@@ -9,10 +9,12 @@ export default function LayoutClientWrapper({ children }: { children: ReactNode 
   const pathname = usePathname();
   const isAuthPage = pathname.startsWith('/auth');
 
+  // Let the auth layout handle auth pages with its own styling
   if (isAuthPage) {
-    return <>{children}</>; // Only return page (no header/sidebar) for /auth
+    return <>{children}</>; 
   }
 
+  // Main app layout for non-auth pages
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar /> {/* Left Sidebar */}

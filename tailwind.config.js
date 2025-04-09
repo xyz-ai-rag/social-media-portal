@@ -4,24 +4,26 @@ module.exports = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
+    "./node_modules/flowbite-react/lib/**/*.{js,ts}",
   ],
   theme: {
     container: {
       center: true,
-      padding: '1rem', // ⬅️ Important, centers your dashboard content
+      padding: '1rem', 
     },
     extend: {
       colors: {
-        primary: '#5470c6',   // You can customize based on your brand
+        primary: '#5470c6',  
         secondary: '#9cb4ff',
         lightGray: '#f9fafb',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'], // Use Inter font properly
+        sans: ['Inter', 'sans-serif'], 
       },
     },
   },
   plugins: [
-    require('@tailwindcss/forms'), // ⬅️ This makes your inputs/selects look GOOD!
+    require('@tailwindcss/forms'), 
+    require('flowbite/plugin')
   ],
 }

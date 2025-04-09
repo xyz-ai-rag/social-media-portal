@@ -24,9 +24,5 @@ export default function LoginPage() {
     );
   }
 
-  return (
-    <div className="flex justify-center items-center py-12">
-      <AuthForm />
-    </div>
-  );
+  return <AuthForm />;
 }
