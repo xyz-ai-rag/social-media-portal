@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import ChartComponent from './ChartComponent';
+import { useAuth } from '@/context/AuthContext';
 
 // Sample data for visualization
 const barChartData = [
@@ -47,11 +48,31 @@ const hashtagsData = [
   { tag: '#hotel', percentage: 2, imgSrc: '/icons/hotel.png' },
 ];
 
-export default function Dashboard() {
+interface DashboardProps {
+  clientId: string;
+  businessId: string;
+}
+
+export default function Dashboard({ clientId, businessId }: DashboardProps) {
+  const { clientDetails } = useAuth();
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [businessName, setBusinessName] = useState<string>('');
+  
+  // Find current business name from clientDetails
+  useEffect(() => {
+    if (clientDetails?.businesses?.length) {
+      const currentBusiness = clientDetails.businesses.find(
+        (biz) => biz.business_id === businessId
+      );
+      
+      if (currentBusiness) {
+        setBusinessName(currentBusiness.business_name);
+      }
+    }
+  }, [clientDetails, businessId]);
   
   // Detect sidebar state
   useEffect(() => {
@@ -80,20 +101,23 @@ export default function Dashboard() {
     };
   }, []);
 
-  // Initialize charts
+  // Initialize charts and load initial data based on clientId and businessId
   useEffect(() => {
+    // In a real app, you would use the clientId and businessId to fetch data
+    console.log(`Loading dashboard for client: ${clientId}, business: ${businessId}`);
+    
     // Simulate loading data
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
     
     return () => clearTimeout(timer);
-  }, []);
+  }, [clientId, businessId]);
 
-  // Fetch data based on date range
+  // Fetch data based on date range, clientId, and businessId
   const fetchData = async (start: string, end: string) => {
     // This would be an actual API call in a real application
-    console.log(`Fetching data from ${start} to ${end}`);
+    console.log(`Fetching data for client: ${clientId}, business: ${businessId} from ${start} to ${end}`);
     setIsLoading(true);
     
     // Simulate API delay
@@ -112,7 +136,7 @@ export default function Dashboard() {
   // Render loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
         <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent"></div>
       </div>
     );
@@ -121,7 +145,7 @@ export default function Dashboard() {
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Business Name</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Analytics Dashboard</h1>
         
         <div className="flex gap-4">
           <div className="flex items-center">
@@ -146,7 +170,18 @@ export default function Dashboard() {
         </div>
       </div>
       
-      {/* Grid layout for dashboard - responsive based on sidebar state */}
+      {/* Business info banner */}
+      {businessName && (
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-6">
+          <div className="flex items-center text-blue-700">
+            <span className="font-medium">
+              Viewing data for: {businessName}
+            </span>
+          </div>
+        </div>
+      )}
+      
+      {/* Grid layout for dashboard - matching the original layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Number of posts chart - spans 2 columns */}
         <ChartComponent

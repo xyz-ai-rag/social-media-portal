@@ -22,7 +22,8 @@ export default function LoginPage() {
   useEffect(() => {
     // Check if user is already logged in
     if (user) {
-      router.push('/dashboard');
+      // Redirect to businesses selection page rather than dashboard
+      router.push('/businesses');
     } else {
       setAuthLoading(false);
     }
@@ -38,7 +39,8 @@ export default function LoginPage() {
       if (!success) {
         throw new Error(error || 'Failed to login');
       }
-      router.push('/dashboard');
+      // Redirect to businesses selection page on successful login
+      router.push('/businesses');
     } catch (err:any) {
       setError(err.message || 'Login failed');
     } finally {
