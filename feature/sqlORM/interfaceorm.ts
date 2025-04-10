@@ -30,8 +30,8 @@ export interface BusinessPostInstance extends Model {
   english_ip_location: string;
   english_summary: string;
   english_sentiment: string;
-  english_positive_to: string;
-  english_negative_to: string;
+  english_positive_topics: string;
+  english_negative_topics: string;
   business_id: string; // uuid
   is_relevant: boolean;
   cover_url: string;
