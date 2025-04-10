@@ -1,9 +1,18 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+  useMemo
+} from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { constructVercelURL } from "@/utils/generateURL";
+
 interface User {
   id: string;
   email: string;
@@ -45,8 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [clientDetails, setClientDetails] = useState<ClientDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Function to fetch client details from our API based on user email.
-  const fetchClientDetails = async (email: string) => {
+  // Stabilize the fetchClientDetails function with useCallback
+  const fetchClientDetails = useCallback(async (email: string) => {
     try {
       const response = await fetch(constructVercelURL(`/api/client-details?email=${encodeURIComponent(email)}`));
       const data = await response.json();
@@ -58,11 +67,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('Error fetching client details:', error.message);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    let isMounted = true; // prevent state updates after unmount
+
     // Set up auth state listener
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
+      
       if (session) {
         setUser(session.user as User);
         // Guard: Check if email exists before calling fetchClientDetails.
@@ -79,6 +92,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check for an existing session
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!isMounted) return;
+      
       if (session) {
         setUser(session.user as User);
         if (session.user.email) {
@@ -90,15 +106,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     checkSession();
 
-    // Cleanup: unsubscribe the listener on unmount.
+    // Cleanup function
     return () => {
+      isMounted = false;
       if (data && data.subscription) {
         data.subscription.unsubscribe();
       }
     };
-  }, []);
+  }, [fetchClientDetails]);
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -106,14 +123,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) throw error;
-      // Auth state change listener will trigger and fetch client details.
+      // The auth state change listener will trigger and fetch client details.
       return { success: true, data };
     } catch (error: any) {
       return { success: false, error: error.message };
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
@@ -121,10 +138,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('Error logging out:', error.message);
     }
-  };
+  }, [router]);
+
+  // Memoize the context value so that consumers don't get new object references on every render.
+  const authContextValue = useMemo(() => ({
+    user,
+    loading,
+    clientDetails,
+    login,
+    logout
+  }), [user, loading, clientDetails, login, logout]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, clientDetails, login, logout }}>
+    <AuthContext.Provider value={authContextValue}>
       {children}
     </AuthContext.Provider>
   );
