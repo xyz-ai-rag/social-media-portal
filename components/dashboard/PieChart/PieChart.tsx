@@ -1,0 +1,148 @@
+'use client';
+
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import * as echarts from 'echarts/core';
+import { GraphChart, PieChart } from 'echarts/charts';
+import { TitleComponent, TooltipComponent, LegendComponent,GraphicComponent  } from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
+import { format } from 'date-fns';
+
+// Import helper functions from timeUtils.
+import { setStartOfDay, setEndOfDay } from '@/utils/timeUtils';
+// Import date range context.
+import { useDateRange } from '@/context/DateRangeContext';
+
+echarts.use([TitleComponent, TooltipComponent, LegendComponent, PieChart, CanvasRenderer,GraphicComponent]);
+
+interface PieDataItem {
+  name: string;
+  value: number;
+  color?: string;
+}
+
+interface PieChartProps {
+  clientId: string;
+  businessId: string;
+}
+
+export default function PieChartComponent({ clientId, businessId }: PieChartProps) {
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [chartData, setChartData] = useState<PieDataItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Get date range from context.
+  const { dateRange } = useDateRange();
+
+  // Process dates using helper functions from timeUtils.
+  const startDateProcessed = useMemo(() => setStartOfDay(dateRange.startDate), [dateRange.startDate]);
+  const endDateProcessed = useMemo(() => setEndOfDay(dateRange.endDate), [dateRange.endDate]);
+
+  // Fetch Pie data from the API route.
+  useEffect(() => {
+    async function fetchPieData() {
+      try {
+        const url = `/api/charts/piechart?business_id=${encodeURIComponent(businessId)}&start_date=${encodeURIComponent(startDateProcessed)}&end_date=${encodeURIComponent(endDateProcessed)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        console.log("Returned pie chart data:", data);
+        // If the API already returns an array, then map each item to add a color (if missing).
+        if (Array.isArray(data)) {
+          const mappedData: PieDataItem[] = data.map((item: any) => ({
+            ...item,
+            color:
+              item.color ||
+              (item.name.toLowerCase() === "rednote"
+                ? "#5A6ACF"
+                : item.name.toLowerCase() === "weibo"
+                ? "#8593ED"
+                : item.name.toLowerCase() === "douyin"
+                ? "#C7CEFF"
+                : "#5470c6")
+          }));
+          setChartData(mappedData);
+        } else {
+          setChartData([]);
+        }
+      } catch (err) {
+        console.error("Error fetching Pie chart data:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchPieData();
+  }, [businessId, startDateProcessed, endDateProcessed]);
+
+  // Initialize and configure the chart once data is loaded.
+  useEffect(() => {
+    if (isLoading || !chartRef.current) return;
+
+    const chart = echarts.init(chartRef.current);
+
+    // Map chartData to series format.
+    const seriesData = chartData.map(item => ({
+      name: item.name,
+      value: item.value,
+      itemStyle: { color: item.color }
+    }));
+
+    // Calculate the total posts for the center text.
+    const totalPosts = chartData.reduce((sum, item) => sum + item.value, 0);
+    
+    const option = {
+      tooltip: {
+        trigger: 'item',
+        formatter: '{a} <br/>{b}: {c} ({d}%)'
+      },
+      legend: {
+        bottom: 0,
+        left: 'center'
+      },
+      series: [
+        {
+          name: 'Platforms',
+          type: 'pie',
+          radius: ['40%', '70%'], // donut style
+          avoidLabelOverlap: false,
+          label: { show: false },
+          labelLine: { show: false },
+          data: seriesData
+        }
+      ],
+      // Add a graphic element in the center for total posts.
+      graphic: {
+        type: 'text',
+        left: 'center',
+        top: 'center',
+        style: {
+          text: totalPosts > 0 ? `${totalPosts}\nPosts` : 'No Data',
+          textAlign: 'center',
+          color: '#333',
+          fontSize: 16,
+          fontWeight: 'bold'
+        }
+      }
+    };
+
+    chart.setOption(option);
+    
+    const handleResize = () => chart.resize();
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      chart.dispose();
+    };
+  }, [isLoading, chartData]);
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h2 className="text-base font-medium text-gray-800 mb-2">Platform Distribution</h2>
+      <div className="text-sm text-gray-600 mb-4">
+        Posts from {format(new Date(dateRange.startDate), 'MMM d')} to {format(new Date(dateRange.endDate), 'MMM d')}
+      </div>
+      <div className="h-64">
+        <div ref={chartRef} style={{ width: '100%', height: '100%' }} />
+      </div>
+    </div>
+  );
+}

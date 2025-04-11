@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
-import { setStartOfDay, setEndOfDay } from './timeUtils';
+import { setStartOfDay, setEndOfDay } from '../../utils/timeUtils'
 import { useDateRange } from '@/context/DateRangeContext';
 
 interface DateRangePickerProps {

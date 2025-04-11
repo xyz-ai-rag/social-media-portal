@@ -3,17 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { DateRangeProvider } from '@/context/DateRangeContext';
 import DateRangePicker from './DateRangePicker';
 import GroupedBarChart from '@/components/dashboard/GroupedBarChart/GroupedBarChart';
+import PieChartComponent from './PieChart/PieChart';
+import HashtagChart from './HotHashtags/HotHashtags';
+import LineGraph from './SimilarBusinesses/LineGraph';
 import { useAuth } from '@/context/AuthContext';
 
-// Dummy components for other charts
-const PlatformChart = () => (
-  <div className="bg-white p-6 rounded-lg shadow-md h-full">
-    <h2 className="text-sm font-medium text-gray-500 mb-2">Platform</h2>
-    <div className="flex items-center justify-center h-64 bg-gray-50 rounded">
-      <p className="text-gray-400">Platform Distribution Chart</p>
-    </div>
-  </div>
-);
 
 const TopicsChart = () => (
   <div className="bg-white p-6 rounded-lg shadow-md h-full">
@@ -24,23 +18,6 @@ const TopicsChart = () => (
   </div>
 );
 
-const HashtagsChart = () => (
-  <div className="bg-white p-6 rounded-lg shadow-md h-full">
-    <h2 className="text-sm font-medium text-gray-500 mb-2">Top Hashtags</h2>
-    <div className="flex items-center justify-center h-64 bg-gray-50 rounded">
-      <p className="text-gray-400">Hashtags Chart</p>
-    </div>
-  </div>
-);
-
-const SimilarBusinessesChart = () => (
-  <div className="bg-white p-6 rounded-lg shadow-md h-full">
-    <h2 className="text-sm font-medium text-gray-500 mb-2">Similar Businesses</h2>
-    <div className="flex items-center justify-center h-64 bg-gray-50 rounded">
-      <p className="text-gray-400">Similar Businesses Chart</p>
-    </div>
-  </div>
-);
 
 interface DashboardProps {
   clientId: string;
@@ -74,17 +51,6 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           <DateRangePicker />
         </div>
         
-        {/* Business info banner */}
-        {businessName && (
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-6">
-            <div className="flex items-center text-blue-700">
-              <span className="font-medium">
-                Viewing data for: {businessName}
-              </span>
-            </div>
-          </div>
-        )}
-        
         {/* Grid layout for dashboard with all chart components */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Number of posts chart - spans 2 columns */}
@@ -94,7 +60,7 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           
           {/* Platform Distribution Chart */}
           <div>
-            <PlatformChart />
+          <PieChartComponent clientId={clientId} businessId={businessId} />
           </div>
           
           {/* Topics Chart */}
@@ -104,12 +70,12 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           
           {/* Top Hashtags */}
           <div>
-            <HashtagsChart />
+            <HashtagChart clientId={clientId} businessId={businessId} />
           </div>
           
           {/* Similar Businesses Chart */}
           <div>
-            <SimilarBusinessesChart />
+            <LineGraph clientId={clientId} businessId={businessId} />
           </div>
         </div>
       </div>

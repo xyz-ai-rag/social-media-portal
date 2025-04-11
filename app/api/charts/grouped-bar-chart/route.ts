@@ -2,7 +2,8 @@
 import { BusinessPostModel } from "@/feature/sqlORM/modelorm";
 import { NextRequest, NextResponse } from "next/server";
 import { Op } from "sequelize";
-import { differenceInDays } from 'date-fns';
+import { format } from "date-fns";
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -24,22 +25,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
 
-    // Calculate total number of days (inclusive)
-    
-    const totalDays = differenceInDays(endDate, startDate) + 1;
-      console.log("checking total tays",totalDays)
-    if (totalDays % 2 !== 0) {
-      return NextResponse.json(
-        { error: "Date range must yield an even number of days (inclusive)" },
-        { status: 400 }
-      );
-    }
-
-    // Query posts for the given business_id and date range.
+    // Query posts for the given business and date range.
     const posts = await BusinessPostModel.findAll({
-      attributes: ['note_id', 'last_update_time'], 
+      attributes: ['note_id', 'last_update_time'],
       where: {
         business_id,
+        is_relevant: true,
         last_update_time: {
           [Op.between]: [startDate, endDate]
         }
@@ -47,17 +38,16 @@ export async function GET(request: NextRequest) {
       order: [["last_update_time", "ASC"]]
     });
 
-    // Initialize counts for each day in the range (key: "yyyy-mm-dd").
-    const counts: { [date: string]: number } = {};
+    // Initialize daily counts.
+    const counts: Record<string, number> = {};
     const dailyKeys: string[] = [];
-    // Build keys and initialize count to 0 for each day.
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
       const key = d.toISOString().slice(0, 10);
       counts[key] = 0;
       dailyKeys.push(key);
     }
 
-    // Count posts per day (using the date part of last_update_time).
+    // Count posts per day.
     posts.forEach(post => {
       const dt = new Date(post.getDataValue("last_update_time"));
       const key = dt.toISOString().slice(0, 10);
@@ -68,40 +58,8 @@ export async function GET(request: NextRequest) {
 
     // Build an ordered array of daily counts.
     const dailyCounts = dailyKeys.map(key => ({ date: key, count: counts[key] }));
-
-    // If no records, return empty array.
-    if (dailyCounts.length === 0) {
-      return NextResponse.json([]);
-    }
-
-    // Condition 1: Period > 14 days — aggregate totals for the two halves.
-    if (totalDays > 14) {
-      const half = totalDays / 2;
-      const previousCount = dailyCounts
-        .slice(0, half)
-        .reduce((sum, record) => sum + record.count, 0);
-      const currentCount = dailyCounts
-        .slice(half)
-        .reduce((sum, record) => sum + record.count, 0);
-
-      // Return a single object (inside an array) that has both totals.
-      return NextResponse.json([
-        { previousValue: previousCount, currentValue: currentCount }
-      ]);
-    } else {
-      // Condition 2: Period is 14 days or less — pair each day of first half with the corresponding day of second half.
-      const half = totalDays / 2;
-      const pairedResults = [];
-      for (let i = 0; i < half; i++) {
-        const previousRecord = dailyCounts[i];
-        const currentRecord = dailyCounts[i + half];
-        pairedResults.push({
-          previousValue: previousRecord.count,
-          currentValue: currentRecord.count
-        });
-      }
-      return NextResponse.json(pairedResults);
-    }
+    
+    return NextResponse.json(dailyCounts);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
