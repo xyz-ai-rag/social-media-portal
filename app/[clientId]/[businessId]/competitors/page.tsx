@@ -1,4 +1,4 @@
-import AllPosts from "@/components/posts/PostList";
+import CompetitorsPosts from "@/components/competitors/CompetitorsPostList";
 export default function PostsPage() {
   return (
     <div className="space-y-6">
@@ -6,7 +6,7 @@ export default function PostsPage() {
         <h1 className="text-2xl font-bold">Business Posts</h1>
       </div> */}
 
-      <AllPosts></AllPosts>
+      <CompetitorsPosts></CompetitorsPosts>
     </div>
   );
 }

@@ -10,7 +10,7 @@ import {
   Dropdown,
   Button,
 } from "flowbite-react";
-import PostCard from "./PostCard";
+import PostCard from "./CompetitorsPostCard";
 
 const AllPosts: FC = () => {
   // Search Value
@@ -108,6 +108,14 @@ const AllPosts: FC = () => {
       url: "#",
     },
   ]);
+  // Select Competitor Data
+  const competitorList = [
+    "Competitor_1",
+    "Competitor_2",
+    "Competitor_3",
+    "Competitor_4",
+  ];
+  const [competitor, setCompetitor] = useState("Competitor_1");
 
   // Select Platform Data
   const platformData = ["Douyin", "Rednote", "Weibo"];
@@ -116,11 +124,7 @@ const AllPosts: FC = () => {
     setPlatform(data);
   };
   // Start Date Data
-  const today = new Date().toISOString().split("T")[0];
-  const yesterday = new Date().toISOString().split("T")[0];
-
-  const [startDate, setStartDate] = useState(today);
-
+  const [startDate, setStartDate] = useState("");
   // End Date Data
   const [endDate, setEndDate] = useState("");
   // Select sentiment Data
@@ -155,6 +159,7 @@ const AllPosts: FC = () => {
   const handleCompetitor = (data: string) => {
     // Request API Below
     // Change value
+    setCompetitor(data);
   };
 
   const handleSearch = () => {
@@ -179,10 +184,22 @@ const AllPosts: FC = () => {
   return (
     <div className="bg-white relative">
       {/* Head */}
-      <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-9">All Posts</h1>
+      <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-9">
+        {competitor}
+      </h1>
 
       {/* First Row Components */}
       <div className="flex space-x-4">
+        <Select
+          id="competitor"
+          required
+          value={competitor}
+          onChange={(e) => handleCompetitor(e.target.value)}
+        >
+          {competitorList.map((item, index) => {
+            return <option key={index}>{item}</option>;
+          })}
+        </Select>
         <div className="flex items-center">
           <span className="text-sm text-gray-500 mr-2">Start Date</span>
           <TextInput
@@ -191,7 +208,6 @@ const AllPosts: FC = () => {
             placeholder="Start Date"
             required
             onChange={(e) => setStartDate(e.target.value)}
-            value={startDate}
           />
         </div>
         <div className="flex items-center">
