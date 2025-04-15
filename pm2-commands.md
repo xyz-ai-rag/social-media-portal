@@ -10,6 +10,10 @@ Manage your app with PM2 easily!
 pm2 start npm --name "social-media-portal" -- run start
 ```
 
+```bash
+pm2 start ecosystem.config.js
+```
+
 ## 🛑 Stop an App
 
 ```bash
