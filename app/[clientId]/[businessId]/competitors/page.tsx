@@ -1,12 +1,18 @@
-import CompetitorsPosts from "@/components/competitors/CompetitorsPostList";
-export default function PostsPage() {
+"use client";
+import CompetitorPosts from "@/components/business-posts/competitors-posts/CompetitorPosts";
+import { useParams } from "next/navigation";
+export default function CompetitorsPostsPage() {
+  const params = useParams();
+     
+     const clientId = params.clientId as string;
+     const businessId = params.businessId as string;
   return (
     <div className="space-y-6">
-      {/* <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Business Posts</h1>
-      </div> */}
 
-      <CompetitorsPosts></CompetitorsPosts>
+      <CompetitorPosts
+        clientId={clientId} 
+        businessId={businessId} 
+        />
     </div>
   );
 }

@@ -1,12 +1,23 @@
-import AllPosts from "@/components/posts/PostList";
+"use client";
+
+import { useParams } from "next/navigation";
+import BusinessPosts from "@/components/business-posts/business-posts/BusinessPosts";
+
+
 export default function PostsPage() {
+ const params = useParams();
+   
+   // Extract clientId and businessId from URL parameters
+   const clientId = params.clientId as string;
+   const businessId = params.businessId as string;
+
   return (
     <div className="space-y-6">
-      {/* <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Business Posts</h1>
-      </div> */}
-
-      <AllPosts></AllPosts>
+        <BusinessPosts 
+          clientId={clientId} 
+          businessId={businessId} 
+        />
+      
     </div>
   );
 }
