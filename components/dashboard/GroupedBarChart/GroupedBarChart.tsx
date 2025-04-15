@@ -1,14 +1,19 @@
-'use client';
+"use client";
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import * as echarts from 'echarts/core';
-import { BarChart } from 'echarts/charts';
-import { TitleComponent, TooltipComponent, GridComponent, LegendComponent } from 'echarts/components';
-import { CanvasRenderer } from 'echarts/renderers';
-import { format } from 'date-fns';
-import { setStartOfDay, setEndOfDay } from '@/utils/timeUtils';
+import React, { useEffect, useRef, useState, useMemo } from "react";
+import * as echarts from "echarts/core";
+import { BarChart } from "echarts/charts";
+import {
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  LegendComponent,
+} from "echarts/components";
+import { CanvasRenderer } from "echarts/renderers";
+import { format } from "date-fns";
+import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
 // Import your DateRange context hook and a utility function if needed.
-import { useDateRange } from '@/context/DateRangeContext';
+import { useDateRange } from "@/context/DateRangeContext";
 
 echarts.use([
   TitleComponent,
@@ -16,7 +21,7 @@ echarts.use([
   GridComponent,
   LegendComponent,
   BarChart,
-  CanvasRenderer
+  CanvasRenderer,
 ]);
 
 interface GroupedBarChartProps {
@@ -29,7 +34,10 @@ interface ChartRecord {
   count: number;
 }
 
-export default function GroupedBarChart({ clientId, businessId }: GroupedBarChartProps) {
+export default function GroupedBarChart({
+  clientId,
+  businessId,
+}: GroupedBarChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [chartData, setChartData] = useState<ChartRecord[]>([]);
@@ -39,15 +47,21 @@ export default function GroupedBarChart({ clientId, businessId }: GroupedBarChar
 
   // Format the raw date strings for display.
   const formattedStart = useMemo(
-    () => format(new Date(dateRange.startDate), 'd MMM yyyy'),
+    () => format(new Date(dateRange.startDate), "d MMM yyyy"),
     [dateRange.startDate]
   );
   const formattedEnd = useMemo(
-    () => format(new Date(dateRange.endDate), 'd MMM yyyy'),
+    () => format(new Date(dateRange.endDate), "d MMM yyyy"),
     [dateRange.endDate]
   );
-  const startDateProcessed = useMemo(() => setStartOfDay(dateRange.startDate), [dateRange.startDate]);
-  const endDateProcessed = useMemo(() => setEndOfDay(dateRange.endDate), [dateRange.endDate]);
+  const startDateProcessed = useMemo(
+    () => setStartOfDay(dateRange.startDate),
+    [dateRange.startDate]
+  );
+  const endDateProcessed = useMemo(
+    () => setEndOfDay(dateRange.endDate),
+    [dateRange.endDate]
+  );
   // Fetch daily posts data from the API.
   useEffect(() => {
     async function fetchChartData() {
@@ -78,47 +92,52 @@ export default function GroupedBarChart({ clientId, businessId }: GroupedBarChar
     const chart = echarts.init(chartRef.current);
 
     // xAxis will show the dates.
-    const xAxisData = chartData.map(record => record.date);
+    const xAxisData = chartData.map((record) => record.date);
     // Data series: just one series with daily counts.
-    const seriesData = chartData.map(record => record.count);
+    const seriesData = chartData.map((record) => record.count);
 
     const option = {
       tooltip: {
-        trigger: 'axis',
-        formatter: '{b}: {c} posts'
+        trigger: "axis",
+        formatter:
+          "<div style='width:140px; height:59px'><span style='font-size:12px; color:white'>{b}</span> <br/><br/><span style='color:white; font-size:16px'>{c} posts</span></div>",
+        backgroundColor: "#37375C", // 修改背景颜色，支持透明度
+        borderColor: "#ccc", // 设置边框颜色
+        borderWidth: 1, // 设置边框宽度
       },
       legend: {
-        show: false
+        show: false,
       },
       grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        containLabel: true
+        top: "0%",
+        left: "3%",
+        right: "4%",
+        bottom: "3%",
+        containLabel: true,
       },
       xAxis: {
-        type: 'category',
+        type: "category",
         data: xAxisData,
         axisLine: { show: false },
         axisTick: { show: false },
       },
       yAxis: {
-        type: 'value',
-        splitLine: { lineStyle: { type: 'dashed' } },
-        show: true
+        type: "value",
+        splitLine: { lineStyle: { type: "dashed" } },
+        show: true,
       },
       series: [
         {
-          name: 'Posts',
-          type: 'bar',
-          barWidth: '60%',
+          name: "Posts",
+          type: "bar",
+          barWidth: "30%",
           data: seriesData,
           itemStyle: {
-            color: '#5470c6',
-            borderRadius: [2, 2, 0, 0]
-          }
-        }
-      ]
+            color: "#5470c6",
+            borderRadius: [2, 2, 0, 0],
+          },
+        },
+      ],
     };
 
     chart.setOption(option);
@@ -131,7 +150,7 @@ export default function GroupedBarChart({ clientId, businessId }: GroupedBarChar
   }, [isLoading, chartData]);
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-white p-6 rounded-lg shadow-md h-full">
       {/* Title */}
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-base font-medium text-gray-800">
