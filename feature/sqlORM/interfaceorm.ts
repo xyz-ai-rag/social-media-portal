@@ -48,7 +48,8 @@ export interface BusinessPostInstance extends Model {
   tiebreaker_in_relevancy: boolean;
   english_preview_text: string;
   last_modify_action: string;
-  import_id: string; // uuid
+  import_id: string; // uuid,
+  is_official_post:boolean
 }
 
 export interface BusinessInstance extends Model {

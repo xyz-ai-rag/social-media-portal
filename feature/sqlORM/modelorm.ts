@@ -54,6 +54,7 @@ export const BusinessPostModel = sequelizeDbConnection.define<BusinessPostInstan
     english_preview_text: { type: DataTypes.TEXT, allowNull: true },
     last_modify_action: { type: DataTypes.TEXT, allowNull: true },
     import_id: { type: DataTypes.UUID, allowNull: true },
+    is_official_post: { type: DataTypes.BOOLEAN, allowNull: true },
   },
   {
     tableName: 'business_posts',
