@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     // Now query the clients table using the client_id
     const clientRecord = await ClientModel.findOne({
       where: { id: clientId },
-      attributes: ['id', 'client_name', 'registered_email', 'business_mapping'],
+      attributes: ['id', 'client_name', 'business_mapping'],
     });
     
     if (!clientRecord) {
