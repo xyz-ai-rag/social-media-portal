@@ -68,7 +68,14 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
     () => setEndOfDay(dateRange.endDate),
     [dateRange.endDate]
   );
-
+  const formattedStart = useMemo(
+      () => format(new Date(dateRange.startDate), "d MMM"),
+      [dateRange.startDate]
+    );
+    const formattedEnd = useMemo(
+      () => format(new Date(dateRange.endDate), "d MMM"),
+      [dateRange.endDate]
+    );
   // Derive the similar business ids from clientDetails:
   const { similar_businesses } = useMemo(() => {
     if (!clientDetails || !clientDetails.businesses)
@@ -188,8 +195,7 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
         </h2>
       </div>
       <div className="text-sm text-gray-600 mb-4">
-        Comparison period: {format(new Date(startDateProcessed), "MMM d, yyyy")}{" "}
-        to {format(new Date(endDateProcessed), "MMM d, yyyy")}
+         Posts from {formattedStart} to {formattedEnd}
       </div>
       <div className="h-64">
         <div ref={chartRef} style={{ width: "100%", height: "100%" }} />
