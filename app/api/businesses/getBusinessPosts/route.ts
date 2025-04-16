@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     const pageSize = parseInt(searchParams.get('pageSize') || '10');
     const sortOrder = (searchParams.get('sortOrder') || 'desc').toLowerCase();
 
-    // Build query conditions
+    // Build query conditions. Note the description filter preserves extra white spaces.
     const whereConditions: any = {
       business_id: businessId,
       is_relevant: true,
@@ -67,7 +67,6 @@ export async function GET(request: NextRequest) {
     };
 
     // Apply date range filter (default: last 7 days, excluding today)
-    // Format date strings properly without 'T' character
     const startDateTime = `${startDate} 0:00:00`;
     const endDateTime = `${endDate} 23:59:59`;
     
@@ -77,7 +76,6 @@ export async function GET(request: NextRequest) {
 
     // Apply platform filter if provided with mapping
     if (platform) {
-      // Map display platform names to database platform values
       let dbPlatform;
       switch (platform) {
         case 'Rednote':
@@ -90,7 +88,7 @@ export async function GET(request: NextRequest) {
           dbPlatform = 'dy';
           break;
         default:
-          dbPlatform = platform; // Use as-is if not a mapped platform
+          dbPlatform = platform;
       }
       
       whereConditions.platform = dbPlatform;
@@ -101,12 +99,9 @@ export async function GET(request: NextRequest) {
       whereConditions.english_sentiment = sentiment;
     }
 
-    // Apply relevance filter if provided - handle both >=50 and <50 cases
+    // Apply relevance filter if provided
     if (relevance) {
-      // Parse the relevance value (remove % if present)
       const relevanceValue = parseInt(relevance.replace('%', ''));
-      
-      // Check if we need >= or < comparison
       if (relevance.includes('<')) {
         whereConditions.relevance_percentage = {
           [Op.lt]: relevanceValue
@@ -118,7 +113,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Apply criticism filter if provided - using correct column name
+    // Apply criticism filter if provided
     if (hasCriticism) {
       const criticismValue = hasCriticism === 'true' || hasCriticism === 'Has Criticism';
       whereConditions.has_negative_or_criticism = criticismValue;
@@ -137,19 +132,14 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // First get total count without pagination to ensure we know total pages
     const totalCount = await BusinessPostModel.count({
       where: whereConditions
     });
 
-    // Calculate pagination
     const totalPages = Math.ceil(totalCount / pageSize);
-    
-    // Adjust page if it exceeds total pages
     const adjustedPage = page > totalPages && totalPages > 0 ? totalPages : page;
     const offset = (adjustedPage - 1) * pageSize;
 
-    // Execute the query with pagination
     const { rows } = await BusinessPostModel.findAndCountAll({
       where: whereConditions,
       attributes: [
@@ -174,11 +164,9 @@ export async function GET(request: NextRequest) {
       offset: offset
     });
 
-    // Format the data for the frontend - include both original and English versions
     const posts = rows.map(post => {
       const postData = post.get({ plain: true });
       
-      // Map database platform to display platform
       let displayPlatform;
       switch (postData.platform) {
         case 'xhs':
@@ -191,42 +179,33 @@ export async function GET(request: NextRequest) {
           displayPlatform = 'Douyin';
           break;
         default:
-          displayPlatform = postData.platform; // Use as-is if not a mapped platform
+          displayPlatform = postData.platform;
       }
       
-      // Format data for frontend consumption
       return {
         id: postData.note_id,
         businessId: postData.business_id,
-        // Keep both original and English versions
-        description: postData.description, // Original description
-        englishDesc: postData.english_desc, // English description
-        // Default to English for display, fall back to original if English not available
-        post: postData.english_desc || postData.description, // For display in tables
-        
-        title: postData.title, // Original title
-        englishTitle: postData.english_title, // English title
-        // Default to English for display, fall back to original if English not available
-        displayTitle: postData.english_title || postData.title, // For display in tables
-        
-        tagList: postData.tag_list, // Original taglist
-        englishTagList: postData.english_tag_list, // English taglist
-        // Default to English for display, fall back to original if English not available
-        taglist: postData.english_tag_list || postData.tag_list, // For display in tables
-        
+        description: postData.description,         // Original description (preserving white spaces)
+        englishDesc: postData.english_desc,         // English description
+        post: postData.english_desc || postData.description,
+        title: postData.title,
+        englishTitle: postData.english_title,
+        displayTitle: postData.english_title || postData.title,
+        tagList: postData.tag_list,
+        englishTagList: postData.english_tag_list,
+        taglist: postData.english_tag_list || postData.tag_list,
         date: postData.last_update_time,
         showDate: formatDisplayDate(postData.last_update_time),
         sentiment: postData.english_sentiment,
         nickname: postData.nickname,
         relvance: postData.relevance_percentage,
-        platform: displayPlatform, // Use the mapped platform name
-        dbPlatform: postData.platform, // Keep the original platform value for reference
+        platform: displayPlatform,
+        dbPlatform: postData.platform,
         hasCriticism: postData.has_negative_or_criticism,
         url: postData.note_url
       };
     });
 
-    // Return the paginated results with applied filters for frontend reference
     return NextResponse.json({
       posts,
       pagination: {
@@ -258,20 +237,20 @@ export async function GET(request: NextRequest) {
 // Helper function to format date for query (YYYY-MM-DD)
 function formatDateForQuery(date: Date): string {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
 // Helper function to format date for display
 function formatDisplayDate(date: Date): string {
   const d = new Date(date);
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const month = months[d.getMonth()];
   const day = d.getDate();
   const hours = d.getHours();
-  const minutes = d.getMinutes().toString().padStart(2, '0');
-  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const minutes = d.getMinutes().toString().padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
   const formattedHours = hours % 12 || 12;
   
   return `${month} ${day} - ${formattedHours}:${minutes}${ampm}`;

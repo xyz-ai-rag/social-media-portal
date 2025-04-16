@@ -13,7 +13,7 @@ export default function DateRangePicker({ onDateRangeChange }: DateRangePickerPr
   // Try to use context if available
   const dateRangeContext = useDateRange();
   
-  const [selectedPreset, setSelectedPreset] = useState<string>('last7Days');
+  const [selectedPreset, setSelectedPreset] = useState<string>('last30Days');
   const [customStartDate, setCustomStartDate] = useState<string>('');
   const [customEndDate, setCustomEndDate] = useState<string>('');
   const [showCustomDates, setShowCustomDates] = useState<boolean>(false);

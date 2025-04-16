@@ -55,6 +55,16 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({ clientId, businessId }) => 
     currentPage: 1,
     pageSize: 10
   });
+  
+  // State for the modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalRowData, setModalRowData] = useState<any>({});
+  
+  // NEW: State to store adjacent pages' posts
+  const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
+  const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
+  const [adjacentPagesLoading, setAdjacentPagesLoading] = useState(false);
+  
   // Calculate yesterday's date for date limits
   const yesterday = useMemo(() => {
     const date = new Date();
@@ -68,6 +78,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({ clientId, businessId }) => 
     date.setDate(date.getDate() - 7);
     return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
   }, []);
+  
   // Initialize with empty filters - the API will apply defaults (last 7 days)
   const [filters, setFilters] = useState({
     startDate: sevenDaysAgo,
@@ -145,18 +156,13 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({ clientId, businessId }) => 
     return competitor ? competitor.name : "Competitor Analysis";
   }, [competitorId, competitors]);
 
-  // Fetch posts for selected competitor
-  const fetchCompetitorPosts = useCallback(async () => {
+  // Helper function to fetch posts for any page
+  const fetchPostsForPage = useCallback(async (pageNumber: number) => {
     if (!competitorId) {
-      setPosts([]);
-      setIsLoading(false);
-      return;
+      return { posts: [], pagination: null, appliedFilters: null };
     }
 
     try {
-      setIsLoading(true);
-      setError(null);
-
       // Build query parameters
       const queryParams = new URLSearchParams();
       queryParams.append('businessId', competitorId); // Use competitorId as businessId for API
@@ -164,14 +170,14 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({ clientId, businessId }) => 
         ? yesterday 
         : filters.endDate;
       if (filters.startDate) queryParams.append('startDate', filters.startDate);
-        queryParams.append('endDate', endDate);
+      queryParams.append('endDate', endDate);
       if (filters.platform) queryParams.append('platform', filters.platform);
       if (filters.sentiment) queryParams.append('sentiment', filters.sentiment);
       if (filters.relevance) queryParams.append('relevance', filters.relevance);
       if (filters.hasCriticism) queryParams.append('hasCriticism', filters.hasCriticism);
       if (filters.search) queryParams.append('search', filters.search);
       if (filters.sortOrder) queryParams.append('sortOrder', filters.sortOrder);
-      queryParams.append('page', filters.page.toString());
+      queryParams.append('page', pageNumber.toString());
 
       // Make the API call - use the same endpoint as business posts
       const response = await fetch(
@@ -190,9 +196,39 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({ clientId, businessId }) => 
       }
 
       const data = await response.json();
-      setPosts(data.posts);
-      setPagination(data.pagination);
-      setAppliedFilters(data.appliedFilters);
+      return { 
+        posts: data.posts || [], 
+        pagination: data.pagination,
+        appliedFilters: data.appliedFilters
+      };
+    } catch (error: any) {
+      console.error(`Error fetching posts for page ${pageNumber}:`, error);
+      return { posts: [], pagination: null, appliedFilters: null };
+    }
+  }, [competitorId, filters, yesterday]);
+
+  // Main fetch function for competitor posts
+  const fetchCompetitorPosts = useCallback(async () => {
+    if (!competitorId) {
+      setPosts([]);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const { posts, pagination, appliedFilters } = await fetchPostsForPage(filters.page);
+      
+      if (posts.length > 0) {
+        setPosts(posts);
+        if (pagination) setPagination(pagination);
+        if (appliedFilters) setAppliedFilters(appliedFilters);
+      } else {
+        setPosts([]);
+        setError('No posts found for this competitor');
+      }
     } catch (error: any) {
       console.error('Error fetching competitor posts:', error);
       setError(error.message || 'An error occurred while fetching competitor posts');
@@ -200,12 +236,110 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({ clientId, businessId }) => 
     } finally {
       setIsLoading(false);
     }
-  }, [competitorId, filters]);
+  }, [competitorId, filters.page, fetchPostsForPage]);
+
+  // NEW: Function to fetch adjacent pages
+  const fetchAdjacentPages = useCallback(async () => {
+    if (pagination.totalPages <= 1) return;
+    
+    setAdjacentPagesLoading(true);
+    
+    const prevPage = pagination.currentPage > 1 
+      ? pagination.currentPage - 1 
+      : pagination.totalPages;
+      
+    const nextPage = pagination.currentPage < pagination.totalPages 
+      ? pagination.currentPage + 1 
+      : 1;
+    
+    const [prevResult, nextResult] = await Promise.all([
+      fetchPostsForPage(prevPage),
+      fetchPostsForPage(nextPage)
+    ]);
+    
+    setPrevPagePosts(prevResult.posts);
+    setNextPagePosts(nextResult.posts);
+    setAdjacentPagesLoading(false);
+  }, [pagination, fetchPostsForPage]);
 
   // Fetch posts when competitorId or filters change
   useEffect(() => {
     fetchCompetitorPosts();
   }, [fetchCompetitorPosts]);
+  
+  // NEW: Fetch adjacent pages when modal is opened or current page changes
+  useEffect(() => {
+    if (isModalOpen && pagination.totalPages > 1) {
+      fetchAdjacentPages();
+    }
+  }, [isModalOpen, pagination.currentPage, fetchAdjacentPages]);
+
+  // NEW: Handle opening the modal
+  const openModal = (row: any) => {
+    // Add contextual IDs to row data for the modal
+    setModalRowData({
+      ...row,
+      clientId,
+      businessId,
+      competitorId
+    });
+    setIsModalOpen(true);
+  };
+  
+  // NEW: Handle closing the modal
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+  
+  // NEW: Add event listener to update the modal content without closing it
+  useEffect(() => {
+    const handleUpdateModal = (event: CustomEvent<{data: any}>) => {
+      if (event.detail && event.detail.data) {
+        setModalRowData(event.detail.data);
+      }
+    };
+    
+    document.addEventListener('updatePostModal', handleUpdateModal as EventListener);
+    
+    return () => {
+      document.removeEventListener('updatePostModal', handleUpdateModal as EventListener);
+    };
+  }, []);
+
+  // NEW: Function to handle cross-page navigation
+  const handleCrossPageNavigation = useCallback((direction: 'prev' | 'next') => {
+    // Calculate the new page number
+    const newPage = direction === 'prev' 
+      ? (pagination.currentPage > 1 ? pagination.currentPage - 1 : pagination.totalPages)
+      : (pagination.currentPage < pagination.totalPages ? pagination.currentPage + 1 : 1);
+    
+    // Get posts from the appropriate page
+    const newPagePosts = direction === 'prev' ? prevPagePosts : nextPagePosts;
+    
+    // Get the post from the beginning or end of the adjacent page
+    const newRowData = direction === 'prev' 
+      ? newPagePosts[newPagePosts.length - 1] 
+      : newPagePosts[0];
+    
+    if (newRowData) {
+      // Update modal data
+      const updatedData = {
+        ...newRowData,
+        clientId,
+        businessId,
+        competitorId
+      };
+      
+      // Dispatch event to update modal
+      const event = new CustomEvent('updatePostModal', { 
+        detail: { data: updatedData } 
+      });
+      document.dispatchEvent(event);
+      
+      // Change the page (this will also fetch new set of posts)
+      handleFilterChange({ page: newPage });
+    }
+  }, [pagination, prevPagePosts, nextPagePosts, clientId, businessId, competitorId]);
 
   // Handle competitor change
   const handleCompetitorChange = (selectedId: string) => {
@@ -264,25 +398,40 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({ clientId, businessId }) => 
   );
 
   return (
-    <SharedPostList
-      title={competitorName}
-      clientId={clientId}
-      businessId={businessId}
-      competitorId={competitorId}
-      additionalFilters={CompetitorFilter}
-      postCardComponent={CompetitorPostCard}
-      onFilterChange={handleFilterChange}
-      initialData={posts}
-      isLoading={isLoading}
-      error={error}
-      appliedFilters={appliedFilters}
-      pagination={{
-        currentPage: pagination.currentPage,
-        totalPages: pagination.totalPages,
-        onPageChange: handlePageChange
-      }}
-      onRefresh={fetchCompetitorPosts}
-    />
+    <>
+      <SharedPostList
+        title={competitorName}
+        clientId={clientId}
+        businessId={businessId}
+        competitorId={competitorId}
+        additionalFilters={CompetitorFilter}
+        postCardComponent={CompetitorPostCard}
+        onFilterChange={handleFilterChange}
+        initialData={posts}
+        isLoading={isLoading}
+        error={error}
+        appliedFilters={appliedFilters}
+        pagination={{
+          currentPage: pagination.currentPage,
+          totalPages: pagination.totalPages,
+          onPageChange: handlePageChange
+        }}
+        onRefresh={fetchCompetitorPosts}
+        openModal={openModal} // NEW: Pass the openModal function
+      />
+      
+      {/* NEW: Render CompetitorPostCard independently */}
+      <CompetitorPostCard 
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        rowData={modalRowData}
+        listData={posts} // Pass the list data for navigation
+        onCrossPageNext={() => handleCrossPageNavigation('next')}
+        onCrossPagePrev={() => handleCrossPageNavigation('prev')}
+        isLoadingAdjacentPages={adjacentPagesLoading}
+        pagination={pagination}
+      />
+    </>
   );
 };
 

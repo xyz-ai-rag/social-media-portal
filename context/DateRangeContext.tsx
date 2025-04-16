@@ -152,8 +152,8 @@ interface DateRangeProviderProps {
 }
 
 export function DateRangeProvider({ children }: DateRangeProviderProps) {
-  // Initialize with Last 7 Days as default (computed only once on mount)
-  const initialRange = useMemo(() => DATE_PRESETS.last7Days.getRange(), []);
+  // Initialize with Last 30 Days as default (computed only once on mount)
+  const initialRange = useMemo(() => DATE_PRESETS.last30Days.getRange(), []);
   const [dateRange, setDateRange] = useState<DateRange>(initialRange);
 
   // Wrap updateDateRange with useCallback and only update if values change.

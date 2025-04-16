@@ -42,13 +42,13 @@ export async function GET(request: NextRequest) {
 
     // Define fixed colors.
     const platformColors: Record<string, string> = {
-      rednote: "#5A6ACF",
-      weibo: "#8593ED",
-      douyin: "#C7CEFF",
+      Rednote: "#5A6ACF",
+      Weibo: "#8593ED",
+      Douyin: "#C7CEFF",
     };
 
     // Count posts per platform.
-    const counts: Record<string, number> = { rednote: 0, weibo: 0, douyin: 0 };
+    const counts: Record<string, number> = { Rednote: 0, Weibo: 0, Douyin: 0 };
 
     rows.forEach(row => {
       // Get the raw platform value and normalize it to lowercase.

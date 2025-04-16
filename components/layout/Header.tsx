@@ -61,12 +61,30 @@ export default function Header() {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
+  // Avatar Change
+  interface AvatarProps {
+    name: string;
+  }
+  const Avatar = ({ name }: AvatarProps) => {
+    const initails = name
+      .split(" ")
+      .map((word: string) => word[0])
+      .join("")
+      .toUpperCase();
+
+    return (
+      <div className="w-10 h-10 flex items-center justify-center bg-[#5A67BA] text-white text-sm font-bold rounded-full">
+        {initails}
+      </div>
+    );
+  };
   return (
-    <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
+    <header className="flex items-center justify-between px-6 bg-white border-b border-gray-200">
       {/* Left side (Logo and Business Info) */}
       <div className="flex items-center space-x-4">
         {/* Business Logo */}
-        <div className="bg-orange-100 rounded-full p-2">🍔</div>
+        <Avatar name={currentBusinessName}></Avatar>
+        {/* <div className="bg-orange-100 rounded-full p-2">🍔</div> */}
 
         {/* Custom Business Dropdown - only on dashboard pages with available businesses */}
         {showBusinessSelector && hasBusinesses && (
@@ -109,10 +127,12 @@ export default function Header() {
       </div>
 
       {/* Right side (Company Name and User Info) */}
-      <div className="flex items-center space-x-4">
-        <span className="text-gray-800 font-semibold">Hyprdata.ai</span>
+      <div className="items-center space-x-4 text-right py-2">
+        <span className="text-gray-800 font-semibold text-2xl">
+          Hyprdata.ai
+        </span>
         {user?.email && (
-          <div className="text-sm text-gray-600 hidden md:block">
+          <div className="text-sm text-gray-600 hidden md:block mt-1">
             <span className="font-medium">Logged in as: </span>
             {user.email}
           </div>
