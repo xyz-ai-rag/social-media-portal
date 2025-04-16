@@ -16,6 +16,7 @@ interface ModelDataProps {
     relvance: number;
     sentiment: string;
     hasCriticism: boolean;
+    title:string;
   };
 }
 
