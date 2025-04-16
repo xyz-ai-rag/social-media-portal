@@ -59,7 +59,6 @@ export default function HashtagChart({
         const url = `/api/charts/hashtags?business_id=${businessId}&start_date=${startDateProcessed}&end_date=${endDateProcessed}`;
         const res = await fetch(url);
         const data = await res.json();
-        console.log("Returned hashtag data:", data);
         // Assume data is an array of objects like: [ { tag: "Travel", percentage: 15 }, ... ]
         setHashtags(data);
       } catch (error) {

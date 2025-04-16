@@ -69,7 +69,7 @@ export default function PieChartComponent({
         )}&end_date=${encodeURIComponent(endDateProcessed)}`;
         const res = await fetch(url);
         const data = await res.json();
-        console.log("Returned pie chart data:", data);
+    
         // If the API already returns an array, then map each item to add a color (if missing).
         if (Array.isArray(data)) {
           const mappedData: PieDataItem[] = data.map((item: any) => ({
