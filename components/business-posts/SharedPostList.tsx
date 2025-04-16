@@ -13,7 +13,8 @@ import {
   Alert
 } from "flowbite-react";
 import { useAuth } from '@/context/AuthContext';
-
+import DatePicker from './DatePicker';
+import PreviewModal from "./PreviewModal"; 
 // Base post data structure shared between components
 export interface PostData {
   id?: string;
@@ -69,6 +70,7 @@ interface SharedPostListProps {
   pagination?: PaginationProps;
   onFilterChange?: (filters: any) => void;
   onRefresh?: () => void;
+  openModal?: (item: any) => void;
 }
 
 const SharedPostList: FC<SharedPostListProps> = ({
@@ -84,7 +86,8 @@ const SharedPostList: FC<SharedPostListProps> = ({
   appliedFilters = null,
   pagination,
   onFilterChange,
-  onRefresh
+  onRefresh,
+  openModal
 }) => {
   // Search Value
   const [searchQuery, setSearchQuery] = useState("");
@@ -115,10 +118,9 @@ const SharedPostList: FC<SharedPostListProps> = ({
   // List Data
   const [listData, setListData] = useState<PostData[]>(initialData);
   
-  // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [rowData, setRowData] = useState<any>({});
-  
+  // State for controlling the PreviewModal
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewRowData, setPreviewRowData] = useState<PostData | null>(null);
   // Update list data when initialData changes
   useEffect(() => {
     setListData(initialData);
@@ -199,18 +201,6 @@ const SharedPostList: FC<SharedPostListProps> = ({
     }
   };
 
-  // Control Modal Display
-  const openModal = (item: any) => {
-    // Add contextual IDs to row data for the modal
-    setRowData({
-      ...item,
-      clientId,
-      businessId,
-      competitorId
-    });
-    setIsModalOpen(true);
-  };
-  const closeModal = () => setIsModalOpen(false);
 
   const handleSearch = () => {
     if (onFilterChange) {
@@ -276,6 +266,15 @@ const SharedPostList: FC<SharedPostListProps> = ({
       });
     }
   };
+  const openPreviewModal = (row: PostData) => {
+    setPreviewRowData(row);
+    setIsPreviewOpen(true);
+  };
+
+  const closePreviewModal = () => {
+    setIsPreviewOpen(false);
+    setPreviewRowData(null);
+  };
 
   return (
     <div className="bg-white relative">
@@ -326,30 +325,23 @@ const SharedPostList: FC<SharedPostListProps> = ({
           </div>
         )}
 
-        <div className="flex items-center">
-          <span className="text-sm text-gray-500 mr-2">Start Date</span>
-          <TextInput
-            type="date"
+        <DatePicker
             id="start-date"
-            placeholder="Start Date"
-            onChange={(e) => handleStartDateChange(e.target.value)}
+            label="Start Date"
             value={startDate}
-            max={yesterday} // Restrict to yesterday and earlier
+            onChange={handleStartDateChange}
+            max={yesterday}
             disabled={isLoading}
-          />
-        </div>
-        <div className="flex items-center">
-          <span className="text-sm text-gray-500 mr-2">End Date</span>
-          <TextInput
-            type="date"
+        />
+        
+        <DatePicker
             id="end-date"
-            placeholder="End Date"
-            onChange={(e) => handleEndDateChange(e.target.value)}
+            label="End Date"
             value={endDate}
-            max={yesterday} // Restrict to yesterday and earlier
+            onChange={handleEndDateChange}
+            max={yesterday}
             disabled={isLoading}
-          />
-        </div>
+        />
         <Select
           id="platform"
           value={platform}
@@ -466,9 +458,9 @@ const SharedPostList: FC<SharedPostListProps> = ({
 
       {/* Table */}
       <div className="mt-6 bg-white rounded shadow">
-        <Table hoverable>
+        <Table hoverable className="w-full table-fixed">
           <Table.Head>
-            <Table.HeadCell className="flex items-center">
+            <Table.HeadCell className="flex items-center w-24">
               Date
               <div className="pl-2 flex flex-col">
                 <svg
@@ -501,19 +493,20 @@ const SharedPostList: FC<SharedPostListProps> = ({
                 </svg>
               </div>
             </Table.HeadCell>
-            <Table.HeadCell>Platform</Table.HeadCell>
-            <Table.HeadCell>Nickname</Table.HeadCell>
-            <Table.HeadCell>Post</Table.HeadCell>
-            <Table.HeadCell>Taglist</Table.HeadCell>
-            <Table.HeadCell>View Original</Table.HeadCell>
-            <Table.HeadCell>Relevance</Table.HeadCell>
-            <Table.HeadCell>Sentiment</Table.HeadCell>
-            {/* <Table.HeadCell>Criticism</Table.HeadCell>
-            <Table.HeadCell>Original URL</Table.HeadCell> */}
+            <Table.HeadCell className="w-24">Platform</Table.HeadCell>
+            <Table.HeadCell className="w-24">Nickname</Table.HeadCell>
+            <Table.HeadCell className="w-64">Post</Table.HeadCell>
+            <Table.HeadCell className="w-48">Taglist</Table.HeadCell>
+            <Table.HeadCell className="w-24">View Original</Table.HeadCell>
+            <Table.HeadCell className="w-24">Relevance</Table.HeadCell>
+            <Table.HeadCell className="w-24">Sentiment</Table.HeadCell>
+            {/* <Table.HeadCell className="w-24">Criticism</Table.HeadCell>
+            <Table.HeadCell className="w-16">URL</Table.HeadCell> */}
           </Table.Head>
           <Table.Body className="divide-y">
             {isLoading ? (
-              <Table.Row>
+              <Table.Row
+              >
                 <Table.Cell colSpan={10} className="text-center py-10">
                   <div className="flex flex-col items-center justify-center">
                     <Spinner size="xl" color="purple" />
@@ -530,25 +523,37 @@ const SharedPostList: FC<SharedPostListProps> = ({
             ) : (
               listData.map((item, index) => {
                 return (
-                  <Table.Row key={item.id || index}>
+                  <Table.Row 
+                    key={item.id || index}
+                    onClick={() => openPreviewModal(item)}
+                    className="cursor-pointer">
                     <Table.Cell className="text-[#DD9A19]">
                       {item.showDate}
                     </Table.Cell>
                     <Table.Cell>{item.platform}</Table.Cell>
                     <Table.Cell>{item.nickname}</Table.Cell>
-                    <Table.Cell className="truncate max-w-40 whitespace-nowrap overflow-hidden">
-                      {item.post}
+                    
+                    {/* Updated Post Cell with Multi-line Support */}
+                    <Table.Cell className="max-w-64 w-64">
+                      <div className="line-clamp-3 text-sm break-words">
+                        {item.post}
+                      </div>
                     </Table.Cell>
-                    <Table.Cell className="truncate max-w-40 whitespace-nowrap overflow-hidden">
-                      {item.taglist}
+                    
+                    {/* Updated Taglist Cell with Multi-line Support */}
+                    <Table.Cell className="max-w-48 w-48">
+                      <div className="line-clamp-2 text-sm break-words">
+                        {item.taglist}
+                      </div>
                     </Table.Cell>
+                    
                     <Table.Cell className="flex justify-center items-center">
-                      <button
+                    <button
                         className="text-white text-xs bg-[#5D5FEF] shadow-sm w-[69px] h-[32px] justify-center items-center border rounded"
-                        onClick={() => openModal(item)}
-                      >
+                        onClick={() => openModal ? openModal(item) : null}
+                        >
                         Original
-                      </button>
+                        </button>
                     </Table.Cell>
                     <Table.Cell>{item.relvance}%</Table.Cell>
                     <Table.Cell>{item.sentiment}</Table.Cell>
@@ -578,11 +583,6 @@ const SharedPostList: FC<SharedPostListProps> = ({
             )}
           </Table.Body>
         </Table>
-        <PostCardComponent
-          isOpen={isModalOpen}
-          onClose={closeModal}
-          rowData={rowData}
-        />
       </div>
       
       {/* Pagination */}
@@ -658,6 +658,15 @@ const SharedPostList: FC<SharedPostListProps> = ({
             </span>
           </div>
         </div>
+      )}
+      {/* Render the PreviewModal when a row is clicked */}
+      {isPreviewOpen && previewRowData && (
+        <PreviewModal
+          isOpen={isPreviewOpen}
+          onClose={closePreviewModal}
+          rowData={previewRowData}
+          headerTitle={previewRowData.englishTitle || "English Post Preview"}
+        />
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useEffect, useState, useCallback,useMemo } from "react";
+import { FC, useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from '@/context/AuthContext';
 import SharedPostList from "../SharedPostList";
 import PostCard from './PostCard';
@@ -42,6 +42,16 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     currentPage: 1,
     pageSize: 10
   });
+  
+  // State for the modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalRowData, setModalRowData] = useState<any>({});
+  
+  // NEW: State to store adjacent pages' posts
+  const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
+  const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
+  const [adjacentPagesLoading, setAdjacentPagesLoading] = useState(false);
+  
   // Calculate yesterday's date for date limits
   const yesterday = useMemo(() => {
     const date = new Date();
@@ -49,15 +59,16 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
   }, []);
 
-  // Calculate default 7 days ago date
-  const sevenDaysAgo = useMemo(() => {
+  // Calculate default 30 days ago date
+  const thirtyDaysAgo = useMemo(() => {
     const date = new Date();
-    date.setDate(date.getDate() - 7);
+    date.setDate(date.getDate() - 30);
     return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
   }, []);
-  // Initialize with empty filters - the API will apply defaults (last 7 days)
+  
+  // Initialize with empty filters - the API will apply defaults (last 30 days)
   const [filters, setFilters] = useState({
-    startDate: sevenDaysAgo,
+    startDate: thirtyDaysAgo,
     endDate: yesterday,
     platform: '',
     sentiment: '',
@@ -81,17 +92,13 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     }
   }, [clientDetails, businessId]);
 
-  // Fetch posts with current filters
-  const fetchPosts = useCallback(async () => {
+  // Helper function to fetch posts for any page
+  const fetchPostsForPage = useCallback(async (pageNumber: number) => {
     if (!businessId) {
-      setError("Business ID is required");
-      setIsLoading(false);
-      return;
+      return { posts: [], pagination: null, appliedFilters: null };
     }
 
     try {
-      setIsLoading(true);
-      setError(null);
       // Ensure endDate is not after yesterday
       const endDate = new Date(filters.endDate) > new Date(yesterday) 
         ? yesterday 
@@ -102,14 +109,14 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       queryParams.append('businessId', businessId);
       
       if (filters.startDate) queryParams.append('startDate', filters.startDate);
-        queryParams.append('endDate', endDate);
+      queryParams.append('endDate', endDate);
       if (filters.platform) queryParams.append('platform', filters.platform);
       if (filters.sentiment) queryParams.append('sentiment', filters.sentiment);
       if (filters.relevance) queryParams.append('relevance', filters.relevance);
       if (filters.hasCriticism) queryParams.append('hasCriticism', filters.hasCriticism);
       if (filters.search) queryParams.append('search', filters.search);
       if (filters.sortOrder) queryParams.append('sortOrder', filters.sortOrder);
-      queryParams.append('page', filters.page.toString());
+      queryParams.append('page', pageNumber.toString());
 
       // Make the API call
       const response = await fetch(
@@ -128,9 +135,39 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       }
 
       const data = await response.json();
-      setPosts(data.posts);
-      setPagination(data.pagination);
-      setAppliedFilters(data.appliedFilters);
+      return { 
+        posts: data.posts || [], 
+        pagination: data.pagination,
+        appliedFilters: data.appliedFilters
+      };
+    } catch (error: any) {
+      console.error(`Error fetching posts for page ${pageNumber}:`, error);
+      return { posts: [], pagination: null, appliedFilters: null };
+    }
+  }, [businessId, filters, yesterday]);
+
+  // Main fetch function for current page
+  const fetchPosts = useCallback(async () => {
+    if (!businessId) {
+      setError("Business ID is required");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const { posts, pagination, appliedFilters } = await fetchPostsForPage(filters.page);
+      
+      if (posts.length > 0) {
+        setPosts(posts);
+        if (pagination) setPagination(pagination);
+        if (appliedFilters) setAppliedFilters(appliedFilters);
+      } else {
+        setPosts([]);
+        setError('No posts found');
+      }
     } catch (error: any) {
       console.error('Error fetching posts:', error);
       setError(error.message || 'An error occurred while fetching posts');
@@ -138,20 +175,116 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [businessId, filters]);
+  }, [businessId, filters.page, fetchPostsForPage]);
+
+  // NEW: Function to fetch adjacent pages
+  const fetchAdjacentPages = useCallback(async () => {
+    if (pagination.totalPages <= 1) return;
+    
+    setAdjacentPagesLoading(true);
+    
+    const prevPage = pagination.currentPage > 1 
+      ? pagination.currentPage - 1 
+      : pagination.totalPages;
+      
+    const nextPage = pagination.currentPage < pagination.totalPages 
+      ? pagination.currentPage + 1 
+      : 1;
+    
+    const [prevResult, nextResult] = await Promise.all([
+      fetchPostsForPage(prevPage),
+      fetchPostsForPage(nextPage)
+    ]);
+    
+    setPrevPagePosts(prevResult.posts);
+    setNextPagePosts(nextResult.posts);
+    setAdjacentPagesLoading(false);
+  }, [pagination, fetchPostsForPage]);
 
   // Fetch posts when filters or businessId changes
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
+  
+  // NEW: Fetch adjacent pages when modal is opened or current page changes
+  useEffect(() => {
+    if (isModalOpen && pagination.totalPages > 1) {
+      fetchAdjacentPages();
+    }
+  }, [isModalOpen, pagination.currentPage, fetchAdjacentPages]);
+  
+  // Handle opening the modal
+  const openModal = (row: any) => {
+    // Add contextual IDs to row data for the modal
+    setModalRowData({
+      ...row,
+      clientId,
+      businessId
+    });
+    setIsModalOpen(true);
+  };
+  
+  // Handle closing the modal
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+  
+  // Add event listener to update the modal content without closing it
+  useEffect(() => {
+    const handleUpdateModal = (event: CustomEvent<{data: any}>) => {
+      if (event.detail && event.detail.data) {
+        setModalRowData(event.detail.data);
+      }
+    };
+    
+    document.addEventListener('updatePostModal', handleUpdateModal as EventListener);
+    
+    return () => {
+      document.removeEventListener('updatePostModal', handleUpdateModal as EventListener);
+    };
+  }, []);
+
+  // NEW: Function to handle cross-page navigation
+  const handleCrossPageNavigation = useCallback((direction: 'prev' | 'next') => {
+    // Calculate the new page number
+    const newPage = direction === 'prev' 
+      ? (pagination.currentPage > 1 ? pagination.currentPage - 1 : pagination.totalPages)
+      : (pagination.currentPage < pagination.totalPages ? pagination.currentPage + 1 : 1);
+    
+    // Get posts from the appropriate page
+    const newPagePosts = direction === 'prev' ? prevPagePosts : nextPagePosts;
+    
+    // Get the post from the beginning or end of the adjacent page
+    const newRowData = direction === 'prev' 
+      ? newPagePosts[newPagePosts.length - 1] 
+      : newPagePosts[0];
+    
+    if (newRowData) {
+      // Update modal data
+      const updatedData = {
+        ...newRowData,
+        clientId,
+        businessId
+      };
+      
+      // Dispatch event to update modal
+      const event = new CustomEvent('updatePostModal', { 
+        detail: { data: updatedData } 
+      });
+      document.dispatchEvent(event);
+      
+      // Change the page (this will also fetch new set of posts)
+      handleFilterChange({ page: newPage });
+    }
+  }, [pagination, prevPagePosts, nextPagePosts, clientId, businessId]);
 
   // Handle filter changes from the SharedPostList component
   const handleFilterChange = (newFilters: any) => {
-
     // Ensure we never send a date after yesterday
     if (newFilters.endDate && new Date(newFilters.endDate) > new Date(yesterday)) {
-        newFilters.endDate = yesterday;
-      }
+      newFilters.endDate = yesterday;
+    }
+    
     setFilters(prev => ({
       ...prev,
       ...newFilters,
@@ -166,23 +299,38 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   };
 
   return (
-    <SharedPostList
-      title={`Posts for ${businessName || "Business"}`}
-      clientId={clientId}
-      businessId={businessId}
-      postCardComponent={PostCard}
-      onFilterChange={handleFilterChange}
-      initialData={posts}
-      isLoading={isLoading}
-      error={error}
-      appliedFilters={appliedFilters}
-      pagination={{
-        currentPage: pagination.currentPage,
-        totalPages: pagination.totalPages,
-        onPageChange: handlePageChange
-      }}
-      onRefresh={fetchPosts}
-    />
+    <>
+      <SharedPostList
+        title={`Posts for ${businessName || "Business"}`}
+        clientId={clientId}
+        businessId={businessId}
+        postCardComponent={PostCard}
+        onFilterChange={handleFilterChange}
+        initialData={posts}
+        isLoading={isLoading}
+        error={error}
+        appliedFilters={appliedFilters}
+        pagination={{
+          currentPage: pagination.currentPage,
+          totalPages: pagination.totalPages,
+          onPageChange: handlePageChange
+        }}
+        onRefresh={fetchPosts}
+        openModal={openModal} // Pass the openModal function
+      />
+      
+      {/* Render PostCard independently */}
+      <PostCard 
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        rowData={modalRowData}
+        listData={posts} // Pass the list data for navigation
+        onCrossPageNext={() => handleCrossPageNavigation('next')}
+        onCrossPagePrev={() => handleCrossPageNavigation('prev')}
+        isLoadingAdjacentPages={adjacentPagesLoading}
+        pagination={pagination}
+      />
+    </>
   );
 };
 
