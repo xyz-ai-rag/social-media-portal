@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ClientModel } from '@/feature/sqlORM/modelorm';
 import { BusinessModel } from '@/feature/sqlORM/modelorm';
+import { ClientUsersModel } from '@/feature/sqlORM/modelorm';
 import { Op } from 'sequelize';
 
 interface Business {
@@ -13,7 +14,7 @@ interface Business {
 }
 
 export async function GET(request: NextRequest) {
-  // extract email from query parameter, e.g. /api/client-details?email=user@example.com
+  // Extract email from query parameter, e.g. /api/client-details?email=user@example.com
   const { searchParams } = new URL(request.url);
   const email = searchParams.get('email');
   if (!email) {
@@ -21,13 +22,24 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Query the clients table for a record whose `registered_email` matches the provided email.
-    const clientRecord = await ClientModel.findOne({
+    // First, query the client_users table to find the user with the given email
+    const userRecord = await ClientUsersModel.findOne({
       where: { registered_email: email },
+      attributes: ['client_id'],
+    });
+
+    if (!userRecord) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Extract client_id from the user record
+    const clientId = userRecord.client_id;
+
+    // Now query the clients table using the client_id
+    const clientRecord = await ClientModel.findOne({
+      where: { id: clientId },
       attributes: ['id', 'client_name', 'registered_email', 'business_mapping'],
     });
-    
-    // console.log("checking client record", clientRecord);
     
     if (!clientRecord) {
       return NextResponse.json({ error: 'Client not found' }, { status: 404 });

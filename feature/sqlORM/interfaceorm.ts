@@ -73,3 +73,9 @@ export interface ClientInstance extends Model {
   report_days?: number[]; // Optional (array of integers)
   registered_email:string;
 }
+
+export interface ClientUsersInstance extends Model {
+  id: string; // UUID
+  client_id:string;
+  registered_email:string;
+}
