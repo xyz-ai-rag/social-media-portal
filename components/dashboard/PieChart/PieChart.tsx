@@ -1,18 +1,30 @@
-'use client';
+"use client";
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import * as echarts from 'echarts/core';
-import { GraphChart, PieChart } from 'echarts/charts';
-import { TitleComponent, TooltipComponent, LegendComponent,GraphicComponent  } from 'echarts/components';
-import { CanvasRenderer } from 'echarts/renderers';
-import { format } from 'date-fns';
+import React, { useEffect, useRef, useState, useMemo } from "react";
+import * as echarts from "echarts/core";
+import { GraphChart, PieChart } from "echarts/charts";
+import {
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GraphicComponent,
+} from "echarts/components";
+import { CanvasRenderer } from "echarts/renderers";
+import { format } from "date-fns";
 
 // Import helper functions from timeUtils.
-import { setStartOfDay, setEndOfDay } from '@/utils/timeUtils';
+import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
 // Import date range context.
-import { useDateRange } from '@/context/DateRangeContext';
+import { useDateRange } from "@/context/DateRangeContext";
 
-echarts.use([TitleComponent, TooltipComponent, LegendComponent, PieChart, CanvasRenderer,GraphicComponent]);
+echarts.use([
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  PieChart,
+  CanvasRenderer,
+  GraphicComponent,
+]);
 
 interface PieDataItem {
   name: string;
@@ -25,7 +37,10 @@ interface PieChartProps {
   businessId: string;
 }
 
-export default function PieChartComponent({ clientId, businessId }: PieChartProps) {
+export default function PieChartComponent({
+  clientId,
+  businessId,
+}: PieChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartData, setChartData] = useState<PieDataItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,14 +49,24 @@ export default function PieChartComponent({ clientId, businessId }: PieChartProp
   const { dateRange } = useDateRange();
 
   // Process dates using helper functions from timeUtils.
-  const startDateProcessed = useMemo(() => setStartOfDay(dateRange.startDate), [dateRange.startDate]);
-  const endDateProcessed = useMemo(() => setEndOfDay(dateRange.endDate), [dateRange.endDate]);
+  const startDateProcessed = useMemo(
+    () => setStartOfDay(dateRange.startDate),
+    [dateRange.startDate]
+  );
+  const endDateProcessed = useMemo(
+    () => setEndOfDay(dateRange.endDate),
+    [dateRange.endDate]
+  );
 
   // Fetch Pie data from the API route.
   useEffect(() => {
     async function fetchPieData() {
       try {
-        const url = `/api/charts/piechart?business_id=${encodeURIComponent(businessId)}&start_date=${encodeURIComponent(startDateProcessed)}&end_date=${encodeURIComponent(endDateProcessed)}`;
+        const url = `/api/charts/piechart?business_id=${encodeURIComponent(
+          businessId
+        )}&start_date=${encodeURIComponent(
+          startDateProcessed
+        )}&end_date=${encodeURIComponent(endDateProcessed)}`;
         const res = await fetch(url);
         const data = await res.json();
         console.log("Returned pie chart data:", data);
@@ -57,7 +82,7 @@ export default function PieChartComponent({ clientId, businessId }: PieChartProp
                 ? "#8593ED"
                 : item.name.toLowerCase() === "douyin"
                 ? "#C7CEFF"
-                : "#5470c6")
+                : "#5470c6"),
           }));
           setChartData(mappedData);
         } else {
@@ -79,69 +104,82 @@ export default function PieChartComponent({ clientId, businessId }: PieChartProp
     const chart = echarts.init(chartRef.current);
 
     // Map chartData to series format.
-    const seriesData = chartData.map(item => ({
+    const seriesData = chartData.map((item) => ({
       name: item.name,
       value: item.value,
-      itemStyle: { color: item.color }
+      itemStyle: { color: item.color },
     }));
 
     // Calculate the total posts for the center text.
     const totalPosts = chartData.reduce((sum, item) => sum + item.value, 0);
-    
+
     const option = {
       tooltip: {
-        trigger: 'item',
-        formatter: '{a} <br/>{b}: {c} ({d}%)'
+        trigger: "item",
+        formatter:
+          "<div style='width:140px; height:89px'><span style='font-size:12px; color:white'>{b}</span> <br/><span style='font-size:12px; color:white; opacity:50%'>This week</span> <br/><br/> <span style='color:white; font-size:16px'>{c} posts</span></div>",
+        backgroundColor: "#37375C",
+        borderColor: "#ccc",
+        borderWidth: 1,
       },
       legend: {
-        bottom: 0,
-        left: 'center'
+        bottom: "0%",
+        left: "center",
+        itemGap: 20,
+        icon: "circle",
+        textStyle: {
+          fontSize: 14,
+          color: "#333",
+        },
       },
       series: [
         {
-          name: 'Platforms',
-          type: 'pie',
-          radius: ['40%', '70%'], // donut style
+          name: "Platforms",
+          type: "pie",
+          radius: ["40%", "70%"], // donut style
           avoidLabelOverlap: false,
           label: { show: false },
           labelLine: { show: false },
-          data: seriesData
-        }
+          data: seriesData,
+        },
       ],
       // Add a graphic element in the center for total posts.
       graphic: {
-        type: 'text',
-        left: 'center',
-        top: 'center',
+        type: "text",
+        left: "center",
+        top: "center",
         style: {
-          text: totalPosts > 0 ? `${totalPosts}\nPosts` : 'No Data',
-          textAlign: 'center',
-          color: '#333',
+          text: totalPosts > 0 ? `${totalPosts}\nPosts` : "No Data",
+          textAlign: "center",
+          color: "#333",
           fontSize: 16,
-          fontWeight: 'bold'
-        }
-      }
+          fontWeight: "bold",
+        },
+      },
     };
 
     chart.setOption(option);
-    
+
     const handleResize = () => chart.resize();
-    window.addEventListener('resize', handleResize);
-    
+    window.addEventListener("resize", handleResize);
+
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       chart.dispose();
     };
   }, [isLoading, chartData]);
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-base font-medium text-gray-800 mb-2">Platform Distribution</h2>
+    <div className="bg-white p-6 rounded-lg shadow-md h-full">
+      <h2 className="text-base font-medium text-gray-800 mb-2">
+        Platform Distribution
+      </h2>
       <div className="text-sm text-gray-600 mb-4">
-        Posts from {format(new Date(dateRange.startDate), 'MMM d')} to {format(new Date(dateRange.endDate), 'MMM d')}
+        Posts from {format(new Date(dateRange.startDate), "MMM d")} to{" "}
+        {format(new Date(dateRange.endDate), "MMM d")}
       </div>
-      <div className="h-64">
-        <div ref={chartRef} style={{ width: '100%', height: '100%' }} />
+      <div className="h-80">
+        <div ref={chartRef} style={{ width: "100%", height: "100%" }} />
       </div>
     </div>
   );

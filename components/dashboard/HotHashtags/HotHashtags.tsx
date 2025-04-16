@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { useDateRange } from '@/context/DateRangeContext';
-import { setStartOfDay, setEndOfDay } from '@/utils/timeUtils';
-import { format } from 'date-fns';
+import React, { useEffect, useState } from "react";
+import { useDateRange } from "@/context/DateRangeContext";
+import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
+import { format } from "date-fns";
 
-import { 
-  FaPlane, 
-  FaHotel, 
-  FaUtensils, 
-  FaMagic, 
-  FaMusic, 
-  FaShoppingBag, 
-  FaStar, 
-  FaEllipsisH 
-} from 'react-icons/fa';
+import {
+  FaPlane,
+  FaHotel,
+  FaUtensils,
+  FaMagic,
+  FaMusic,
+  FaShoppingBag,
+  FaStar,
+  FaEllipsisH,
+} from "react-icons/fa";
 
 interface HashtagItem {
   tag: string;
@@ -26,7 +26,10 @@ interface HashtagChartProps {
   businessId: string;
 }
 
-export default function HashtagChart({ clientId, businessId }: HashtagChartProps) {
+export default function HashtagChart({
+  clientId,
+  businessId,
+}: HashtagChartProps) {
   const [hashtags, setHashtags] = useState<HashtagItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -39,15 +42,15 @@ export default function HashtagChart({ clientId, businessId }: HashtagChartProps
 
   // Mapping from tag (string) to a JSX icon element.
   const tagIconMapping: Record<string, React.ReactNode> = {
-    "Travel": <FaPlane className="text-gray-600" />,
-    "Hotels": <FaHotel className="text-gray-600" />,
-    "Foods": <FaUtensils className="text-gray-600" />,
+    Travel: <FaPlane className="text-gray-600" />,
+    Hotels: <FaHotel className="text-gray-600" />,
+    Foods: <FaUtensils className="text-gray-600" />,
     "Fashion and Beauty": <FaMagic className="text-gray-600" />,
-    "Festivals": <FaMusic className="text-gray-600" />,
-    "Shopping": <FaShoppingBag className="text-gray-600" />,
+    Festivals: <FaMusic className="text-gray-600" />,
+    Shopping: <FaShoppingBag className="text-gray-600" />,
     "Special Event": <FaStar className="text-gray-600" />,
     // Fallback if the tag doesn't match any key.
-    "Others": <FaEllipsisH className="text-gray-600" />
+    Others: <FaEllipsisH className="text-gray-600" />,
   };
 
   useEffect(() => {
@@ -77,10 +80,13 @@ export default function HashtagChart({ clientId, businessId }: HashtagChartProps
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-base font-medium text-gray-800 mb-2">Top Hashtag Topics</h2>
+    <div className="bg-white p-6 rounded-lg shadow-md h-full overflow-auto">
+      <h2 className="text-base font-medium text-gray-800 mb-2">
+        Top Hashtag Topics
+      </h2>
       <div className="text-sm text-gray-600 mb-4">
-        Posts from {format(new Date(dateRange.startDate), 'MMM d')} to {format(new Date(dateRange.endDate), 'MMM d')}
+        Posts from {format(new Date(dateRange.startDate), "MMM d")} to{" "}
+        {format(new Date(dateRange.endDate), "MMM d")}
       </div>
       {hashtags.length === 0 ? (
         <div>No hashtags found.</div>
@@ -95,11 +101,13 @@ export default function HashtagChart({ clientId, businessId }: HashtagChartProps
               <div className="flex-1">
                 <div className="flex justify-between mb-1">
                   <span className="text-sm font-medium">{hashtag.tag}</span>
-                  <span className="text-sm font-medium">{hashtag.percentage}%</span>
+                  <span className="text-sm font-medium">
+                    {hashtag.percentage}%
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-500 h-2 rounded-full" 
+                  <div
+                    className="bg-blue-500 h-2 rounded-full"
                     style={{ width: `${hashtag.percentage}%` }}
                   ></div>
                 </div>
