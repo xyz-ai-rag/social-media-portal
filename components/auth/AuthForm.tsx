@@ -91,7 +91,7 @@ export default function LoginPage() {
         <ModalBody className="pt-6">
           <div className="w-full flex justify-center mb-6">
             <Image
-              src="/logo.png"
+              src="/hyprdata_icon_color.svg"
               alt="Hyprdata.ai Logo"
               width={160}
               height={48}
@@ -101,7 +101,7 @@ export default function LoginPage() {
 
           <div className="space-y-6 px-6 pb-4 sm:pb-6 lg:px-8 xl:pb-8">
             <h3 className="text-2xl font-bold text-center text-gray-800">
-              Sign in to Social Media Portal
+              Client Portal
             </h3>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
@@ -176,7 +176,7 @@ export default function LoginPage() {
                   href="/auth/forgot-password"
                   className="text-blue-600 hover:underline"
                 >
-                  I seem to have forgotten my password
+                  Forgot password
                 </Link>
               </div>
             </form>
