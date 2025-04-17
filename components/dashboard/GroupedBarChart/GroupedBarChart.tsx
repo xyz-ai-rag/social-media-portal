@@ -47,11 +47,11 @@ export default function GroupedBarChart({
 
   // Format the raw date strings for display.
   const formattedStart = useMemo(
-    () => format(new Date(dateRange.startDate), "d MMM yyyy"),
+    () => format(new Date(dateRange.startDate), "d MMM"),
     [dateRange.startDate]
   );
   const formattedEnd = useMemo(
-    () => format(new Date(dateRange.endDate), "d MMM yyyy"),
+    () => format(new Date(dateRange.endDate), "d MMM"),
     [dateRange.endDate]
   );
   const startDateProcessed = useMemo(

@@ -6,16 +6,8 @@ import GroupedBarChart from "@/components/dashboard/GroupedBarChart/GroupedBarCh
 import PieChartComponent from "./PieChart/PieChart";
 import HashtagChart from "./HotHashtags/HotHashtags";
 import LineGraph from "./SimilarBusinesses/LineGraph";
+import TopCitiesMap from "./TopCities/TopCities";
 import { useAuth } from "@/context/AuthContext";
-
-const TopicsChart = () => (
-  <div className="bg-white p-6 rounded-lg shadow-md h-full">
-    <h2 className="text-sm font-medium text-gray-500 mb-2">Topics</h2>
-    <div className="flex items-center justify-center h-64 bg-gray-50 rounded">
-      <p className="text-gray-400">Topics Chart</p>
-    </div>
-  </div>
-);
 
 interface DashboardProps {
   clientId: string;
@@ -65,7 +57,7 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
 
           {/* Topics Chart */}
           <div>
-            <TopicsChart />
+            <TopCitiesMap clientId={clientId} businessId={businessId} />
           </div>
 
           {/* Top Hashtags */}

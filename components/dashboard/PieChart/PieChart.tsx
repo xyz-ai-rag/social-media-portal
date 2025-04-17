@@ -30,6 +30,7 @@ interface PieDataItem {
   name: string;
   value: number;
   color?: string;
+  percentage?: number; // Add percentage field
 }
 
 interface PieChartProps {
@@ -69,7 +70,13 @@ export default function PieChartComponent({
         )}&end_date=${encodeURIComponent(endDateProcessed)}`;
         const res = await fetch(url);
         const data = await res.json();
-        console.log("Returned pie chart data:", data);
+
+        // Calculate total for percentages
+        let total = 0;
+        if (Array.isArray(data)) {
+          total = data.reduce((sum, item) => sum + item.value, 0);
+        }
+
         // If the API already returns an array, then map each item to add a color (if missing).
         if (Array.isArray(data)) {
           const mappedData: PieDataItem[] = data.map((item: any) => ({
@@ -83,6 +90,7 @@ export default function PieChartComponent({
                 : item.name.toLowerCase() === "douyin"
                 ? "#C7CEFF"
                 : "#5470c6"),
+            percentage: total > 0 ? Math.round((item.value / total) * 100) : 0,
           }));
           setChartData(mappedData);
         } else {
@@ -108,6 +116,7 @@ export default function PieChartComponent({
       name: item.name,
       value: item.value,
       itemStyle: { color: item.color },
+      percentage: item.percentage,
     }));
 
     // Calculate the total posts for the center text.
@@ -127,9 +136,28 @@ export default function PieChartComponent({
         left: "center",
         itemGap: 20,
         icon: "circle",
+        formatter: function (name: string) {
+          // Find the corresponding data item
+          const item = chartData.find((item) => item.name === name);
+          // Return name and percentage on separate lines
+          return `{a|${name}}\n{b|${item?.percentage}%}`;
+        },
         textStyle: {
-          fontSize: 14,
-          color: "#333",
+          rich: {
+            a: {
+              fontSize: 14,
+              lineHeight: 20,
+              color: "#333",
+              fontWeight: "normal",
+              align: "center",
+            },
+            b: {
+              fontSize: 12,
+              lineHeight: 16,
+              color: "#666",
+              align: "center",
+            },
+          },
         },
       },
       series: [

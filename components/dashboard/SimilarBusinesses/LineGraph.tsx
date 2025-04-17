@@ -23,6 +23,7 @@ echarts.use([
   GridComponent,
   LineChart,
   CanvasRenderer,
+  CanvasRenderer,
 ]);
 
 // Define type for a daily count.
@@ -68,7 +69,14 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
     () => setEndOfDay(dateRange.endDate),
     [dateRange.endDate]
   );
-
+  const formattedStart = useMemo(
+    () => format(new Date(dateRange.startDate), "d MMM"),
+    [dateRange.startDate]
+  );
+  const formattedEnd = useMemo(
+    () => format(new Date(dateRange.endDate), "d MMM"),
+    [dateRange.endDate]
+  );
   // Derive the similar business ids from clientDetails:
   const { similar_businesses } = useMemo(() => {
     if (!clientDetails || !clientDetails.businesses)
@@ -90,7 +98,7 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
         const url = `/api/charts/line-graph?business_id=${businessId}&similar_business_ids=${similarBizParam}&start_date=${startDateProcessed}&end_date=${endDateProcessed}`;
         const res = await fetch(url);
         const data: LineGraphData = await res.json();
-        console.log("LineGraph data from server:", data);
+
         setGraphData(data);
       } catch (err) {
         console.error("Error fetching line graph data:", err);
@@ -188,8 +196,7 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
         </h2>
       </div>
       <div className="text-sm text-gray-600 mb-4">
-        Comparison period: {format(new Date(startDateProcessed), "MMM d, yyyy")}{" "}
-        to {format(new Date(endDateProcessed), "MMM d, yyyy")}
+        Posts from {formattedStart} to {formattedEnd}
       </div>
       <div className="h-64">
         <div ref={chartRef} style={{ width: "100%", height: "100%" }} />

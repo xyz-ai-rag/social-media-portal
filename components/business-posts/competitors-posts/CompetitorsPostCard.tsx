@@ -6,6 +6,13 @@ import { PostData } from "../SharedPostList";
 import { constructVercelURL } from "@/utils/generateURL";
 import SharedPostModal from "../SharedPostModal";
 
+interface PaginationInfo {
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+}
+
 interface CompetitorPostCardProps {
   isOpen: boolean;
   onClose: () => void;
@@ -14,6 +21,12 @@ interface CompetitorPostCardProps {
     businessId?: string;
     competitorId?: string;
   };
+  // NEW: Navigation properties
+  listData?: PostData[];
+  onCrossPageNext?: () => void;
+  onCrossPagePrev?: () => void;
+  isLoadingAdjacentPages?: boolean;
+  pagination?: PaginationInfo;
 }
 
 interface BusinessInfo {
@@ -23,12 +36,22 @@ interface BusinessInfo {
   business_type?: string;
 }
 
-const CompetitorPostCard = ({ isOpen, onClose, rowData }: CompetitorPostCardProps) => {
+const CompetitorPostCard = ({ 
+  isOpen, 
+  onClose, 
+  rowData,
+  listData = [],
+  onCrossPageNext,
+  onCrossPagePrev,
+  isLoadingAdjacentPages = false,
+  pagination
+}: CompetitorPostCardProps) => {
   // Get auth context
   const { clientDetails } = useAuth();
   const [businessName, setBusinessName] = useState<string | null>(null);
   const [competitorInfo, setCompetitorInfo] = useState<BusinessInfo | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [currentIndex, setCurrentIndex] = useState<number>(-1);
 
   // Fetch the competitor's business information
   useEffect(() => {
@@ -89,6 +112,16 @@ const CompetitorPostCard = ({ isOpen, onClose, rowData }: CompetitorPostCardProp
     fetchCompetitorInfo();
   }, [rowData?.competitorId, rowData?.businessId, clientDetails]);
 
+  // Find current index in the list data when rowData changes
+  useEffect(() => {
+    if (rowData && rowData.id && listData && listData.length > 0) {
+      const index = listData.findIndex(item => item.id === rowData.id);
+      setCurrentIndex(index);
+    } else {
+      setCurrentIndex(-1);
+    }
+  }, [rowData, listData]);
+
   // Create header title without loading state
   const headerTitle = useMemo(() => {
     // Use competitorInfo if available
@@ -101,46 +134,105 @@ const CompetitorPostCard = ({ isOpen, onClose, rowData }: CompetitorPostCardProp
   }, [competitorInfo, rowData?.platform]);
 
   // Optional competitor info section
-  // Uncomment this section if you want to show competitor info
-  // const competitorInfoContent = (
-  //   <div className="bg-blue-50 p-4 rounded-md mb-6">
-  //     {isLoading ? (
-  //       <div className="flex items-center">
-  //         <div className="w-4 h-4 border-2 border-gray-200 border-t-[#5D5FEF] rounded-full animate-spin mr-2"></div>
-  //         <p className="text-sm text-gray-500">Fetching competitor details...</p>
-  //       </div>
-  //     ) : (
-  //       <>
-  //         {competitorInfo && (
-  //           <div className="mb-2">
-  //             <p className="text-sm text-gray-500">Competitor</p>
-  //             <p className="font-medium text-red-700">{competitorInfo.business_name}</p>
-  //             {competitorInfo.business_city && (
-  //               <p className="text-sm text-gray-600">{competitorInfo.business_city}</p>
-  //             )}
-  //             {competitorInfo.business_type && (
-  //               <p className="text-xs text-gray-500">{competitorInfo.business_type}</p>
-  //             )}
-  //             <p className="text-xs text-gray-400 mt-1">ID: {competitorInfo.business_id}</p>
-  //           </div>
-  //         )}
+  // This could be re-enabled if desired
+  const competitorInfoContent = isLoadingAdjacentPages ? (
+    <div className="flex items-center">
+      <div className="w-4 h-4 border-2 border-gray-200 border-t-[#5D5FEF] rounded-full animate-spin mr-2"></div>
+      <p className="text-sm text-gray-500">Loading...</p>
+    </div>
+  ) : null;
+
+  // NEW: Navigation to previous post (with cross-page support)
+  const handlePrevious = () => {
+    if (listData && listData.length > 0) {
+      // If we're at the first item and there's a cross-page handler
+      if (currentIndex === 0 && onCrossPagePrev && pagination && pagination.currentPage > 1) {
+        onCrossPagePrev();
+        return;
+      // If we're at the first item and need to loop to the last page
+      } else if (currentIndex === 0 && onCrossPagePrev && pagination && pagination.currentPage === 1 && pagination.totalPages > 1) {
+        onCrossPagePrev();
+        return;
+      }
+      
+      // Regular navigation within the current page
+      let newIndex = currentIndex - 1;
+      
+      // If at the beginning and no cross-page navigation, loop to the end of current page
+      if (newIndex < 0) {
+        newIndex = listData.length - 1;
+      }
+      
+      const previousItem = listData[newIndex];
+      if (previousItem) {
+        // Add clientId, businessId and competitorId if they were in rowData
+        const updatedItem = {
+          ...previousItem,
+          clientId: rowData.clientId,
+          businessId: rowData.businessId,
+          competitorId: rowData.competitorId
+        };
         
-  //         {businessName && (
-  //           <div>
-  //             <p className="text-sm text-gray-500">Compared to Your Business</p>
-  //             <p className="font-medium text-blue-700">{businessName}</p>
-  //             {rowData.businessId && (
-  //               <p className="text-xs text-gray-400">ID: {rowData.businessId}</p>
-  //             )}
-  //           </div>
-  //         )}
-  //       </>
-  //     )}
-  //   </div>
-  // );
+        // Update the current index directly
+        setCurrentIndex(newIndex);
+        
+        // Dispatch event to update modal
+        const event = new CustomEvent('updatePostModal', { 
+          detail: { data: updatedItem } 
+        });
+        document.dispatchEvent(event);
+      }
+    }
+  };
+
+  // NEW: Navigation to next post (with cross-page support)
+  const handleNext = () => {
+    if (listData && listData.length > 0) {
+      // If we're at the last item and there's a cross-page handler
+      if (currentIndex === listData.length - 1 && onCrossPageNext && pagination && pagination.currentPage < pagination.totalPages) {
+        onCrossPageNext();
+        return;
+      // If we're at the last item and need to loop to the first page
+      } else if (currentIndex === listData.length - 1 && onCrossPageNext && pagination && pagination.currentPage === pagination.totalPages && pagination.totalPages > 1) {
+        onCrossPageNext();
+        return;
+      }
+      
+      // Regular navigation within the current page
+      let newIndex = currentIndex + 1;
+      
+      // If at the end and no cross-page navigation, loop to the beginning of current page
+      if (newIndex >= listData.length) {
+        newIndex = 0;
+      }
+      
+      const nextItem = listData[newIndex];
+      if (nextItem) {
+        // Add clientId, businessId and competitorId if they were in rowData
+        const updatedItem = {
+          ...nextItem,
+          clientId: rowData.clientId,
+          businessId: rowData.businessId,
+          competitorId: rowData.competitorId
+        };
+        
+        // Update the current index directly
+        setCurrentIndex(newIndex);
+        
+        // Dispatch event to update modal
+        const event = new CustomEvent('updatePostModal', { 
+          detail: { data: updatedItem } 
+        });
+        document.dispatchEvent(event);
+      }
+    }
+  };
 
   // Create custom competitive insights section based on business info
   const competitiveInsights = competitorInfo && businessName;
+
+  // Handle case where rowData might be empty or undefined
+  if (!rowData) return null;
 
   return (
     <SharedPostModal
@@ -148,8 +240,13 @@ const CompetitorPostCard = ({ isOpen, onClose, rowData }: CompetitorPostCardProp
       onClose={onClose}
       rowData={rowData}
       headerTitle={headerTitle}
-      // additionalContent={competitorInfoContent} 
-      showCompetitiveInsights={false}
+      additionalContent={competitorInfoContent}
+      showCompetitiveInsights={competitiveInsights !== null}
+      onPrevious={handlePrevious}
+      onNext={handleNext}
+      hasPrevious={true} // Always enable - will handle circular navigation
+      hasNext={true} // Always enable - will handle circular navigation
+      isNavigating={isLoadingAdjacentPages}
     />
   );
 };

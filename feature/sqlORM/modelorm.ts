@@ -1,6 +1,11 @@
 import { DataTypes } from 'sequelize';
 import { sequelizeDbConnection } from './sqlDbConnection';
-import { BusinessPostInstance,BusinessInstance,ClientInstance } from './interfaceorm'; 
+import { 
+  BusinessPostInstance,
+  BusinessInstance,
+  ClientInstance,
+  ClientUsersInstance
+ } from './interfaceorm'; 
 
 // BusinessPosts table
 export const BusinessPostModel = sequelizeDbConnection.define<BusinessPostInstance>(
@@ -138,13 +143,33 @@ export const ClientModel = sequelizeDbConnection.define<ClientInstance>(
       type: DataTypes.ARRAY(DataTypes.INTEGER),
       allowNull: true,
     },
-    registered_email: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
   },
   {
     tableName: 'clients',
+    timestamps: false,
+  }
+);
+
+export const ClientUsersModel = sequelizeDbConnection.define<ClientUsersInstance>(
+  'client_users',
+  {
+    id: {
+      type: DataTypes.UUID,
+      primaryKey: true,
+      allowNull: false,
+    },
+    client_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
+    registered_email: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    
+  },
+  {
+    tableName: 'client_users',
     timestamps: false,
   }
 );
