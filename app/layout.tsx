@@ -11,6 +11,9 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata = {
   title: 'Social Media Portal',
   description: 'Analytics and management for social media',
+  icons: {
+    icon: '/favicon.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
