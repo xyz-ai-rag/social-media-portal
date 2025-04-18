@@ -10,24 +10,24 @@ import {
   Spinner,
   Badge,
   Button,
-  Alert
+  Alert,
 } from "flowbite-react";
-import { useAuth } from '@/context/AuthContext';
-import DatePicker from './DatePicker';
-import PreviewModal from "./PreviewModal"; 
+import { useAuth } from "@/context/AuthContext";
+import DatePicker from "./DatePicker";
+import PreviewModal from "./PreviewModal";
 // Base post data structure shared between components
 export interface PostData {
   id?: string;
   businessId?: string;
-  description?: string;     // Original description
-  englishDesc?: string;     // English description
-  post?: string;            // Combined (for backward compatibility)
-  title?: string;           // Original title
-  englishTitle?: string;    // English title
-  displayTitle?: string;    // Combined (for display purposes)
-  tagList?: string;         // Original taglist
-  englishTagList?: string;  // English taglist
-  taglist?: string;         // Combined (for backward compatibility)
+  description?: string; // Original description
+  englishDesc?: string; // English description
+  post?: string; // Combined (for backward compatibility)
+  title?: string; // Original title
+  englishTitle?: string; // English title
+  displayTitle?: string; // Combined (for display purposes)
+  tagList?: string; // Original taglist
+  englishTagList?: string; // English taglist
+  taglist?: string; // Combined (for backward compatibility)
   date?: string;
   showDate?: string;
   sentiment?: string;
@@ -36,7 +36,7 @@ export interface PostData {
   platform?: string;
   hasCriticism?: boolean;
   url?: string;
-  [key: string]: any;       // For additional properties
+  [key: string]: any; // For additional properties
 }
 
 interface PaginationProps {
@@ -87,37 +87,37 @@ const SharedPostList: FC<SharedPostListProps> = ({
   pagination,
   onFilterChange,
   onRefresh,
-  openModal
+  openModal,
 }) => {
   // Search Value
   const [searchQuery, setSearchQuery] = useState("");
   // Sort Order - default to desc (newest first)
   const [sortOrder, setSortOrder] = useState("desc");
-  
+
   // Date filters for UI
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  
+
   // Other filters for UI
   const [platform, setPlatform] = useState("");
   const [sentiment, setSentiment] = useState("");
   const [relevance, setRelevance] = useState("");
   const [criticism, setCriticism] = useState("");
-  
+
   // Calculate yesterday's date for max date restriction
   const yesterday = useMemo(() => {
     const date = new Date();
     date.setDate(date.getDate() - 1);
-    return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+    return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
   }, []);
-  
+
   // Use external pagination if provided, or local state
   const currentPage = pagination?.currentPage || 1;
   const totalPages = pagination?.totalPages || 1;
-  
+
   // List Data
   const [listData, setListData] = useState<PostData[]>(initialData);
-  
+
   // State for controlling the PreviewModal
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewRowData, setPreviewRowData] = useState<PostData | null>(null);
@@ -125,7 +125,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
   useEffect(() => {
     setListData(initialData);
   }, [initialData]);
-  
+
   // Update UI filter states when appliedFilters changes
   useEffect(() => {
     if (appliedFilters) {
@@ -142,14 +142,14 @@ const SharedPostList: FC<SharedPostListProps> = ({
 
   // Select Platform Data
   const platformData = ["Douyin", "Rednote", "Weibo"];
-  
+
   const handlePlatform = (data: string) => {
     setPlatform(data);
     if (onFilterChange) {
       onFilterChange({ platform: data });
     }
   };
-  
+
   // Handle Start Date Change
   const handleStartDateChange = (date: string) => {
     setStartDate(date);
@@ -164,43 +164,42 @@ const SharedPostList: FC<SharedPostListProps> = ({
     if (date > yesterday) {
       date = yesterday;
     }
-    
+
     setEndDate(date);
     if (onFilterChange) {
       onFilterChange({ endDate: date });
     }
   };
-  
+
   // Select sentiment Data
-  const sentimentData = ["Positive", "Negative","Neutral"];
-  
+  const sentimentData = ["Positive", "Negative", "Neutral"];
+
   const handleSentiment = (data: string) => {
     setSentiment(data);
     if (onFilterChange) {
       onFilterChange({ sentiment: data });
     }
   };
-  
+
   // Select relevance Data
   const relevanceData = ["50%", "60%", "70%", "80%", "90%", "100%"];
-  
+
   const handleRelevance = (data: string) => {
     setRelevance(data);
     if (onFilterChange) {
       onFilterChange({ relevance: data });
     }
   };
-  
+
   // Select criticism Data
   const criticismData = ["Has Criticism", "No Criticism"];
-  
+
   const handleCriticism = (data: string) => {
     setCriticism(data);
     if (onFilterChange) {
       onFilterChange({ hasCriticism: data });
     }
   };
-
 
   const handleSearch = () => {
     if (onFilterChange) {
@@ -221,12 +220,14 @@ const SharedPostList: FC<SharedPostListProps> = ({
       setSortOrder(data);
       return;
     }
-    
+
     // Otherwise, sort locally
     const sortedPosts = [...listData].sort((a, b) =>
       data === "asc"
-        ? new Date(a.date as string).getTime() - new Date(b.date as string).getTime()
-        : new Date(b.date as string).getTime() - new Date(a.date as string).getTime()
+        ? new Date(a.date as string).getTime() -
+          new Date(b.date as string).getTime()
+        : new Date(b.date as string).getTime() -
+          new Date(a.date as string).getTime()
     );
     setListData(sortedPosts);
     setSortOrder(data);
@@ -235,15 +236,30 @@ const SharedPostList: FC<SharedPostListProps> = ({
   // Format date range for display
   const getDateRangeText = () => {
     if (!appliedFilters) return "Recent posts";
-    
+
     const start = new Date(appliedFilters.startDate);
     const end = new Date(appliedFilters.endDate);
-    
+
     const formatDate = (date: Date) => {
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      return `${
+        months[date.getMonth()]
+      } ${date.getDate()}, ${date.getFullYear()}`;
     };
-    
+
     return `${formatDate(start)} to ${formatDate(end)}`;
   };
 
@@ -258,11 +274,11 @@ const SharedPostList: FC<SharedPostListProps> = ({
   const clearFilters = () => {
     if (onFilterChange) {
       onFilterChange({
-        platform: '',
-        sentiment: '',
-        relevance: '',
-        hasCriticism: '',
-        search: ''
+        platform: "",
+        sentiment: "",
+        relevance: "",
+        hasCriticism: "",
+        search: "",
       });
     }
   };
@@ -280,10 +296,8 @@ const SharedPostList: FC<SharedPostListProps> = ({
     <div className="bg-white relative">
       {/* Head */}
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-[34px] font-bold text-[#5D5FEF]">
-          {title}
-        </h1>
-        
+        <h1 className="text-[34px] font-bold text-[#5D5FEF]">{title}</h1>
+
         {/* Refresh button */}
         <Button
           color="light"
@@ -293,11 +307,11 @@ const SharedPostList: FC<SharedPostListProps> = ({
           disabled={isLoading}
           title="Refresh data"
         >
-          <FaSync className={`${isLoading ? 'animate-spin' : ''} mr-2`} />
+          <FaSync className={`${isLoading ? "animate-spin" : ""} mr-2`} />
           Refresh
         </Button>
       </div>
-      
+
       {/* Date Range Display */}
       <div className="mb-4">
         <div className="text-gray-500 text-sm">{getDateRangeText()}</div>
@@ -320,27 +334,25 @@ const SharedPostList: FC<SharedPostListProps> = ({
       <div className="flex flex-wrap gap-4">
         {/* Additional Filters (like Competitor dropdown) */}
         {additionalFilters && (
-          <div className="min-w-40">
-            {additionalFilters}
-          </div>
+          <div className="min-w-40">{additionalFilters}</div>
         )}
 
         <DatePicker
-            id="start-date"
-            label="Start Date"
-            value={startDate}
-            onChange={handleStartDateChange}
-            max={yesterday}
-            disabled={isLoading}
+          id="start-date"
+          label="Start Date"
+          value={startDate}
+          onChange={handleStartDateChange}
+          max={yesterday}
+          disabled={isLoading}
         />
-        
+
         <DatePicker
-            id="end-date"
-            label="End Date"
-            value={endDate}
-            onChange={handleEndDateChange}
-            max={yesterday}
-            disabled={isLoading}
+          id="end-date"
+          label="End Date"
+          value={endDate}
+          onChange={handleEndDateChange}
+          max={yesterday}
+          disabled={isLoading}
         />
         <Select
           id="platform"
@@ -397,22 +409,33 @@ const SharedPostList: FC<SharedPostListProps> = ({
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             className="w-full"
             disabled={isLoading}
           />
-          <button 
+          <button
             onClick={handleSearch}
             className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
             disabled={isLoading}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
           </button>
         </div>
       </div>
-      
+
       {/* Active Filters Display */}
       {appliedFilters && (
         <div className="flex flex-wrap gap-2 mt-4 items-center">
@@ -433,8 +456,9 @@ const SharedPostList: FC<SharedPostListProps> = ({
           )}
           {appliedFilters.hasCriticism && (
             <Badge color="info" className="text-xs">
-              {appliedFilters.hasCriticism === "true" || appliedFilters.hasCriticism === "Has Criticism" 
-                ? "Has Criticism" 
+              {appliedFilters.hasCriticism === "true" ||
+              appliedFilters.hasCriticism === "Has Criticism"
+                ? "Has Criticism"
                 : "No Criticism"}
             </Badge>
           )}
@@ -443,9 +467,12 @@ const SharedPostList: FC<SharedPostListProps> = ({
               Search: "{appliedFilters.search}"
             </Badge>
           )}
-          {(appliedFilters.platform || appliedFilters.sentiment || appliedFilters.relevance || 
-            appliedFilters.hasCriticism || appliedFilters.search) && (
-            <button 
+          {(appliedFilters.platform ||
+            appliedFilters.sentiment ||
+            appliedFilters.relevance ||
+            appliedFilters.hasCriticism ||
+            appliedFilters.search) && (
+            <button
               onClick={clearFilters}
               className="text-xs text-blue-600 hover:underline"
               disabled={isLoading}
@@ -460,9 +487,9 @@ const SharedPostList: FC<SharedPostListProps> = ({
       <div className="mt-6 bg-white rounded shadow">
         <Table hoverable className="w-full table-fixed">
           <Table.Head>
-            <Table.HeadCell className="flex items-center w-24">
-              Date
-              <div className="pl-2 flex flex-col">
+            <Table.HeadCell className="flex items-center h-14">
+              <div>Date</div>
+              <div className="pl-2">
                 <svg
                   width="10"
                   height="8"
@@ -495,18 +522,19 @@ const SharedPostList: FC<SharedPostListProps> = ({
             </Table.HeadCell>
             <Table.HeadCell className="w-24">Platform</Table.HeadCell>
             <Table.HeadCell className="w-24">Nickname</Table.HeadCell>
-            <Table.HeadCell className="w-64">Post</Table.HeadCell>
-            <Table.HeadCell className="w-48">Taglist</Table.HeadCell>
-            <Table.HeadCell className="w-24">View Original</Table.HeadCell>
+            <Table.HeadCell className="w-56">Post</Table.HeadCell>
+            <Table.HeadCell className="w-56">Taglist</Table.HeadCell>
+            <Table.HeadCell className="w-32">View Original</Table.HeadCell>
             <Table.HeadCell className="w-24">Relevance</Table.HeadCell>
             <Table.HeadCell className="w-24">Sentiment</Table.HeadCell>
+            <Table.HeadCell className="w-36"></Table.HeadCell>
+            <Table.HeadCell className="w-24"></Table.HeadCell>
             {/* <Table.HeadCell className="w-24">Criticism</Table.HeadCell>
             <Table.HeadCell className="w-16">URL</Table.HeadCell> */}
           </Table.Head>
           <Table.Body className="divide-y">
             {isLoading ? (
-              <Table.Row
-              >
+              <Table.Row>
                 <Table.Cell colSpan={10} className="text-center py-10">
                   <div className="flex flex-col items-center justify-center">
                     <Spinner size="xl" color="purple" />
@@ -517,43 +545,48 @@ const SharedPostList: FC<SharedPostListProps> = ({
             ) : listData.length === 0 ? (
               <Table.Row>
                 <Table.Cell colSpan={10} className="text-center py-10">
-                  <p className="text-gray-500">No posts found. Try adjusting your filters.</p>
+                  <p className="text-gray-500">
+                    No posts found. Try adjusting your filters.
+                  </p>
                 </Table.Cell>
               </Table.Row>
             ) : (
               listData.map((item, index) => {
                 return (
-                  <Table.Row 
+                  <Table.Row
                     key={item.id || index}
                     onClick={() => openPreviewModal(item)}
-                    className="cursor-pointer">
+                    className="cursor-pointer"
+                  >
                     <Table.Cell className="text-[#DD9A19]">
                       {item.showDate}
                     </Table.Cell>
                     <Table.Cell>{item.platform}</Table.Cell>
-                    <Table.Cell>{item.nickname}</Table.Cell>
-                    
+                    <Table.Cell className="line-clamp-2 text-sm break-words">
+                      {item.nickname}
+                    </Table.Cell>
+
                     {/* Updated Post Cell with Multi-line Support */}
-                    <Table.Cell className="max-w-64 w-64">
+                    <Table.Cell>
                       <div className="line-clamp-3 text-sm break-words">
                         {item.post}
                       </div>
                     </Table.Cell>
-                    
+
                     {/* Updated Taglist Cell with Multi-line Support */}
-                    <Table.Cell className="max-w-48 w-48">
+                    <Table.Cell>
                       <div className="line-clamp-2 text-sm break-words">
                         {item.taglist}
                       </div>
                     </Table.Cell>
-                    
-                    <Table.Cell className="flex justify-center items-center">
-                    <button
+
+                    <Table.Cell>
+                      <button
                         className="text-white text-xs bg-[#5D5FEF] shadow-sm w-[69px] h-[32px] justify-center items-center border rounded"
-                        onClick={() => openModal ? openModal(item) : null}
-                        >
+                        onClick={() => (openModal ? openModal(item) : null)}
+                      >
                         Original
-                        </button>
+                      </button>
                     </Table.Cell>
                     <Table.Cell>{item.relvance}%</Table.Cell>
                     <Table.Cell>{item.sentiment}</Table.Cell>
@@ -568,9 +601,13 @@ const SharedPostList: FC<SharedPostListProps> = ({
                         </span>
                       )}
                     </Table.Cell>
-                    <Table.Cell className="flex justify-center items-center">
+                    <Table.Cell>
                       {item.url && item.url !== "#" ? (
-                        <a href={item.url} target="_blank" rel="noopener noreferrer">
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           <FaEarthAfrica className="cursor-pointer w-6 h-6 text-[#5D5FEF]"></FaEarthAfrica>
                         </a>
                       ) : (
@@ -584,7 +621,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
           </Table.Body>
         </Table>
       </div>
-      
+
       {/* Pagination */}
       {totalPages > 0 && (
         <div className="flex justify-center w-full h-auto mt-3">
@@ -594,7 +631,11 @@ const SharedPostList: FC<SharedPostListProps> = ({
             <button
               disabled={currentPage <= 1 || isLoading}
               onClick={() => handlePageChange(currentPage - 1)}
-              className={`bg-transparent text-white p-2 ${(currentPage <= 1 || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`bg-transparent text-white p-2 ${
+                currentPage <= 1 || isLoading
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
             >
               <svg
                 width="18"
@@ -619,7 +660,11 @@ const SharedPostList: FC<SharedPostListProps> = ({
             <button
               disabled={currentPage >= totalPages || isLoading}
               onClick={() => handlePageChange(currentPage + 1)}
-              className={`bg-transparent text-white p-2 ${(currentPage >= totalPages || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`bg-transparent text-white p-2 ${
+                currentPage >= totalPages || isLoading
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
             >
               <svg
                 width="18"
@@ -630,14 +675,18 @@ const SharedPostList: FC<SharedPostListProps> = ({
               >
                 <path
                   d="M0.5 1.08711L0.5 4.91289C0.5 5.34007 1.00106 5.57052 1.3254 5.29252L3.5571 3.37963C3.78991 3.18008 3.78991 2.81992 3.5571 2.62037L1.3254 0.707482C1.00106 0.429479 0.5 0.659934 0.5 1.08711Z"
-                  fill={currentPage >= totalPages || isLoading ? "#A5A6F6" : "#5D5FEF"}
+                  fill={
+                    currentPage >= totalPages || isLoading
+                      ? "#A5A6F6"
+                      : "#5D5FEF"
+                  }
                 />
               </svg>
             </button>
 
             {/* Page Select */}
             {totalPages > 1 && (
-              <Select 
+              <Select
                 id="pageSelect"
                 onChange={(e) => handlePageChange(parseInt(e.target.value))}
                 value={currentPage.toString()}
@@ -651,10 +700,10 @@ const SharedPostList: FC<SharedPostListProps> = ({
                 ))}
               </Select>
             )}
-            
+
             {/* Page info */}
             <span className="text-sm text-gray-500">
-              of {totalPages} {totalPages === 1 ? 'page' : 'pages'}
+              of {totalPages} {totalPages === 1 ? "page" : "pages"}
             </span>
           </div>
         </div>
