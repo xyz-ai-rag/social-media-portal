@@ -487,9 +487,9 @@ const SharedPostList: FC<SharedPostListProps> = ({
       <div className="mt-6 bg-white rounded shadow">
         <Table hoverable className="w-full table-fixed">
           <Table.Head>
-            <Table.HeadCell className="flex items-center h-14">
-              <div>Date</div>
-              <div className="pl-2">
+            <Table.HeadCell className="flex items-center w-24">
+              Date
+              <div className="pl-2 flex flex-col">
                 <svg
                   width="10"
                   height="8"
@@ -522,13 +522,11 @@ const SharedPostList: FC<SharedPostListProps> = ({
             </Table.HeadCell>
             <Table.HeadCell className="w-24">Platform</Table.HeadCell>
             <Table.HeadCell className="w-24">Nickname</Table.HeadCell>
-            <Table.HeadCell className="w-56">Post</Table.HeadCell>
-            <Table.HeadCell className="w-56">Taglist</Table.HeadCell>
-            <Table.HeadCell className="w-32">View Original</Table.HeadCell>
+            <Table.HeadCell className="w-64">Post</Table.HeadCell>
+            <Table.HeadCell className="w-48">Taglist</Table.HeadCell>
+            <Table.HeadCell className="w-24">View Original</Table.HeadCell>
             <Table.HeadCell className="w-24">Relevance</Table.HeadCell>
             <Table.HeadCell className="w-24">Sentiment</Table.HeadCell>
-            <Table.HeadCell className="w-36"></Table.HeadCell>
-            <Table.HeadCell className="w-24"></Table.HeadCell>
             {/* <Table.HeadCell className="w-24">Criticism</Table.HeadCell>
             <Table.HeadCell className="w-16">URL</Table.HeadCell> */}
           </Table.Head>
@@ -567,20 +565,20 @@ const SharedPostList: FC<SharedPostListProps> = ({
                     </Table.Cell>
 
                     {/* Updated Post Cell with Multi-line Support */}
-                    <Table.Cell>
+                    <Table.Cell className="max-w-64 w-64">
                       <div className="line-clamp-3 text-sm break-words">
                         {item.post}
                       </div>
                     </Table.Cell>
 
                     {/* Updated Taglist Cell with Multi-line Support */}
-                    <Table.Cell>
+                    <Table.Cell className="max-w-48 w-48">
                       <div className="line-clamp-2 text-sm break-words">
                         {item.taglist}
                       </div>
                     </Table.Cell>
 
-                    <Table.Cell>
+                    <Table.Cell className="flex justify-center items-center">
                       <button
                         className="text-white text-xs bg-[#5D5FEF] shadow-sm w-[69px] h-[32px] justify-center items-center border rounded"
                         onClick={() => (openModal ? openModal(item) : null)}
@@ -601,7 +599,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
                         </span>
                       )}
                     </Table.Cell>
-                    <Table.Cell>
+                    <Table.Cell className="flex justify-center items-center">
                       {item.url && item.url !== "#" ? (
                         <a
                           href={item.url}
