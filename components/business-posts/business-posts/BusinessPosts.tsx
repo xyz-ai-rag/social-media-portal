@@ -52,7 +52,6 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
   const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
   const [adjacentPagesLoading, setAdjacentPagesLoading] = useState(false);
-
   // Calculate yesterday's date for date limits
   const yesterday = useMemo(() => {
     const date = new Date();
@@ -174,9 +173,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   // Main fetch function for current page
   const fetchPosts = useCallback(async () => {
     if (!businessId) {
-      setError("Business ID is required");
-      setIsLoading(false);
-      return;
+      return { posts: [], pagination: null, appliedFilters: null };
     }
 
     try {
@@ -235,6 +232,29 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
+  
+  // NEW: Fetch adjacent pages when modal is opened or current page changes
+  useEffect(() => {
+    if (isModalOpen && pagination.totalPages > 1) {
+      fetchAdjacentPages();
+    }
+  }, [isModalOpen, pagination.currentPage, fetchAdjacentPages]);
+  
+  
+  // Add event listener to update the modal content without closing it
+  useEffect(() => {
+    const handleUpdateModal = (event: CustomEvent<{data: any}>) => {
+      if (event.detail && event.detail.data) {
+        setModalRowData(event.detail.data);
+      }
+    };
+    
+    document.addEventListener('updatePostModal', handleUpdateModal as EventListener);
+    
+    return () => {
+      document.removeEventListener('updatePostModal', handleUpdateModal as EventListener);
+    };
+  }, []);
 
   // NEW: Fetch adjacent pages when modal is opened or current page changes
   useEffect(() => {

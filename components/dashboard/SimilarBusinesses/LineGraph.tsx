@@ -23,7 +23,6 @@ echarts.use([
   GridComponent,
   LineChart,
   CanvasRenderer,
-  CanvasRenderer,
 ]);
 
 // Define type for a daily count.
@@ -98,7 +97,6 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
         const url = `/api/charts/line-graph?business_id=${businessId}&similar_business_ids=${similarBizParam}&start_date=${startDateProcessed}&end_date=${endDateProcessed}`;
         const res = await fetch(url);
         const data: LineGraphData = await res.json();
-
         setGraphData(data);
       } catch (err) {
         console.error("Error fetching line graph data:", err);

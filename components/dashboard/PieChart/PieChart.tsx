@@ -70,13 +70,11 @@ export default function PieChartComponent({
         )}&end_date=${encodeURIComponent(endDateProcessed)}`;
         const res = await fetch(url);
         const data = await res.json();
-
         // Calculate total for percentages
         let total = 0;
         if (Array.isArray(data)) {
           total = data.reduce((sum, item) => sum + item.value, 0);
         }
-
         // If the API already returns an array, then map each item to add a color (if missing).
         if (Array.isArray(data)) {
           const mappedData: PieDataItem[] = data.map((item: any) => ({
