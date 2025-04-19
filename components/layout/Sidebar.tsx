@@ -38,9 +38,8 @@ const MenuItem: React.FC<MenuItemProps> = ({
   if (disabled) {
     return (
       <div
-        className={`flex items-center p-2 rounded-md cursor-not-allowed ${
-          collapsed ? "justify-center" : ""
-        } text-gray-400`}
+        className={`flex items-center p-2 rounded-md cursor-not-allowed ${collapsed ? "justify-center" : ""
+          } text-gray-400`}
         onClick={onClick}
       >
         <span className="flex items-center relative group">
@@ -66,13 +65,11 @@ const MenuItem: React.FC<MenuItemProps> = ({
   return (
     <Link
       href={href}
-      className={`flex items-center p-2 rounded-md ${
-        collapsed ? "justify-center" : ""
-      } ${
-        isActive
+      className={`flex items-center p-2 rounded-md ${collapsed ? "justify-center" : ""
+        } ${isActive
           ? "bg-[#5A67BA]/10 text-[#5A67BA]"
           : "text-gray-700/60 hover:bg-[#5A67BA]/10"
-      }`}
+        }`}
     >
       <span className="flex items-center relative group">
         <span className="inline-flex items-center justify-center w-6 h-6">
@@ -149,20 +146,19 @@ export default function Sidebar() {
   // Get current business name
   const currentBusiness = hasSelectedBusiness
     ? clientDetails?.businesses?.find(
-        (biz) => biz.business_id === currentBusinessId
-      )
+      (biz) => biz.business_id === currentBusinessId
+    )
     : null;
 
   return (
     <aside
-      className={`bg-[#F1F2F7] border-r border-gray-200 fixed top-0 bottom-0 left-0 flex flex-col ${
-        collapsed ? "w-20 overflow-visible" : "w-60"
-      } transition-all duration-300 z-10`}
+      className={`bg-[#F1F2F7] border-r border-gray-200 fixed top-0 bottom-0 left-0 flex flex-col ${collapsed ? "w-20 overflow-visible" : "w-60"
+        } transition-all duration-300 z-10`}
     >
       {/* Top: Client Info */}
       <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center space-x-3">
-          <div className="flex-shrink-0 bg-[#5A67BA] text-white rounded-full h-10 w-10 flex items-center justify-center ml-1">
+        <div className="flex items-center ml-2">
+          {/* <div className="flex-shrink-0 bg-[#5A67BA] text-white rounded-full h-10 w-10 flex items-center justify-center ml-1">
             {clientDetails?.client_name?.charAt(0).toUpperCase() || "C"}
           </div>
           {!collapsed && (
@@ -179,15 +175,18 @@ export default function Sidebar() {
                 </div>
               )}
             </div>
-          )}
+          )} */}
+          <img
+            src="/hyprdata_logo_transparent.svg"
+            className="h-10 object-contain"
+          />
         </div>
       </div>
 
       {/* Middle: Menu Section with scrolling */}
       <div
-        className={`flex-1 ${
-          collapsed ? "" : "overflow-y-auto overflow-x-hidden"
-        }`}
+        className={`flex-1 ${collapsed ? "" : "overflow-y-auto overflow-x-hidden"
+          }`}
       >
         <div className="p-4">
           {!collapsed && (
@@ -259,9 +258,8 @@ export default function Sidebar() {
 
           <div
             onClick={logout}
-            className={`flex items-center cursor-pointer p-2 rounded-md ${
-              collapsed ? "justify-center" : ""
-            } text-gray-700/60 hover:bg-[#5A67BA]/10`}
+            className={`flex items-center cursor-pointer p-2 rounded-md ${collapsed ? "justify-center" : ""
+              } text-gray-700/60 hover:bg-[#5A67BA]/10`}
           >
             <span className="flex items-center relative group">
               <span className="inline-flex items-center justify-center w-6 h-6">
