@@ -81,13 +81,11 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
 
   // Use context useFilters(), when filters components changed, also can use same setFilters function build before.
   const { filters, setFilters } = useFilters();
-  // If startDate and EndDate both empty, give the default date. So whatever page user opened at fist time, the page will have default date. Avoid page cannot update state because of setting date in api part.
-  useEffect(() => {
-    if (filters.startDate === "" && filters.endDate === "") {
-      setFilters({ ...filters, startDate: thirtyDaysAgo, endDate: yesterday });
-    }
-  }, []);
-
+  // setting default date
+  const [dateRange, setDateRange] = useState({
+    startDate: thirtyDaysAgo,
+    endDate: yesterday,
+  });
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
     null
@@ -115,16 +113,16 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       try {
         // Ensure endDate is not after yesterday
         const endDate =
-          new Date(filters.endDate) > new Date(yesterday)
+          new Date(dateRange.endDate) > new Date(yesterday)
             ? yesterday
-            : filters.endDate;
+            : dateRange.endDate;
 
         // Build query parameters
         const queryParams = new URLSearchParams();
         queryParams.append("businessId", businessId);
 
-        if (filters.startDate)
-          queryParams.append("startDate", filters.startDate);
+        if (dateRange.startDate)
+          queryParams.append("startDate", dateRange.startDate);
         queryParams.append("endDate", endDate);
         if (filters.platform) queryParams.append("platform", filters.platform);
         if (filters.sentiment)
@@ -232,27 +230,32 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
-  
+
   // NEW: Fetch adjacent pages when modal is opened or current page changes
   useEffect(() => {
     if (isModalOpen && pagination.totalPages > 1) {
       fetchAdjacentPages();
     }
   }, [isModalOpen, pagination.currentPage, fetchAdjacentPages]);
-  
-  
+
   // Add event listener to update the modal content without closing it
   useEffect(() => {
-    const handleUpdateModal = (event: CustomEvent<{data: any}>) => {
+    const handleUpdateModal = (event: CustomEvent<{ data: any }>) => {
       if (event.detail && event.detail.data) {
         setModalRowData(event.detail.data);
       }
     };
-    
-    document.addEventListener('updatePostModal', handleUpdateModal as EventListener);
-    
+
+    document.addEventListener(
+      "updatePostModal",
+      handleUpdateModal as EventListener
+    );
+
     return () => {
-      document.removeEventListener('updatePostModal', handleUpdateModal as EventListener);
+      document.removeEventListener(
+        "updatePostModal",
+        handleUpdateModal as EventListener
+      );
     };
   }, []);
 
@@ -352,10 +355,20 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     ) {
       newFilters.endDate = yesterday;
     }
+    // Extract startDate / endDate and save to local dateRange
+    const { startDate, endDate, ...otherFilters } = newFilters;
+
+    if (endDate || startDate) {
+      setDateRange((prevdate) => ({
+        ...prevdate,
+        ...(startDate && { startDate: startDate }),
+        ...(endDate && { endDate: endDate }),
+      }));
+    }
 
     setFilters((prev) => ({
       ...prev,
-      ...newFilters,
+      ...otherFilters,
       // If filters other than page change, reset to page 1
       page: newFilters.hasOwnProperty("page") ? newFilters.page : 1,
     }));

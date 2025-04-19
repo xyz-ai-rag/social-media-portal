@@ -7,8 +7,6 @@ interface FilterState {
   relevance: string;
   hasCriticism: string;
   search: string;
-  endDate: string;
-  startDate: string;
   sortOrder: string;
   page: number;
 }
@@ -27,8 +25,6 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
   const [filters, setFilters] = useState<FilterState>({
     page: 1,
     sortOrder: "desc",
-    startDate: "",
-    endDate: "",
     platform: "",
     sentiment: "",
     relevance: "",

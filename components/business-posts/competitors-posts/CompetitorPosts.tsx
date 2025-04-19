@@ -96,12 +96,11 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
 
   // Use context useFilters(), when filters components changed, also can use same setFilters function build before.
   const { filters, setFilters } = useFilters();
-  // If startDate and EndDate both empty, give the default date. So whatever page user opened at fist time, the page will have default date. Avoid page cannot update state because of setting date in api part.
-  useEffect(() => {
-    if (filters.startDate === "" && filters.endDate === "") {
-      setFilters({ ...filters, startDate: sevenDaysAgo, endDate: yesterday });
-    }
-  }, []);
+  // setting default date
+  const [dateRange, setDateRange] = useState({
+    startDate: sevenDaysAgo,
+    endDate: yesterday,
+  });
 
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
@@ -190,11 +189,11 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         const queryParams = new URLSearchParams();
         queryParams.append("businessId", competitorId); // Use competitorId as businessId for API
         const endDate =
-          new Date(filters.endDate) > new Date(yesterday)
+          new Date(dateRange.endDate) > new Date(yesterday)
             ? yesterday
-            : filters.endDate;
-        if (filters.startDate)
-          queryParams.append("startDate", filters.startDate);
+            : dateRange.endDate;
+        if (dateRange.startDate)
+          queryParams.append("startDate", dateRange.startDate);
         queryParams.append("endDate", endDate);
         if (filters.platform) queryParams.append("platform", filters.platform);
         if (filters.sentiment)
@@ -307,7 +306,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   useEffect(() => {
     fetchCompetitorPosts();
   }, [fetchCompetitorPosts]);
-  
+
   // NEW: Fetch adjacent pages when modal is opened or current page changes
   useEffect(() => {
     if (isModalOpen && pagination.totalPages > 1) {
@@ -322,73 +321,15 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
       ...row,
       clientId,
       businessId,
-      competitorId
+      competitorId,
     });
     setIsModalOpen(true);
   };
-  
+
   // NEW: Handle closing the modal
   const closeModal = () => {
     setIsModalOpen(false);
   };
-  
-  // NEW: Add event listener to update the modal content without closing it
-  useEffect(() => {
-    const handleUpdateModal = (event: CustomEvent<{data: any}>) => {
-      if (event.detail && event.detail.data) {
-        setModalRowData(event.detail.data);
-      }
-    };
-    
-    document.addEventListener('updatePostModal', handleUpdateModal as EventListener);
-    
-    return () => {
-      document.removeEventListener('updatePostModal', handleUpdateModal as EventListener);
-    };
-  }, []);
-
-  // NEW: Function to handle cross-page navigation
-  const handleCrossPageNavigation = useCallback((direction: 'prev' | 'next') => {
-    // Calculate the new page number
-    const newPage = direction === 'prev' 
-      ? (pagination.currentPage > 1 ? pagination.currentPage - 1 : pagination.totalPages)
-      : (pagination.currentPage < pagination.totalPages ? pagination.currentPage + 1 : 1);
-    
-    // Get posts from the appropriate page
-    const newPagePosts = direction === 'prev' ? prevPagePosts : nextPagePosts;
-    
-    // Get the post from the beginning or end of the adjacent page
-    const newRowData = direction === 'prev' 
-      ? newPagePosts[newPagePosts.length - 1] 
-      : newPagePosts[0];
-    
-    if (newRowData) {
-      // Update modal data
-      const updatedData = {
-        ...newRowData,
-        clientId,
-        businessId,
-        competitorId
-      };
-      
-      // Dispatch event to update modal
-      const event = new CustomEvent('updatePostModal', { 
-        detail: { data: updatedData } 
-      });
-      document.dispatchEvent(event);
-      
-      // Change the page (this will also fetch new set of posts)
-      handleFilterChange({ page: newPage });
-    }
-  }, [pagination, prevPagePosts, nextPagePosts, clientId, businessId, competitorId]);
-
-  // NEW: Fetch adjacent pages when modal is opened or current page changes
-  useEffect(() => {
-    if (isModalOpen && pagination.totalPages > 1) {
-      fetchAdjacentPages();
-    }
-  }, [isModalOpen, pagination.currentPage, fetchAdjacentPages]);
-
 
   // NEW: Add event listener to update the modal content without closing it
   useEffect(() => {
@@ -411,6 +352,84 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     };
   }, []);
 
+  // NEW: Function to handle cross-page navigation
+  const handleCrossPageNavigation = useCallback(
+    (direction: "prev" | "next") => {
+      // Calculate the new page number
+      const newPage =
+        direction === "prev"
+          ? pagination.currentPage > 1
+            ? pagination.currentPage - 1
+            : pagination.totalPages
+          : pagination.currentPage < pagination.totalPages
+          ? pagination.currentPage + 1
+          : 1;
+
+      // Get posts from the appropriate page
+      const newPagePosts = direction === "prev" ? prevPagePosts : nextPagePosts;
+
+      // Get the post from the beginning or end of the adjacent page
+      const newRowData =
+        direction === "prev"
+          ? newPagePosts[newPagePosts.length - 1]
+          : newPagePosts[0];
+
+      if (newRowData) {
+        // Update modal data
+        const updatedData = {
+          ...newRowData,
+          clientId,
+          businessId,
+          competitorId,
+        };
+
+        // Dispatch event to update modal
+        const event = new CustomEvent("updatePostModal", {
+          detail: { data: updatedData },
+        });
+        document.dispatchEvent(event);
+
+        // Change the page (this will also fetch new set of posts)
+        handleFilterChange({ page: newPage });
+      }
+    },
+    [
+      pagination,
+      prevPagePosts,
+      nextPagePosts,
+      clientId,
+      businessId,
+      competitorId,
+    ]
+  );
+
+  // NEW: Fetch adjacent pages when modal is opened or current page changes
+  useEffect(() => {
+    if (isModalOpen && pagination.totalPages > 1) {
+      fetchAdjacentPages();
+    }
+  }, [isModalOpen, pagination.currentPage, fetchAdjacentPages]);
+
+  // NEW: Add event listener to update the modal content without closing it
+  useEffect(() => {
+    const handleUpdateModal = (event: CustomEvent<{ data: any }>) => {
+      if (event.detail && event.detail.data) {
+        setModalRowData(event.detail.data);
+      }
+    };
+
+    document.addEventListener(
+      "updatePostModal",
+      handleUpdateModal as EventListener
+    );
+
+    return () => {
+      document.removeEventListener(
+        "updatePostModal",
+        handleUpdateModal as EventListener
+      );
+    };
+  }, []);
 
   // Handle competitor change
   const handleCompetitorChange = (selectedId: string) => {
@@ -431,9 +450,21 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     ) {
       newFilters.endDate = yesterday;
     }
+    // Extract startDate / endDate and save to local dateRange
+    const { startDate, endDate, ...otherFilters } = newFilters;
+
+    if (endDate || startDate) {
+      setDateRange((prevdate) => ({
+        ...prevdate,
+        ...(startDate && { startDate: startDate }),
+        ...(endDate && { endDate: endDate }),
+      }));
+    }
+
+    // Pass non-date fields to context management
     setFilters((prev) => ({
       ...prev,
-      ...newFilters,
+      ...otherFilters,
       // If filters other than page change, reset to page 1
       page: newFilters.hasOwnProperty("page") ? newFilters.page : 1,
     }));
