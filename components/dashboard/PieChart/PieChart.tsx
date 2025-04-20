@@ -61,46 +61,73 @@ export default function PieChartComponent({
 
   // Fetch Pie data from the API route.
   useEffect(() => {
+    let isCurrent = true; // Flag to control whether the request is still valid
+
     async function fetchPieData() {
+      setIsLoading(true); // Set loading state when the request is made
+
       try {
         const url = `/api/charts/piechart?business_id=${encodeURIComponent(
           businessId
         )}&start_date=${encodeURIComponent(
           startDateProcessed
         )}&end_date=${encodeURIComponent(endDateProcessed)}`;
+
         const res = await fetch(url);
         const data = await res.json();
-        // Calculate total for percentages
-        let total = 0;
-        if (Array.isArray(data)) {
-          total = data.reduce((sum, item) => sum + item.value, 0);
-        }
-        // If the API already returns an array, then map each item to add a color (if missing).
-        if (Array.isArray(data)) {
-          const mappedData: PieDataItem[] = data.map((item: any) => ({
-            ...item,
-            color:
-              item.color ||
-              (item.name.toLowerCase() === "rednote"
-                ? "#5A6ACF"
-                : item.name.toLowerCase() === "weibo"
-                ? "#8593ED"
-                : item.name.toLowerCase() === "douyin"
-                ? "#C7CEFF"
-                : "#5470c6"),
-            percentage: total > 0 ? Math.round((item.value / total) * 100) : 0,
-          }));
-          setChartData(mappedData);
-        } else {
-          setChartData([]);
+
+        console.log(res);
+
+        // Only update state if this is the current request
+        if (isCurrent) {
+          let total = 0;
+          if (Array.isArray(data)) {
+            total = data.reduce((sum, item) => sum + item.value, 0);
+          }
+
+          // If the API already returns an array, then map each item to add a color (if missing)
+          if (Array.isArray(data)) {
+            const mappedData: PieDataItem[] = data.map((item: any) => ({
+              ...item,
+              color:
+                item.color ||
+                (item.name.toLowerCase() === "rednote"
+                  ? "#5A6ACF"
+                  : item.name.toLowerCase() === "weibo"
+                  ? "#8593ED"
+                  : item.name.toLowerCase() === "douyin"
+                  ? "#C7CEFF"
+                  : "#5470c6"),
+              percentage:
+                total > 0 ? Math.round((item.value / total) * 100) : 0,
+            }));
+
+            if (isCurrent) {
+              setChartData(mappedData);
+            }
+          } else {
+            if (isCurrent) {
+              setChartData([]);
+            }
+          }
         }
       } catch (err) {
-        console.error("Error fetching Pie chart data:", err);
+        if (isCurrent) {
+          console.error("Error fetching Pie chart data:", err);
+        }
       } finally {
-        setIsLoading(false);
+        if (isCurrent) {
+          setIsLoading(false);
+        }
       }
     }
+
     fetchPieData();
+
+    // Cleanup function: Mark the previous request as invalid when a new one is made
+    return () => {
+      isCurrent = false;
+    };
   }, [businessId, startDateProcessed, endDateProcessed]);
 
   // Initialize and configure the chart once data is loaded.
