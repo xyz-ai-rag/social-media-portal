@@ -76,9 +76,9 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   }, []);
 
   // Calculate default 7 days ago date
-  const sevenDaysAgo = useMemo(() => {
+  const thirtyDaysAgo = useMemo(() => {
     const date = new Date();
-    date.setDate(date.getDate() - 7);
+    date.setDate(date.getDate() - 30);
     return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
   }, []);
   // Initialize with empty filters - the API will apply defaults (last 7 days)
@@ -97,10 +97,19 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   // Use context useFilters(), when filters components changed, also can use same setFilters function build before.
   const { filters, setFilters } = useFilters();
   // setting default date
-  const [dateRange, setDateRange] = useState({
-    startDate: sevenDaysAgo,
-    endDate: yesterday,
+  const [dateRange, setDateRange] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("competitors_page_date");
+      return saved
+        ? JSON.parse(saved)
+        : { startDate: thirtyDaysAgo, endDate: yesterday };
+    }
+    return { startDate: thirtyDaysAgo, endDate: yesterday };
   });
+
+  useEffect(() => {
+    sessionStorage.setItem("competitors_page_date", JSON.stringify(dateRange));
+  }, [dateRange]);
 
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
@@ -454,7 +463,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     const { startDate, endDate, ...otherFilters } = newFilters;
 
     if (endDate || startDate) {
-      setDateRange((prevdate) => ({
+      setDateRange((prevdate: object) => ({
         ...prevdate,
         ...(startDate && { startDate: startDate }),
         ...(endDate && { endDate: endDate }),

@@ -82,10 +82,19 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   // Use context useFilters(), when filters components changed, also can use same setFilters function build before.
   const { filters, setFilters } = useFilters();
   // setting default date
-  const [dateRange, setDateRange] = useState({
-    startDate: thirtyDaysAgo,
-    endDate: yesterday,
+  const [dateRange, setDateRange] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("business_page_date");
+      return saved
+        ? JSON.parse(saved)
+        : { startDate: thirtyDaysAgo, endDate: yesterday };
+    }
+    return { startDate: thirtyDaysAgo, endDate: yesterday };
   });
+
+  useEffect(() => {
+    sessionStorage.setItem("business_page_date", JSON.stringify(dateRange));
+  }, [dateRange]);
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
     null
@@ -359,7 +368,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     const { startDate, endDate, ...otherFilters } = newFilters;
 
     if (endDate || startDate) {
-      setDateRange((prevdate) => ({
+      setDateRange((prevdate: object) => ({
         ...prevdate,
         ...(startDate && { startDate: startDate }),
         ...(endDate && { endDate: endDate }),
