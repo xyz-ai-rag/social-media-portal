@@ -157,29 +157,19 @@ export default function Sidebar() {
     >
       {/* Top: Client Info */}
       <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center ml-2">
-          {/* <div className="flex-shrink-0 bg-[#5A67BA] text-white rounded-full h-10 w-10 flex items-center justify-center ml-1">
-            {clientDetails?.client_name?.charAt(0).toUpperCase() || "C"}
-          </div>
-          {!collapsed && (
-            <div className="overflow-hidden">
-              <div className="text-sm font-bold text-[#5A67BA] truncate">
-                {clientDetails?.client_name || "Client Name"}
-              </div>
-              {currentBusiness && (
-                <div className="text-xs text-gray-500 truncate">
-                  Viewing:{" "}
-                  <span className="font-medium">
-                    {currentBusiness.business_name}
-                  </span>
-                </div>
-              )}
-            </div>
-          )} */}
-          <img
-            src="/hyprdata_logo_transparent.svg"
-            className="h-10 object-contain"
-          />
+        <div className={`flex items-center ${collapsed ? "justify-center" : "justify-start"}`}>
+          {collapsed ? (
+            <img
+              src="/hyprdata_icon_transparent.svg"
+              className="h-10 object-contain mx-auto"
+            />
+          ) : (
+            <img
+              src="/hyprdata_logo_transparent.svg"
+              className="h-10 object-contain ml-2"
+            />
+          )}
+
         </div>
       </div>
 
