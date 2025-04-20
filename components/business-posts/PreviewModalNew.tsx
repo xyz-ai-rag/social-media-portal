@@ -5,7 +5,7 @@ import { Modal, Spinner } from "flowbite-react";
 import { PostData } from "./SharedPostList";
 
 // Base interface for shared post data
-export interface BasePostModalProps {
+export interface PreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   rowData: PostData & {
@@ -23,7 +23,7 @@ export interface BasePostModalProps {
   isNavigating?: boolean; // NEW: Flag to show loading state during navigation
 }
 
-const SharedPostModal = ({
+const PreviewModalNew = ({
   isOpen,
   onClose,
   rowData,
@@ -35,12 +35,12 @@ const SharedPostModal = ({
   hasPrevious = true,
   hasNext = true,
   isNavigating = false, // NEW: Default to false
-}: BasePostModalProps) => {
+}: PreviewModalProps) => {
   // Handle case where rowData might be empty or undefined
   if (!rowData) return null;
 
   // Use platform name as default header if none provided
-  const title = headerTitle || rowData.platform || "Post Details";
+  const title = headerTitle || rowData.platform || "Post Preview";
 
   // Ref for the modal content
   const modalContentRef = useRef<HTMLDivElement>(null);
@@ -56,8 +56,6 @@ const SharedPostModal = ({
         onClose();
       }
     };
-
-    console.log(rowData);
 
     // Add event listener when modal is open
     if (isOpen) {
@@ -117,21 +115,21 @@ const SharedPostModal = ({
               )}
 
               {/* Post Title (if available) */}
-              {rowData.title && (
+              {rowData.englishTitle && (
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                  {rowData.title}
+                  {rowData.englishTitle}
                 </h3>
               )}
 
               {/* Post Content */}
               <p className="whitespace-pre-wrap text-gray-700 mb-4">
-                {rowData.description || "No content available"}
+                {rowData.englishDesc || "No content available"}
               </p>
 
               {/* TagList */}
-              {rowData.tagList && (
+              {rowData.englishTagList && (
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {rowData.tagList.split(",").map((tag, index) => (
+                  {rowData.englishTagList.split(",").map((tag, index) => (
                     <span
                       key={index}
                       className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded"
@@ -149,6 +147,20 @@ const SharedPostModal = ({
                   {rowData.showDate || rowData.date || "Unknown date"}
                 </span>
               </div>
+
+              {/* Negative Feedback Summary !!!!! Need Test */}
+              {rowData.hasCriticism && rowData.criticismSummary && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <h3 className="text-md font-medium text-red-700 mb-2">
+                    Negative feedback or criticism:
+                  </h3>
+                  <div className="bg-red-50 p-3 rounded-md">
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {rowData.criticismSummary}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Additional Information */}
               <div className="mt-4 pt-4 border-t border-gray-200">
@@ -290,4 +302,4 @@ const SharedPostModal = ({
   );
 };
 
-export default SharedPostModal;
+export default PreviewModalNew;

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { PostData } from "../SharedPostList";
-import SharedPostModal from "../SharedPostModal";
+import PreviewModalNew from "../PreviewModalNew";
 
 interface PaginationInfo {
   totalCount: number;
@@ -28,7 +28,7 @@ interface PostCardProps {
   pagination?: PaginationInfo;
 }
 
-const PostCard = ({
+const PostPreviewCard = ({
   isOpen,
   onClose,
   rowData,
@@ -190,7 +190,7 @@ const PostCard = ({
   ) : null;
 
   return (
-    <SharedPostModal
+    <PreviewModalNew
       isOpen={isOpen}
       onClose={onClose}
       rowData={rowData}
@@ -205,4 +205,4 @@ const PostCard = ({
   );
 };
 
-export default PostCard;
+export default PostPreviewCard;
