@@ -559,7 +559,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
                     <Table.Cell className="text-[#DD9A19]">
                       {item.showDate}
                     </Table.Cell>
-                    <Table.Cell>{item.platform}</Table.Cell>
+
                     <Table.Cell className="line-clamp-2 text-sm break-words">
                       {item.nickname}
                     </Table.Cell>
@@ -570,7 +570,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
                         {item.post}
                       </div>
                     </Table.Cell>
-
+                    
                     {/* Updated Taglist Cell with Multi-line Support */}
                     <Table.Cell className="max-w-48 w-48">
                       <div className="line-clamp-2 text-sm break-words">
