@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { setStartOfDay, setEndOfDay } from "../../utils/timeUtils";
 import { useDateRange } from "@/context/DateRangeContext";
+import DatePicker from "../business-posts/DatePicker";
 
 interface DateRangePickerProps {
   onDateRangeChange?: (
@@ -21,22 +22,28 @@ export default function DateRangePicker({
   const dateRangeContext = useDateRange();
 
   const [selectedPreset, setSelectedPreset] = useState(() => {
-    if (typeof window !== undefined) {
+    if (typeof window !== "undefined") {
       const savedSelected = sessionStorage.getItem("dashboard_select");
       return savedSelected ? JSON.parse(savedSelected) : "last30Days";
     }
     return "last30Days";
   });
 
-  const [showCustomDates, setShowCustomDates] = useState<boolean>(false);
+  const [showCustomDates, setShowCustomDates] = useState<boolean>(
+    selectedPreset === "custom"
+  );
+
+  // Calculate date limits - use yesterday as the maximum selectable date
+  const yesterday = subDays(new Date(), 1).toISOString().split("T")[0];
+  const thirtyDaysAgo = subDays(new Date(), 30).toISOString().split("T")[0];
 
   // Define preset date ranges
   const datePresets = {
     yesterday: {
       label: "Yesterday",
       getRange: () => {
-        const yesterday = subDays(new Date(), 1);
-        const yesterdayStr = format(yesterday, "yyyy-MM-dd");
+        const yesterdayDate = subDays(new Date(), 1);
+        const yesterdayStr = format(yesterdayDate, "yyyy-MM-dd");
         return {
           start: setStartOfDay(yesterdayStr),
           end: setEndOfDay(yesterdayStr),
@@ -47,11 +54,11 @@ export default function DateRangePicker({
     last7Days: {
       label: "Last 7 days",
       getRange: () => {
-        const yesterday = subDays(new Date(), 1);
-        const start = subDays(yesterday, 6); // 7 days ending with yesterday
+        const yesterdayDate = subDays(new Date(), 1);
+        const start = subDays(yesterdayDate, 6); // 7 days ending with yesterday
 
         const startStr = format(start, "yyyy-MM-dd");
-        const endStr = format(yesterday, "yyyy-MM-dd");
+        const endStr = format(yesterdayDate, "yyyy-MM-dd");
 
         return {
           start: setStartOfDay(startStr),
@@ -63,11 +70,11 @@ export default function DateRangePicker({
     last30Days: {
       label: "Last 30 days",
       getRange: () => {
-        const yesterday = subDays(new Date(), 1);
-        const start = subDays(yesterday, 29); // 30 days ending with yesterday
+        const yesterdayDate = subDays(new Date(), 1);
+        const start = subDays(yesterdayDate, 29); // 30 days ending with yesterday
 
         const startStr = format(start, "yyyy-MM-dd");
-        const endStr = format(yesterday, "yyyy-MM-dd");
+        const endStr = format(yesterdayDate, "yyyy-MM-dd");
 
         return {
           start: setStartOfDay(startStr),
@@ -80,11 +87,11 @@ export default function DateRangePicker({
       label: "This month",
       getRange: () => {
         const today = new Date();
-        const yesterday = subDays(today, 1);
+        const yesterdayDate = subDays(today, 1);
         const monthStart = startOfMonth(today);
 
         const startStr = format(monthStart, "yyyy-MM-dd");
-        const endStr = format(yesterday, "yyyy-MM-dd");
+        const endStr = format(yesterdayDate, "yyyy-MM-dd");
 
         return {
           start: setStartOfDay(startStr),
@@ -147,25 +154,6 @@ export default function DateRangePicker({
       },
     },
   };
-
-  // Calculate yesterday's date for date limits
-  const yesterday = useMemo(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 1);
-    return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-  }, []);
-
-  // Calculate default 30 days ago date
-  const thirtyDaysAgo = useMemo(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-  }, []);
-
-  const today = useMemo(() => {
-    const date = new Date();
-    return date.toISOString().split("T")[0];
-  }, []);
 
   const [customStartDate, setCustomStartDate] = useState(() => {
     if (typeof window !== "undefined") {
@@ -244,27 +232,21 @@ export default function DateRangePicker({
 
       {showCustomDates && (
         <>
-          <div className="flex items-center">
-            <span className="text-sm text-gray-500 mr-2">Start</span>
-            <input
-              type="date"
-              value={customStartDate}
-              onChange={(e) => setCustomStartDate(e.target.value)}
-              className="border rounded-md p-2 text-sm"
-            />
-          </div>
+          <DatePicker
+            id="start-date-picker"
+            label="Start"
+            value={customStartDate}
+            onChange={setCustomStartDate}
+            max={customEndDate}
+          />
 
-          <div className="flex items-center">
-            <span className="text-sm text-gray-500 mr-2">End</span>
-            <input
-              type="date"
-              value={customEndDate}
-              onChange={(e) => setCustomEndDate(e.target.value)}
-              className="border rounded-md p-2 text-sm"
-              min={customStartDate}
-              max={today}
-            />
-          </div>
+          <DatePicker
+            id="end-date-picker"
+            label="End"
+            value={customEndDate}
+            onChange={setCustomEndDate}
+            max={yesterday}
+          />
         </>
       )}
     </div>
