@@ -418,7 +418,8 @@ const SharedPostList: FC<SharedPostListProps> = ({
             );
           })}
         </Select>
-        <div className="relative flex-grow">
+        {/* Search */}
+        <div className="relative w-1/2 max-w-sm">
           <TextInput
             type="text"
             id="search"
