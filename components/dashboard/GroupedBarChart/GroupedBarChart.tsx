@@ -64,19 +64,38 @@ export default function GroupedBarChart({
   );
   // Fetch daily posts data from the API.
   useEffect(() => {
+    let isCurrent = true; // Flag to control whether the request is still valid
+
     async function fetchChartData() {
+      setIsLoading(true); // Set loading state when the request is made
+
       try {
         const url = `/api/charts/grouped-bar-chart?business_id=${businessId}&start_date=${startDateProcessed}&end_date=${endDateProcessed}`;
         const response = await fetch(url);
         const data = await response.json();
-        setChartData(data);
+
+        if (isCurrent) {
+          setChartData(data); // Only update state if this is the current request
+        } else {
+          console.log("Ignore an invalid request");
+        }
       } catch (error) {
-        console.error("Error fetching chart data:", error);
+        if (isCurrent) {
+          console.error("Error fetching chart data:", error);
+        }
       } finally {
-        setIsLoading(false);
+        if (isCurrent) {
+          setIsLoading(false);
+        }
       }
     }
+
     fetchChartData();
+
+    // Cleanup function: Mark the previous request as invalid when a new one is made
+    return () => {
+      isCurrent = false;
+    };
   }, [businessId, startDateProcessed, endDateProcessed]);
 
   // Compute the total number of posts in the current period.

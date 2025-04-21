@@ -10,7 +10,7 @@ import {
   Spinner,
   Badge,
   Button,
-  Alert
+  Alert,
 } from "flowbite-react";
 import { useAuth } from '@/context/AuthContext';
 import DatePicker from './DatePicker';
@@ -19,15 +19,15 @@ import PreviewModal from "./PreviewModal";
 export interface PostData {
   id?: string;
   businessId?: string;
-  description?: string;     // Original description
-  englishDesc?: string;     // English description
-  post?: string;            // Combined (for backward compatibility)
-  title?: string;           // Original title
-  englishTitle?: string;    // English title
-  displayTitle?: string;    // Combined (for display purposes)
-  tagList?: string;         // Original taglist
-  englishTagList?: string;  // English taglist
-  taglist?: string;         // Combined (for backward compatibility)
+  description?: string; // Original description
+  englishDesc?: string; // English description
+  post?: string; // Combined (for backward compatibility)
+  title?: string; // Original title
+  englishTitle?: string; // English title
+  displayTitle?: string; // Combined (for display purposes)
+  tagList?: string; // Original taglist
+  englishTagList?: string; // English taglist
+  taglist?: string; // Combined (for backward compatibility)
   date?: string;
   showDate?: string;
   sentiment?: string;
@@ -36,7 +36,7 @@ export interface PostData {
   platform?: string;
   hasCriticism?: boolean;
   url?: string;
-  [key: string]: any;       // For additional properties
+  [key: string]: any; // For additional properties
 }
 
 interface PaginationProps {
@@ -87,7 +87,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
   pagination,
   onFilterChange,
   onRefresh,
-  openModal
+  openModal,
 }) => {
   // Search Value
   const [searchQuery, setSearchQuery] = useState("");
@@ -108,7 +108,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
   const yesterday = useMemo(() => {
     const date = new Date();
     date.setDate(date.getDate() - 1);
-    return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+    return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
   }, []);
 
   // Use external pagination if provided, or local state
@@ -182,7 +182,11 @@ const SharedPostList: FC<SharedPostListProps> = ({
   };
 
   // Select relevance Data
-  const relevanceData = ["50%", "60%", "70%", "80%", "90%", "100%"];
+  const relevanceData = [
+    { value: "25%", label: "≥ 25%" },
+    { value: "50%", label: "≥ 50%" },
+    { value: "75%", label: "≥ 75%" },
+  ];
 
   const handleRelevance = (data: string) => {
     setRelevance(data);
@@ -192,7 +196,10 @@ const SharedPostList: FC<SharedPostListProps> = ({
   };
 
   // Select criticism Data
-  const criticismData = ["Has Criticism", "No Criticism"];
+  const criticismData = [
+    { value: "Has Criticism", label: "Has negative feedback" },
+    { value: "No Criticism", label: "No negative feedback" },
+  ];
 
   const handleCriticism = (data: string) => {
     setCriticism(data);
@@ -200,7 +207,6 @@ const SharedPostList: FC<SharedPostListProps> = ({
       onFilterChange({ hasCriticism: data });
     }
   };
-
 
   const handleSearch = () => {
     if (onFilterChange) {
@@ -225,8 +231,10 @@ const SharedPostList: FC<SharedPostListProps> = ({
     // Otherwise, sort locally
     const sortedPosts = [...listData].sort((a, b) =>
       data === "asc"
-        ? new Date(a.date as string).getTime() - new Date(b.date as string).getTime()
-        : new Date(b.date as string).getTime() - new Date(a.date as string).getTime()
+        ? new Date(a.date as string).getTime() -
+          new Date(b.date as string).getTime()
+        : new Date(b.date as string).getTime() -
+          new Date(a.date as string).getTime()
     );
     setListData(sortedPosts);
     setSortOrder(data);
@@ -240,8 +248,23 @@ const SharedPostList: FC<SharedPostListProps> = ({
     const end = new Date(appliedFilters.endDate);
 
     const formatDate = (date: Date) => {
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      return `${
+        months[date.getMonth()]
+      } ${date.getDate()}, ${date.getFullYear()}`;
     };
 
     return `${formatDate(start)} to ${formatDate(end)}`;
@@ -258,11 +281,11 @@ const SharedPostList: FC<SharedPostListProps> = ({
   const clearFilters = () => {
     if (onFilterChange) {
       onFilterChange({
-        platform: '',
-        sentiment: '',
-        relevance: '',
-        hasCriticism: '',
-        search: ''
+        platform: "",
+        sentiment: "",
+        relevance: "",
+        hasCriticism: "",
+        search: "",
       });
     }
   };
@@ -280,9 +303,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
     <div className="bg-white relative">
       {/* Head */}
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-[34px] font-bold text-[#5D5FEF]">
-          {title}
-        </h1>
+        <h1 className="text-[34px] font-bold text-[#5D5FEF]">{title}</h1>
 
         {/* Refresh button */}
         <Button
@@ -293,7 +314,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
           disabled={isLoading}
           title="Refresh data"
         >
-          <FaSync className={`${isLoading ? 'animate-spin' : ''} mr-2`} />
+          <FaSync className={`${isLoading ? "animate-spin" : ""} mr-2`} />
           Refresh
         </Button>
       </div>
@@ -320,9 +341,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
       <div className="flex flex-wrap gap-4">
         {/* Additional Filters (like Competitor dropdown) */}
         {additionalFilters && (
-          <div className="min-w-40">
-            {additionalFilters}
-          </div>
+          <div className="min-w-40">{additionalFilters}</div>
         )}
 
         <DatePicker
@@ -348,7 +367,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
           onChange={(e) => handlePlatform(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">All Platforms</option>
+          <option value="">Platforms</option>
           {platformData.map((item, index) => {
             return <option key={index}>{item}</option>;
           })}
@@ -363,7 +382,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
           onChange={(e) => handleSentiment(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">All Sentiments</option>
+          <option value="">Sentiments</option>
           {sentimentData.map((item, index) => {
             return <option key={index}>{item}</option>;
           })}
@@ -374,9 +393,13 @@ const SharedPostList: FC<SharedPostListProps> = ({
           onChange={(e) => handleRelevance(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">All Relevance</option>
+          <option value="">Relevance</option>
           {relevanceData.map((item, index) => {
-            return <option key={index}>{item}</option>;
+            return (
+              <option key={index} value={item.value}>
+                {item.label}
+              </option>
+            );
           })}
         </Select>
         <Select
@@ -385,9 +408,13 @@ const SharedPostList: FC<SharedPostListProps> = ({
           onChange={(e) => handleCriticism(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">All Criticism</option>
+          <option value="">Feedback</option>
           {criticismData.map((item, index) => {
-            return <option key={index}>{item}</option>;
+            return (
+              <option key={index} value={item.value}>
+                {item.label}
+              </option>
+            );
           })}
         </Select>
         {/* Search */}
@@ -398,7 +425,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             className="w-full"
             disabled={isLoading}
           />
@@ -407,8 +434,19 @@ const SharedPostList: FC<SharedPostListProps> = ({
             className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
             disabled={isLoading}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
           </button>
         </div>
@@ -435,7 +473,8 @@ const SharedPostList: FC<SharedPostListProps> = ({
           )}
           {appliedFilters.hasCriticism && (
             <Badge color="info" className="text-xs">
-              {appliedFilters.hasCriticism === "true" || appliedFilters.hasCriticism === "Has Criticism"
+              {appliedFilters.hasCriticism === "true" ||
+              appliedFilters.hasCriticism === "Has Criticism"
                 ? "Has Criticism"
                 : "No Criticism"}
             </Badge>
@@ -445,24 +484,27 @@ const SharedPostList: FC<SharedPostListProps> = ({
               Search: "{appliedFilters.search}"
             </Badge>
           )}
-          {(appliedFilters.platform || appliedFilters.sentiment || appliedFilters.relevance ||
-            appliedFilters.hasCriticism || appliedFilters.search) && (
-              <button
-                onClick={clearFilters}
-                className="text-xs text-blue-600 hover:underline"
-                disabled={isLoading}
-              >
-                Clear Filters
-              </button>
-            )}
+          {(appliedFilters.platform ||
+            appliedFilters.sentiment ||
+            appliedFilters.relevance ||
+            appliedFilters.hasCriticism ||
+            appliedFilters.search) && (
+            <button
+              onClick={clearFilters}
+              className="text-xs text-blue-600 hover:underline"
+              disabled={isLoading}
+            >
+              Clear Filters
+            </button>
+          )}
         </div>
       )}
 
       {/* Table */}
-      <div className="mt-6 bg-white rounded shadow">
+      <div className="mt-6 bg-white rounded shadow overflow-x-auto">
         <Table hoverable className="w-full table-fixed">
           <Table.Head>
-            <Table.HeadCell className="flex items-center w-24">
+          <Table.HeadCell className="w-28 md:w-30 lg:w-38 xl:w-44">
               Date
               <div className="pl-2 flex flex-col">
                 <svg
@@ -495,20 +537,19 @@ const SharedPostList: FC<SharedPostListProps> = ({
                 </svg>
               </div>
             </Table.HeadCell>
-            <Table.HeadCell className="w-24">Platform</Table.HeadCell>
-            <Table.HeadCell className="w-24">Nickname</Table.HeadCell>
-            <Table.HeadCell className="w-64">Post</Table.HeadCell>
-            <Table.HeadCell className="w-48">Taglist</Table.HeadCell>
-            <Table.HeadCell className="w-24">View Original</Table.HeadCell>
-            <Table.HeadCell className="w-24">Relevance</Table.HeadCell>
-            <Table.HeadCell className="w-24">Sentiment</Table.HeadCell>
+            <Table.HeadCell className="w-32 text-center">Platform</Table.HeadCell>
+            <Table.HeadCell className="w-52 text-center">User</Table.HeadCell>
+            <Table.HeadCell className="w-96">Post</Table.HeadCell>
+            <Table.HeadCell className="w-32 text-center">Original Language</Table.HeadCell>
+            <Table.HeadCell className="w-32 text-center">Relevance Score</Table.HeadCell>
+            <Table.HeadCell className="w-32 text-center">Sentiment</Table.HeadCell>
+            
             {/* <Table.HeadCell className="w-24">Criticism</Table.HeadCell>
             <Table.HeadCell className="w-16">URL</Table.HeadCell> */}
           </Table.Head>
           <Table.Body className="divide-y">
             {isLoading ? (
-              <Table.Row
-              >
+              <Table.Row>
                 <Table.Cell colSpan={10} className="text-center py-10">
                   <div className="flex flex-col items-center justify-center">
                     <Spinner size="xl" color="purple" />
@@ -519,7 +560,9 @@ const SharedPostList: FC<SharedPostListProps> = ({
             ) : listData.length === 0 ? (
               <Table.Row>
                 <Table.Cell colSpan={10} className="text-center py-10">
-                  <p className="text-gray-500">No posts found. Try adjusting your filters.</p>
+                  <p className="text-gray-500">
+                    No posts found. Try adjusting your filters.
+                  </p>
                 </Table.Cell>
               </Table.Row>
             ) : (
@@ -528,55 +571,55 @@ const SharedPostList: FC<SharedPostListProps> = ({
                   <Table.Row
                     key={item.id || index}
                     onClick={() => openPreviewModal(item)}
-                    className="cursor-pointer">
-                    <Table.Cell className="text-[#DD9A19]">
+                    className="cursor-pointer"
+                  >
+                    <Table.Cell className="text-[#DD9A19] align-middle whitespace-nowrap">
                       {item.showDate}
                     </Table.Cell>
-                    <Table.Cell>{item.platform}</Table.Cell>
-                    <Table.Cell>{item.nickname}</Table.Cell>
+                    
+                    <Table.Cell className="text-center align-middle">
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {item.platform}
+                      </a>
+                    </Table.Cell>
+
+                    <Table.Cell className="align-middle">
+                    <div className="line-clamp-2 text-sm break-words text-right md:text-center">
+                        {item.nickname}
+                    </div>
+                    </Table.Cell>
 
                     {/* Updated Post Cell with Multi-line Support */}
-                    <Table.Cell className="max-w-64 w-64">
+                    <Table.Cell className="align-middle">
                       <div className="line-clamp-3 text-sm break-words">
                         {item.post}
                       </div>
                     </Table.Cell>
 
-                    {/* Updated Taglist Cell with Multi-line Support */}
-                    <Table.Cell className="max-w-48 w-48">
-                      <div className="line-clamp-2 text-sm break-words">
-                        {item.taglist}
-                      </div>
-                    </Table.Cell>
-
-                    <Table.Cell className="flex justify-center items-center">
+                    <Table.Cell className="text-center align-middle">
                       <button
-                        className="text-white text-xs bg-[#5D5FEF] shadow-sm w-[69px] h-[32px] justify-center items-center border rounded"
-                        onClick={() => openModal ? openModal(item) : null}
+                        className="text-white text-xs bg-[#5D5FEF] shadow-sm w-[69px] h-[32px] inline-flex justify-center items-center border rounded"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (openModal) openModal(item);
+                        }}
                       >
                         Original
                       </button>
                     </Table.Cell>
-                    <Table.Cell>{item.relvance}%</Table.Cell>
-                    <Table.Cell>{item.sentiment}</Table.Cell>
-                    <Table.Cell>
+                    <Table.Cell className="text-center align-middle">{item.relvance}</Table.Cell>
+                    <Table.Cell className="text-center align-middle">{item.sentiment}</Table.Cell>
+                    <Table.Cell className="text-center align-middle">
                       {item.hasCriticism ? (
                         <span className="bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-red-900 dark:text-red-300">
-                          Criticism
+                          Has negative feedback
                         </span>
                       ) : (
-                        <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-green-900 dark:text-green-300">
-                          All Well
-                        </span>
-                      )}
-                    </Table.Cell>
-                    <Table.Cell className="flex justify-center items-center">
-                      {item.url && item.url !== "#" ? (
-                        <a href={item.url} target="_blank" rel="noopener noreferrer">
-                          <FaEarthAfrica className="cursor-pointer w-6 h-6 text-[#5D5FEF]"></FaEarthAfrica>
-                        </a>
-                      ) : (
-                        <FaEarthAfrica className="w-6 h-6 text-gray-300"></FaEarthAfrica>
+                        <></>
                       )}
                     </Table.Cell>
                   </Table.Row>
@@ -596,7 +639,11 @@ const SharedPostList: FC<SharedPostListProps> = ({
             <button
               disabled={currentPage <= 1 || isLoading}
               onClick={() => handlePageChange(currentPage - 1)}
-              className={`bg-transparent text-white p-2 ${(currentPage <= 1 || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`bg-transparent text-white p-2 ${
+                currentPage <= 1 || isLoading
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
             >
               <svg
                 width="18"
@@ -621,7 +668,11 @@ const SharedPostList: FC<SharedPostListProps> = ({
             <button
               disabled={currentPage >= totalPages || isLoading}
               onClick={() => handlePageChange(currentPage + 1)}
-              className={`bg-transparent text-white p-2 ${(currentPage >= totalPages || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`bg-transparent text-white p-2 ${
+                currentPage >= totalPages || isLoading
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
             >
               <svg
                 width="18"
@@ -632,7 +683,11 @@ const SharedPostList: FC<SharedPostListProps> = ({
               >
                 <path
                   d="M0.5 1.08711L0.5 4.91289C0.5 5.34007 1.00106 5.57052 1.3254 5.29252L3.5571 3.37963C3.78991 3.18008 3.78991 2.81992 3.5571 2.62037L1.3254 0.707482C1.00106 0.429479 0.5 0.659934 0.5 1.08711Z"
-                  fill={currentPage >= totalPages || isLoading ? "#A5A6F6" : "#5D5FEF"}
+                  fill={
+                    currentPage >= totalPages || isLoading
+                      ? "#A5A6F6"
+                      : "#5D5FEF"
+                  }
                 />
               </svg>
             </button>
@@ -656,7 +711,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
 
             {/* Page info */}
             <span className="text-sm text-gray-500">
-              of {totalPages} {totalPages === 1 ? 'page' : 'pages'}
+              of {totalPages} {totalPages === 1 ? "page" : "pages"}
             </span>
           </div>
         </div>
