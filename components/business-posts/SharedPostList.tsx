@@ -117,6 +117,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
 
   // List Data
   const [listData, setListData] = useState<PostData[]>(initialData);
+
   // State for controlling the PreviewModal
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewRowData, setPreviewRowData] = useState<PostData | null>(null);
@@ -531,8 +532,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
           </Table.Head>
           <Table.Body className="divide-y">
             {isLoading ? (
-              <Table.Row
-              >
+              <Table.Row>
                 <Table.Cell colSpan={10} className="text-center py-10">
                   <div className="flex flex-col items-center justify-center">
                     <Spinner size="xl" color="purple" />
@@ -559,28 +559,32 @@ const SharedPostList: FC<SharedPostListProps> = ({
                     <Table.Cell className="text-[#DD9A19]">
                       {item.showDate}
                     </Table.Cell>
-                    <Table.Cell>{item.platform}</Table.Cell>
-                    <Table.Cell>{item.nickname}</Table.Cell>
+
+                    <Table.Cell className="line-clamp-2 text-sm break-words">
+                      {item.nickname}
+                    </Table.Cell>
+
                     {/* Updated Post Cell with Multi-line Support */}
                     <Table.Cell className="max-w-64 w-64">
                       <div className="line-clamp-3 text-sm break-words">
                         {item.post}
                       </div>
                     </Table.Cell>
+                    
                     {/* Updated Taglist Cell with Multi-line Support */}
                     <Table.Cell className="max-w-48 w-48">
                       <div className="line-clamp-2 text-sm break-words">
                         {item.taglist}
                       </div>
                     </Table.Cell>
-                    
+
                     <Table.Cell className="flex justify-center items-center">
-                    <button
+                      <button
                         className="text-white text-xs bg-[#5D5FEF] shadow-sm w-[69px] h-[32px] justify-center items-center border rounded"
                         onClick={() => (openModal ? openModal(item) : null)}
                       >
                         Original
-                        </button>
+                      </button>
                     </Table.Cell>
                     <Table.Cell>{item.relvance}%</Table.Cell>
                     <Table.Cell>{item.sentiment}</Table.Cell>
