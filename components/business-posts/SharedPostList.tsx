@@ -12,8 +12,8 @@ import {
   Button,
   Alert,
 } from "flowbite-react";
-import { useAuth } from "@/context/AuthContext";
-import DatePicker from "./DatePicker";
+import { useAuth } from '@/context/AuthContext';
+import DatePicker from './DatePicker';
 import PreviewModal from "./PreviewModal";
 // Base post data structure shared between components
 export interface PostData {
@@ -417,7 +417,8 @@ const SharedPostList: FC<SharedPostListProps> = ({
             );
           })}
         </Select>
-        <div className="relative flex-grow">
+        {/* Search */}
+        <div className="relative w-1/2 max-w-sm">
           <TextInput
             type="text"
             id="search"
@@ -449,6 +450,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
             </svg>
           </button>
         </div>
+
       </div>
 
       {/* Active Filters Display */}
