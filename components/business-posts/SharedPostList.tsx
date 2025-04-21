@@ -182,7 +182,6 @@ const SharedPostList: FC<SharedPostListProps> = ({
   };
 
   // Select relevance Data
-
   const relevanceData = [
     { value: "25%", label: "≥ 25%" },
     { value: "50%", label: "≥ 50%" },
@@ -197,7 +196,6 @@ const SharedPostList: FC<SharedPostListProps> = ({
   };
 
   // Select criticism Data
-
   const criticismData = [
     { value: "Has Criticism", label: "Has negative feedback" },
     { value: "No Criticism", label: "No negative feedback" },
@@ -501,10 +499,10 @@ const SharedPostList: FC<SharedPostListProps> = ({
       )}
 
       {/* Table */}
-      <div className="mt-6 bg-white rounded shadow">
+      <div className="mt-6 bg-white rounded shadow overflow-x-auto">
         <Table hoverable className="w-full table-fixed">
           <Table.Head>
-            <Table.HeadCell className="flex items-center w-24">
+          <Table.HeadCell className="w-28 md:w-30 lg:w-38 xl:w-44">
               Date
               <div className="pl-2 flex flex-col">
                 <svg
@@ -537,13 +535,13 @@ const SharedPostList: FC<SharedPostListProps> = ({
                 </svg>
               </div>
             </Table.HeadCell>
-            <Table.HeadCell className="w-24">Platform</Table.HeadCell>
-            <Table.HeadCell className="w-24">Nickname</Table.HeadCell>
-            <Table.HeadCell className="w-64">Post</Table.HeadCell>
-            <Table.HeadCell className="w-48">Taglist</Table.HeadCell>
-            <Table.HeadCell className="w-24">View Original</Table.HeadCell>
-            <Table.HeadCell className="w-24">Relevance</Table.HeadCell>
-            <Table.HeadCell className="w-24">Sentiment</Table.HeadCell>
+            <Table.HeadCell className="w-32 text-center">Platform</Table.HeadCell>
+            <Table.HeadCell className="w-52 text-center">User</Table.HeadCell>
+            <Table.HeadCell className="w-96">Post</Table.HeadCell>
+            <Table.HeadCell className="w-32 text-center">Original Language</Table.HeadCell>
+            <Table.HeadCell className="w-32 text-center">Relevance Score</Table.HeadCell>
+            <Table.HeadCell className="w-32 text-center">Sentiment</Table.HeadCell>
+            
             {/* <Table.HeadCell className="w-24">Criticism</Table.HeadCell>
             <Table.HeadCell className="w-16">URL</Table.HeadCell> */}
           </Table.Head>
@@ -573,60 +571,53 @@ const SharedPostList: FC<SharedPostListProps> = ({
                     onClick={() => openPreviewModal(item)}
                     className="cursor-pointer"
                   >
-                    <Table.Cell className="text-[#DD9A19]">
+                    <Table.Cell className="text-[#DD9A19] align-middle whitespace-nowrap">
                       {item.showDate}
                     </Table.Cell>
+                    
+                    <Table.Cell className="text-center align-middle">
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {item.platform}
+                      </a>
+                    </Table.Cell>
 
-                    <Table.Cell className="line-clamp-2 text-sm break-words">
-                      {item.nickname}
+                    <Table.Cell className="align-middle">
+                    <div className="line-clamp-2 text-sm break-words text-right md:text-center">
+                        {item.nickname}
+                    </div>
                     </Table.Cell>
 
                     {/* Updated Post Cell with Multi-line Support */}
-                    <Table.Cell className="max-w-64 w-64">
+                    <Table.Cell className="align-middle">
                       <div className="line-clamp-3 text-sm break-words">
                         {item.post}
                       </div>
                     </Table.Cell>
 
-                    {/* Updated Taglist Cell with Multi-line Support */}
-                    <Table.Cell className="max-w-48 w-48">
-                      <div className="line-clamp-2 text-sm break-words">
-                        {item.taglist}
-                      </div>
-                    </Table.Cell>
-
-                    <Table.Cell className="flex justify-center items-center">
+                    <Table.Cell className="text-center align-middle">
                       <button
-                        className="text-white text-xs bg-[#5D5FEF] shadow-sm w-[69px] h-[32px] justify-center items-center border rounded"
-                        onClick={() => (openModal ? openModal(item) : null)}
+                        className="text-white text-xs bg-[#5D5FEF] shadow-sm w-[69px] h-[32px] inline-flex justify-center items-center border rounded"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (openModal) openModal(item);
+                        }}
                       >
                         Original
                       </button>
                     </Table.Cell>
-                    <Table.Cell>{item.relvance}%</Table.Cell>
-                    <Table.Cell>{item.sentiment}</Table.Cell>
-                    <Table.Cell>
+                    <Table.Cell className="text-center align-middle">{item.relvance}</Table.Cell>
+                    <Table.Cell className="text-center align-middle">{item.sentiment}</Table.Cell>
+                    <Table.Cell className="text-center align-middle">
                       {item.hasCriticism ? (
                         <span className="bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-red-900 dark:text-red-300">
-                          Criticism
+                          Has negative feedback
                         </span>
                       ) : (
-                        <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-green-900 dark:text-green-300">
-                          All Well
-                        </span>
-                      )}
-                    </Table.Cell>
-                    <Table.Cell className="flex justify-center items-center">
-                      {item.url && item.url !== "#" ? (
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <FaEarthAfrica className="cursor-pointer w-6 h-6 text-[#5D5FEF]"></FaEarthAfrica>
-                        </a>
-                      ) : (
-                        <FaEarthAfrica className="w-6 h-6 text-gray-300"></FaEarthAfrica>
+                        <></>
                       )}
                     </Table.Cell>
                   </Table.Row>
