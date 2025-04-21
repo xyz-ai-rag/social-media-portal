@@ -182,6 +182,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
   };
 
   // Select relevance Data
+
   const relevanceData = [
     { value: "25%", label: "≥ 25%" },
     { value: "50%", label: "≥ 50%" },
@@ -196,6 +197,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
   };
 
   // Select criticism Data
+
   const criticismData = [
     { value: "Has Criticism", label: "Has negative feedback" },
     { value: "No Criticism", label: "No negative feedback" },
@@ -574,8 +576,10 @@ const SharedPostList: FC<SharedPostListProps> = ({
                     <Table.Cell className="text-[#DD9A19]">
                       {item.showDate}
                     </Table.Cell>
-                    <Table.Cell>{item.platform}</Table.Cell>
-                    <Table.Cell>{item.nickname}</Table.Cell>
+
+                    <Table.Cell className="line-clamp-2 text-sm break-words">
+                      {item.nickname}
+                    </Table.Cell>
 
                     {/* Updated Post Cell with Multi-line Support */}
                     <Table.Cell className="max-w-64 w-64">

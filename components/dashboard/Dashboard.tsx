@@ -9,7 +9,6 @@ import LineGraph from "./SimilarBusinesses/LineGraph";
 import TopCitiesMap from "./TopCities/TopCities";
 import { useAuth } from "@/context/AuthContext";
 
-
 interface DashboardProps {
   clientId: string;
   businessId: string;
