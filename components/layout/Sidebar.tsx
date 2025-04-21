@@ -96,6 +96,7 @@ export default function Sidebar() {
 
   // Check if we're on the business selection page
   const isBusinessSelectionPage = pathname === "/businesses";
+  const isSettingsPage = pathname === "/settings";
 
   // Extract client and business ID from URL for dynamic routing
   const urlParts = pathname.split("/").filter(Boolean);
@@ -189,12 +190,12 @@ export default function Sidebar() {
               href={
                 hasSelectedBusiness
                   ? `/${currentClientId}/${currentBusinessId}/dashboard`
-                  : "#"
+                  : "/businesses"
               }
               icon={<FiGrid />}
               label="Dashboard"
               isActive={isActive("/[clientId]/[businessId]/dashboard")}
-              disabled={!hasSelectedBusiness && !isBusinessSelectionPage}
+              disabled={!hasSelectedBusiness && !isSettingsPage}
               collapsed={collapsed}
               onClick={!hasSelectedBusiness ? handleDisabledClick : undefined}
             />
@@ -203,12 +204,12 @@ export default function Sidebar() {
               href={
                 hasSelectedBusiness
                   ? `/${currentClientId}/${currentBusinessId}/posts`
-                  : "#"
+                  : "/businesses"
               }
               icon={<FiList />}
               label="All Posts"
               isActive={isActive("/[clientId]/[businessId]/posts")}
-              disabled={!hasSelectedBusiness && !isBusinessSelectionPage}
+              disabled={!hasSelectedBusiness && !isSettingsPage}
               collapsed={collapsed}
               onClick={!hasSelectedBusiness ? handleDisabledClick : undefined}
             />
@@ -217,12 +218,12 @@ export default function Sidebar() {
               href={
                 hasSelectedBusiness
                   ? `/${currentClientId}/${currentBusinessId}/competitors`
-                  : "#"
+                  : "/businesses"
               }
               icon={<FiUsers />}
               label="Competitors"
               isActive={isActive("/[clientId]/[businessId]/competitors")}
-              disabled={!hasSelectedBusiness && !isBusinessSelectionPage}
+              disabled={!hasSelectedBusiness && !isSettingsPage}
               collapsed={collapsed}
               onClick={!hasSelectedBusiness ? handleDisabledClick : undefined}
             />
