@@ -182,7 +182,12 @@ const SharedPostList: FC<SharedPostListProps> = ({
   };
 
   // Select relevance Data
-  const relevanceData = ["50%", "60%", "70%", "80%", "90%", "100%"];
+
+  const relevanceData = [
+    { value: "25%", label: "≥ 25%" },
+    { value: "50%", label: "≥ 50%" },
+    { value: "75%", label: "≥ 75%" },
+  ];
 
   const handleRelevance = (data: string) => {
     setRelevance(data);
@@ -192,7 +197,11 @@ const SharedPostList: FC<SharedPostListProps> = ({
   };
 
   // Select criticism Data
-  const criticismData = ["Has Criticism", "No Criticism"];
+
+  const criticismData = [
+    { value: "Has Criticism", label: "Has negative feedback" },
+    { value: "No Criticism", label: "No negative feedback" },
+  ];
 
   const handleCriticism = (data: string) => {
     setCriticism(data);
@@ -360,7 +369,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
           onChange={(e) => handlePlatform(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">All Platforms</option>
+          <option value="">Platforms</option>
           {platformData.map((item, index) => {
             return <option key={index}>{item}</option>;
           })}
@@ -375,7 +384,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
           onChange={(e) => handleSentiment(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">All Sentiments</option>
+          <option value="">Sentiments</option>
           {sentimentData.map((item, index) => {
             return <option key={index}>{item}</option>;
           })}
@@ -386,9 +395,13 @@ const SharedPostList: FC<SharedPostListProps> = ({
           onChange={(e) => handleRelevance(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">All Relevance</option>
+          <option value="">Relevance</option>
           {relevanceData.map((item, index) => {
-            return <option key={index}>{item}</option>;
+            return (
+              <option key={index} value={item.value}>
+                {item.label}
+              </option>
+            );
           })}
         </Select>
         <Select
@@ -397,9 +410,13 @@ const SharedPostList: FC<SharedPostListProps> = ({
           onChange={(e) => handleCriticism(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">All Criticism</option>
+          <option value="">Feedback</option>
           {criticismData.map((item, index) => {
-            return <option key={index}>{item}</option>;
+            return (
+              <option key={index} value={item.value}>
+                {item.label}
+              </option>
+            );
           })}
         </Select>
         <div className="relative flex-grow">
@@ -570,7 +587,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
                         {item.post}
                       </div>
                     </Table.Cell>
-                    
+
                     {/* Updated Taglist Cell with Multi-line Support */}
                     <Table.Cell className="max-w-48 w-48">
                       <div className="line-clamp-2 text-sm break-words">
