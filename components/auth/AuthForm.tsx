@@ -91,7 +91,7 @@ export default function LoginPage() {
         <ModalBody className="pt-6">
           <div className="w-full flex justify-center mb-6">
             <Image
-              src="/hyprdata_icon_color.svg"
+              src="/hyprdata_icon_transparent.svg"
               alt="Hyprdata.ai Logo"
               width={160}
               height={48}
