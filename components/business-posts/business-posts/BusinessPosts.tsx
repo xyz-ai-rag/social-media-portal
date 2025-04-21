@@ -7,6 +7,7 @@ import PostCard from "./PostCard";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "../SharedPostList";
 import PostPreviewCard from "./PostPreviewCard";
+import { useFilters } from "@/context/FilterSelectContext";
 
 interface BusinessPostsProps {
   clientId: string;
@@ -53,7 +54,6 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
   const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
   const [adjacentPagesLoading, setAdjacentPagesLoading] = useState(false);
-
   // Calculate yesterday's date for date limits
   const yesterday = useMemo(() => {
     const date = new Date();
@@ -69,18 +69,34 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   }, []);
 
   // Initialize with empty filters - the API will apply defaults (last 30 days)
-  const [filters, setFilters] = useState({
-    startDate: thirtyDaysAgo,
-    endDate: yesterday,
-    platform: "",
-    sentiment: "",
-    relevance: "",
-    hasCriticism: "",
-    search: "",
-    sortOrder: "desc",
-    page: 1,
+  // const [filters, setFilters] = useState({
+  //   startDate: thirtyDaysAgo,
+  //   endDate: yesterday,
+  //   platform: "",
+  //   sentiment: "",
+  //   relevance: "",
+  //   hasCriticism: "",
+  //   search: "",
+  //   sortOrder: "desc",
+  //   page: 1,
+  // });
+
+  // Use context useFilters(), when filters components changed, also can use same setFilters function build before.
+  const { filters, setFilters } = useFilters();
+  // setting default date
+  const [dateRange, setDateRange] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("business_page_date");
+      return saved
+        ? JSON.parse(saved)
+        : { startDate: thirtyDaysAgo, endDate: yesterday };
+    }
+    return { startDate: thirtyDaysAgo, endDate: yesterday };
   });
 
+  useEffect(() => {
+    sessionStorage.setItem("business_page_date", JSON.stringify(dateRange));
+  }, [dateRange]);
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
     null
@@ -108,16 +124,16 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       try {
         // Ensure endDate is not after yesterday
         const endDate =
-          new Date(filters.endDate) > new Date(yesterday)
+          new Date(dateRange.endDate) > new Date(yesterday)
             ? yesterday
-            : filters.endDate;
+            : dateRange.endDate;
 
         // Build query parameters
         const queryParams = new URLSearchParams();
         queryParams.append("businessId", businessId);
 
-        if (filters.startDate)
-          queryParams.append("startDate", filters.startDate);
+        if (dateRange.startDate)
+          queryParams.append("startDate", dateRange.startDate);
         queryParams.append("endDate", endDate);
         if (filters.platform) queryParams.append("platform", filters.platform);
         if (filters.sentiment)
@@ -166,9 +182,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   // Main fetch function for current page
   const fetchPosts = useCallback(async () => {
     if (!businessId) {
-      setError("Business ID is required");
-      setIsLoading(false);
-      return;
+      return { posts: [], pagination: null, appliedFilters: null };
     }
 
     try {
@@ -179,7 +193,8 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         filters.page
       );
 
-      if (posts.length > 0) {
+      // If no posts, the filters components should still have filters value and filters tag should be also display
+      if (posts.length >= 0) {
         setPosts(posts);
         if (pagination) setPagination(pagination);
         if (appliedFilters) setAppliedFilters(appliedFilters);
@@ -226,6 +241,34 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
+
+  // NEW: Fetch adjacent pages when modal is opened or current page changes
+  useEffect(() => {
+    if (isModalOpen && pagination.totalPages > 1) {
+      fetchAdjacentPages();
+    }
+  }, [isModalOpen, pagination.currentPage, fetchAdjacentPages]);
+
+  // Add event listener to update the modal content without closing it
+  useEffect(() => {
+    const handleUpdateModal = (event: CustomEvent<{ data: any }>) => {
+      if (event.detail && event.detail.data) {
+        setModalRowData(event.detail.data);
+      }
+    };
+
+    document.addEventListener(
+      "updatePostModal",
+      handleUpdateModal as EventListener
+    );
+
+    return () => {
+      document.removeEventListener(
+        "updatePostModal",
+        handleUpdateModal as EventListener
+      );
+    };
+  }, []);
 
   // NEW: Fetch adjacent pages when modal is opened or current page changes
   useEffect(() => {
@@ -338,10 +381,20 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     ) {
       newFilters.endDate = yesterday;
     }
+    // Extract startDate / endDate and save to local dateRange
+    const { startDate, endDate, ...otherFilters } = newFilters;
+
+    if (endDate || startDate) {
+      setDateRange((prevdate: object) => ({
+        ...prevdate,
+        ...(startDate && { startDate: startDate }),
+        ...(endDate && { endDate: endDate }),
+      }));
+    }
 
     setFilters((prev) => ({
       ...prev,
-      ...newFilters,
+      ...otherFilters,
       // If filters other than page change, reset to page 1
       page: newFilters.hasOwnProperty("page") ? newFilters.page : 1,
     }));
