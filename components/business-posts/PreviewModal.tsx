@@ -23,7 +23,7 @@ export interface PreviewModalProps {
   isNavigating?: boolean; // NEW: Flag to show loading state during navigation
 }
 
-const PreviewModalNew = ({
+const PreviewModal = ({
   isOpen,
   onClose,
   rowData,
@@ -302,4 +302,4 @@ const PreviewModalNew = ({
   );
 };
 
-export default PreviewModalNew;
+export default PreviewModal;

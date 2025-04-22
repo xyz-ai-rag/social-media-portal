@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { PostData } from "../SharedPostList";
-import PreviewModalNew from "../PreviewModalNew";
+import PreviewModal from "../PreviewModal";
 
 interface PaginationInfo {
   totalCount: number;
@@ -190,7 +190,7 @@ const PostPreviewCard = ({
   ) : null;
 
   return (
-    <PreviewModalNew
+    <PreviewModal
       isOpen={isOpen}
       onClose={onClose}
       rowData={rowData}
