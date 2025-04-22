@@ -31,19 +31,39 @@ export default function HashtagChart({
   const endDateProcessed = setEndOfDay(dateRange.endDate);
 
   useEffect(() => {
+    let isCurrent = true; // Flag to control whether the request is still valid
+
     async function fetchHashtagData() {
+      setIsLoading(true); // Set loading state when the request is made
+
       try {
         const url = `/api/charts/hashtags?business_id=${businessId}&start_date=${startDateProcessed}&end_date=${endDateProcessed}`;
         const res = await fetch(url);
         const data = await res.json();
-        setHashtags(data);
+
+        // Only update state if this is the current request
+        if (isCurrent) {
+          setHashtags(data);
+        } else {
+          console.log("Ignored an outdated request.");
+        }
       } catch (error) {
-        console.error("Error fetching hashtag data:", error);
+        if (isCurrent) {
+          console.error("Error fetching hashtag data:", error);
+        }
       } finally {
-        setIsLoading(false);
+        if (isCurrent) {
+          setIsLoading(false);
+        }
       }
     }
+
     fetchHashtagData();
+
+    // Cleanup function: Mark the previous request as invalid when a new one is made
+    return () => {
+      isCurrent = false;
+    };
   }, [businessId, startDateProcessed, endDateProcessed]);
 
   if (isLoading) {

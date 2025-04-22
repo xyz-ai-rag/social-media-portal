@@ -32,31 +32,52 @@ const TopCitiesChart = ({ clientId, businessId }: TopCitiesChartProps) => {
   // Format date manually
   const formatDate = (date: string) => {
     const d = new Date(date);
-    const month = d.toLocaleString('default', { month: 'short' });
+    const month = d.toLocaleString("default", { month: "short" });
     const day = d.getDate();
     return `${month} ${day}`;
   };
 
   useEffect(() => {
+    let isCurrent = true; // Flag to control whether the request is still valid
+
     async function fetchCityData() {
+      setIsLoading(true); // Set loading state when the request is made
+
       try {
-        setIsLoading(true);
-        const url = `/api/charts/top-cities?business_id=${businessId}&start_date=${startDateProcessed}&end_date=${endDateProcessed}`;
+        const url = `/api/charts/top-cities?business_id=${encodeURIComponent(
+          businessId
+        )}&start_date=${encodeURIComponent(
+          startDateProcessed
+        )}&end_date=${encodeURIComponent(endDateProcessed)}`;
+
         const res = await fetch(url);
         if (!res.ok) {
           throw new Error(`API request failed with status ${res.status}`);
         }
         const data = await res.json();
-        
-        setCities(data);
+
+        // Only update state if this is the current request
+        if (isCurrent) {
+          setCities(data); // Update the cities data only for the current request
+        }
       } catch (error) {
-        console.error("Error fetching city data:", error);
-        setCities([]);
+        if (isCurrent) {
+          console.error("Error fetching city data:", error);
+          setCities([]); // Set an empty array in case of an error, only for the current request
+        }
       } finally {
-        setIsLoading(false);
+        if (isCurrent) {
+          setIsLoading(false); // Stop loading state only for the current request
+        }
       }
     }
+
     fetchCityData();
+
+    // Cleanup function: Mark the previous request as invalid when a new one is made
+    return () => {
+      isCurrent = false;
+    };
   }, [businessId, startDateProcessed, endDateProcessed]);
 
   // Generate bubble size based on percentage
@@ -67,19 +88,21 @@ const TopCitiesChart = ({ clientId, businessId }: TopCitiesChartProps) => {
   // Generate shades of blue based on index
   const getColor = (index: number) => {
     const baseColors = [
-      'rgba(66, 133, 244, 0.9)',   // Primary blue
-      'rgba(52, 168, 235, 0.9)',   // Light blue
-      'rgba(30, 144, 255, 0.9)',   // Dodger blue
-      'rgba(0, 119, 182, 0.9)',    // Strong blue
-      'rgba(65, 105, 225, 0.9)',   // Royal blue
-      'rgba(100, 149, 237, 0.9)',  // Cornflower blue
-      'rgba(70, 130, 180, 0.9)',   // Steel blue
-      'rgba(106, 90, 205, 0.9)',   // Slate blue with purple tint
-      'rgba(72, 61, 139, 0.9)',    // Dark slate blue
-      'rgba(25, 25, 112, 0.9)',    // Midnight blue
+      "rgba(66, 133, 244, 0.9)", // Primary blue
+      "rgba(52, 168, 235, 0.9)", // Light blue
+      "rgba(30, 144, 255, 0.9)", // Dodger blue
+      "rgba(0, 119, 182, 0.9)", // Strong blue
+      "rgba(65, 105, 225, 0.9)", // Royal blue
+      "rgba(100, 149, 237, 0.9)", // Cornflower blue
+      "rgba(70, 130, 180, 0.9)", // Steel blue
+      "rgba(106, 90, 205, 0.9)", // Slate blue with purple tint
+      "rgba(72, 61, 139, 0.9)", // Dark slate blue
+      "rgba(25, 25, 112, 0.9)", // Midnight blue
     ];
-    
-    return index < baseColors.length ? baseColors[index] : baseColors[index % baseColors.length];
+
+    return index < baseColors.length
+      ? baseColors[index]
+      : baseColors[index % baseColors.length];
   };
 
   if (isLoading) {
@@ -92,16 +115,16 @@ const TopCitiesChart = ({ clientId, businessId }: TopCitiesChartProps) => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md h-full overflow-hidden">
-      <h2 className="text-base font-medium text-gray-800 mb-2">
-        Top Cities
-      </h2>
+      <h2 className="text-base font-medium text-gray-800 mb-2">Top Cities</h2>
       <div className="text-sm text-gray-600 mb-4">
         Posts from {formatDate(dateRange.startDate)} to{" "}
         {formatDate(dateRange.endDate)}
       </div>
 
       {cities.length === 0 ? (
-        <div className="flex justify-center items-center h-64">No city data found.</div>
+        <div className="flex justify-center items-center h-64">
+          No city data found.
+        </div>
       ) : (
         <div className="flex flex-col h-full">
           {/* Circular Bubble Chart */}
@@ -111,17 +134,20 @@ const TopCitiesChart = ({ clientId, businessId }: TopCitiesChartProps) => {
                 // Calculate position in a circular arrangement
                 const totalItems = Math.min(cities.length, 10);
                 const angle = (index / totalItems) * 2 * Math.PI;
-                
+
                 // Radius of the circular arrangement - smaller for more items
                 const radius = totalItems <= 6 ? 35 : 30;
-                
+
                 // Calculate position, with central offset
                 const x = 50 + radius * Math.cos(angle);
                 const y = 50 + radius * Math.sin(angle);
-                
+
                 const size = getBubbleSize(city.percentage);
-                const fontSize = Math.max(10, Math.min(14, 10 + city.percentage * 0.2));
-                
+                const fontSize = Math.max(
+                  10,
+                  Math.min(14, 10 + city.percentage * 0.2)
+                );
+
                 return (
                   <div
                     key={index}
@@ -137,13 +163,13 @@ const TopCitiesChart = ({ clientId, businessId }: TopCitiesChartProps) => {
                     onClick={() => setSelectedCity(city)}
                   >
                     <div className="text-center text-white">
-                      <div 
+                      <div
                         className="font-bold leading-tight"
                         style={{ fontSize: `${fontSize}px` }}
                       >
                         {index + 1}
                       </div>
-                      <div 
+                      <div
                         className="text-white text-opacity-90 leading-tight"
                         style={{ fontSize: `${Math.max(8, fontSize - 4)}px` }}
                       >
@@ -153,30 +179,32 @@ const TopCitiesChart = ({ clientId, businessId }: TopCitiesChartProps) => {
                   </div>
                 );
               })}
-              
+
               {/* Decorative center circle */}
-              <div 
+              <div
                 className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-white bg-opacity-20"
-                style={{ width: '25%', height: '25%', zIndex: 1 }}
+                style={{ width: "25%", height: "25%", zIndex: 1 }}
               />
-              
+
               {/* Decorative rings */}
-              <div 
+              <div
                 className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-blue-200 border-opacity-40"
-                style={{ width: '50%', height: '50%', zIndex: 1 }}
+                style={{ width: "50%", height: "50%", zIndex: 1 }}
               />
-              <div 
+              <div
                 className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-200 border-opacity-30"
-                style={{ width: '75%', height: '75%', zIndex: 1 }}
+                style={{ width: "75%", height: "75%", zIndex: 1 }}
               />
             </div>
-            
+
             {/* Selected city info popup */}
             {selectedCity && (
               <div className="absolute bottom-2 right-2 bg-white p-3 rounded-lg shadow-lg z-20 max-w-xs">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-medium text-gray-900">{selectedCity.city}</h3>
-                  <button 
+                  <h3 className="font-medium text-gray-900">
+                    {selectedCity.city}
+                  </h3>
+                  <button
                     className="text-gray-500 hover:text-gray-700 ml-2"
                     onClick={() => setSelectedCity(null)}
                   >
@@ -184,13 +212,22 @@ const TopCitiesChart = ({ clientId, businessId }: TopCitiesChartProps) => {
                   </button>
                 </div>
                 <div className="text-sm mt-1 text-gray-600">
-                  <div>Posts: <span className="font-medium text-gray-900">{selectedCity.count}</span></div>
-                  <div>Percentage: <span className="font-medium text-gray-900">{selectedCity.percentage}%</span></div>
+                  <div>
+                    Posts:{" "}
+                    <span className="font-medium text-gray-900">
+                      {selectedCity.count}
+                    </span>
+                  </div>
+                  <div>
+                    Percentage:{" "}
+                    <span className="font-medium text-gray-900">
+                      {selectedCity.percentage}%
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
           </div>
-
         </div>
       )}
     </div>
