@@ -9,7 +9,7 @@ import { ReactNode } from "react";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Social Media Portal",
+  title: "Hyprdata.ai Web Portal",
   description: "Analytics and management for social media",
   icons: {
     icon: "/favicon.png",
