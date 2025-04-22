@@ -9,7 +9,6 @@ import LineGraph from "./SimilarBusinesses/LineGraph";
 import TopCitiesMap from "./TopCities/TopCities";
 import { useAuth } from "@/context/AuthContext";
 
-
 interface DashboardProps {
   clientId: string;
   businessId: string;
@@ -37,7 +36,7 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h1 className="text-[34px] font-bold text-[#5D5FEF]">
-            Analytics Dashboard
+            {businessName} Dashboard
           </h1>
 
           {/* Shared Date Range Picker */}

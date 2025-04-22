@@ -12,8 +12,9 @@ import {
   Button,
   Alert,
 } from "flowbite-react";
-import { useAuth } from "@/context/AuthContext";
-import DatePicker from "./DatePicker";
+import { useAuth } from '@/context/AuthContext';
+import DatePicker from './DatePicker';
+import PreviewModal from "./PreviewModal";
 // Base post data structure shared between components
 export interface PostData {
   id?: string;
@@ -183,7 +184,11 @@ const SharedPostList: FC<SharedPostListProps> = ({
   };
 
   // Select relevance Data
-  const relevanceData = ["50%", "60%", "70%", "80%", "90%", "100%"];
+  const relevanceData = [
+    { value: "25%", label: "≥ 25%" },
+    { value: "50%", label: "≥ 50%" },
+    { value: "75%", label: "≥ 75%" },
+  ];
 
   const handleRelevance = (data: string) => {
     setRelevance(data);
@@ -193,7 +198,10 @@ const SharedPostList: FC<SharedPostListProps> = ({
   };
 
   // Select criticism Data
-  const criticismData = ["Has Criticism", "No Criticism"];
+  const criticismData = [
+    { value: "Has Criticism", label: "Has negative feedback" },
+    { value: "No Criticism", label: "No negative feedback" },
+  ];
 
   const handleCriticism = (data: string) => {
     setCriticism(data);
@@ -361,7 +369,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
           onChange={(e) => handlePlatform(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">All Platforms</option>
+          <option value="">Platforms</option>
           {platformData.map((item, index) => {
             return <option key={index}>{item}</option>;
           })}
@@ -376,7 +384,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
           onChange={(e) => handleSentiment(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">All Sentiments</option>
+          <option value="">Sentiments</option>
           {sentimentData.map((item, index) => {
             return <option key={index}>{item}</option>;
           })}
@@ -387,9 +395,13 @@ const SharedPostList: FC<SharedPostListProps> = ({
           onChange={(e) => handleRelevance(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">All Relevance</option>
+          <option value="">Relevance</option>
           {relevanceData.map((item, index) => {
-            return <option key={index}>{item}</option>;
+            return (
+              <option key={index} value={item.value}>
+                {item.label}
+              </option>
+            );
           })}
         </Select>
         <Select
@@ -398,12 +410,17 @@ const SharedPostList: FC<SharedPostListProps> = ({
           onChange={(e) => handleCriticism(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">All Criticism</option>
+          <option value="">Feedback</option>
           {criticismData.map((item, index) => {
-            return <option key={index}>{item}</option>;
+            return (
+              <option key={index} value={item.value}>
+                {item.label}
+              </option>
+            );
           })}
         </Select>
-        <div className="relative flex-grow">
+        {/* Search */}
+        <div className="relative w-1/2 max-w-sm">
           <TextInput
             type="text"
             id="search"
@@ -435,6 +452,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
             </svg>
           </button>
         </div>
+
       </div>
 
       {/* Active Filters Display */}
@@ -485,10 +503,10 @@ const SharedPostList: FC<SharedPostListProps> = ({
       )}
 
       {/* Table */}
-      <div className="mt-6 bg-white rounded shadow">
+      <div className="mt-6 bg-white rounded shadow overflow-x-auto">
         <Table hoverable className="w-full table-fixed">
           <Table.Head>
-            <Table.HeadCell className="flex items-center w-24">
+          <Table.HeadCell className="w-28 md:w-30 lg:w-38 xl:w-44">
               Date
               <div className="pl-2 flex flex-col">
                 <svg
@@ -521,13 +539,13 @@ const SharedPostList: FC<SharedPostListProps> = ({
                 </svg>
               </div>
             </Table.HeadCell>
-            <Table.HeadCell className="w-24">Platform</Table.HeadCell>
-            <Table.HeadCell className="w-24">Nickname</Table.HeadCell>
-            <Table.HeadCell className="w-64">Post</Table.HeadCell>
-            <Table.HeadCell className="w-48">Taglist</Table.HeadCell>
-            <Table.HeadCell className="w-24">View Original</Table.HeadCell>
-            <Table.HeadCell className="w-24">Relevance</Table.HeadCell>
-            <Table.HeadCell className="w-24">Sentiment</Table.HeadCell>
+            <Table.HeadCell className="w-32 text-center">Platform</Table.HeadCell>
+            <Table.HeadCell className="w-52 text-center">User</Table.HeadCell>
+            <Table.HeadCell className="w-96">Post</Table.HeadCell>
+            <Table.HeadCell className="w-32 text-center">Original Language</Table.HeadCell>
+            <Table.HeadCell className="w-32 text-center">Relevance Score</Table.HeadCell>
+            <Table.HeadCell className="w-32 text-center">Sentiment</Table.HeadCell>
+            
             {/* <Table.HeadCell className="w-24">Criticism</Table.HeadCell>
             <Table.HeadCell className="w-16">URL</Table.HeadCell> */}
           </Table.Head>
@@ -559,23 +577,30 @@ const SharedPostList: FC<SharedPostListProps> = ({
                     }
                     className="cursor-pointer"
                   >
-                    <Table.Cell className="text-[#DD9A19]">
+                    <Table.Cell className="text-[#DD9A19] align-middle whitespace-nowrap">
                       {item.showDate}
                     </Table.Cell>
-                    <Table.Cell>{item.platform}</Table.Cell>
-                    <Table.Cell>{item.nickname}</Table.Cell>
-
-                    {/* Updated Post Cell with Multi-line Support */}
-                    <Table.Cell className="max-w-64 w-64">
-                      <div className="line-clamp-3 text-sm break-words">
-                        {item.post}
-                      </div>
+                    
+                    <Table.Cell className="text-center align-middle">
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {item.platform}
+                      </a>
                     </Table.Cell>
 
-                    {/* Updated Taglist Cell with Multi-line Support */}
-                    <Table.Cell className="max-w-48 w-48">
-                      <div className="line-clamp-2 text-sm break-words">
-                        {item.taglist}
+                    <Table.Cell className="align-middle">
+                    <div className="line-clamp-2 text-sm break-words text-right md:text-center">
+                        {item.nickname}
+                    </div>
+                    </Table.Cell>
+
+                    {/* Updated Post Cell with Multi-line Support */}
+                    <Table.Cell className="align-middle">
+                      <div className="line-clamp-3 text-sm break-words">
+                        {item.post}
                       </div>
                     </Table.Cell>
 
@@ -590,30 +615,15 @@ const SharedPostList: FC<SharedPostListProps> = ({
                         Original
                       </button>
                     </Table.Cell>
-                    <Table.Cell>{item.relvance}%</Table.Cell>
-                    <Table.Cell>{item.sentiment}</Table.Cell>
-                    <Table.Cell>
+                    <Table.Cell className="text-center align-middle">{item.relvance}</Table.Cell>
+                    <Table.Cell className="text-center align-middle">{item.sentiment}</Table.Cell>
+                    <Table.Cell className="text-center align-middle">
                       {item.hasCriticism ? (
                         <span className="bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-red-900 dark:text-red-300">
-                          Criticism
+                          Has negative feedback
                         </span>
                       ) : (
-                        <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-green-900 dark:text-green-300">
-                          All Well
-                        </span>
-                      )}
-                    </Table.Cell>
-                    <Table.Cell className="flex justify-center items-center">
-                      {item.url && item.url !== "#" ? (
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <FaEarthAfrica className="cursor-pointer w-6 h-6 text-[#5D5FEF]"></FaEarthAfrica>
-                        </a>
-                      ) : (
-                        <FaEarthAfrica className="w-6 h-6 text-gray-300"></FaEarthAfrica>
+                        <></>
                       )}
                     </Table.Cell>
                   </Table.Row>
