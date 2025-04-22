@@ -69,11 +69,11 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
     [dateRange.endDate]
   );
   const formattedStart = useMemo(
-    () => format(new Date(dateRange.startDate), "d MMM"),
+    () => format(new Date(dateRange.startDate), "MMM d"),
     [dateRange.startDate]
   );
   const formattedEnd = useMemo(
-    () => format(new Date(dateRange.endDate), "d MMM"),
+    () => format(new Date(dateRange.endDate), "MMM d"),
     [dateRange.endDate]
   );
   // Derive the similar business ids from clientDetails:
@@ -215,7 +215,7 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
     <div className="bg-white p-6 rounded-lg shadow-md h-full">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-base font-medium text-gray-800">
-          Similar Businesses Comparison
+          Vs Similar Businesses
         </h2>
       </div>
       <div className="text-sm text-gray-600 mb-4">

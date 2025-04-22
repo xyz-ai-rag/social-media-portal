@@ -38,36 +38,29 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           <h1 className="text-[34px] font-bold text-[#5D5FEF]">
             {businessName} Dashboard
           </h1>
-
-          {/* Shared Date Range Picker */}
           <DateRangePicker />
         </div>
 
-        {/* Grid layout for dashboard with all chart components */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 h-full items-stretch">
-          {/* Number of posts chart - spans 2 columns */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full items-stretch">
+          {/* Row 1 */}
           <div className="md:col-span-2">
             <GroupedBarChart clientId={clientId} businessId={businessId} />
           </div>
-
-          {/* Platform Distribution Chart */}
-          <div>
+          <div className="md:col-span-1">
             <PieChartComponent clientId={clientId} businessId={businessId} />
           </div>
 
-          {/* Topics Chart */}
-          <div>
-            <TopCitiesMap clientId={clientId} businessId={businessId} />
-          </div>
-
-          {/* Top Hashtags */}
-          <div>
+          {/* Row 2 */}
+          <div className="md:col-span-1">
             <HashtagChart clientId={clientId} businessId={businessId} />
           </div>
-
-          {/* Similar Businesses Chart */}
-          <div>
+          <div className="md:col-span-2">
             <LineGraph clientId={clientId} businessId={businessId} />
+          </div>
+
+          {/* Row 3 */}
+          <div className="md:col-span-1">
+            <TopCitiesMap clientId={clientId} businessId={businessId} />
           </div>
         </div>
       </div>
