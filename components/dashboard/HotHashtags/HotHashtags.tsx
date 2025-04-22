@@ -76,9 +76,7 @@ export default function HashtagChart({
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md h-full overflow-auto">
-      <h2 className="text-base font-medium text-gray-800 mb-2">
-        Top Hashtag Topics
-      </h2>
+      <h2 className="text-base font-medium text-gray-800 mb-2">Top Hashtags</h2>
       <div className="text-sm text-gray-600 mb-4">
         Posts from {format(new Date(dateRange.startDate), "MMM d")} to{" "}
         {format(new Date(dateRange.endDate), "MMM d")}
@@ -92,7 +90,7 @@ export default function HashtagChart({
               <div className="flex justify-between mb-1">
                 <span className="text-sm font-medium">{hashtag.tag}</span>
                 <span className="text-sm font-medium">
-                  {hashtag.percentage}%
+                  {Math.round(hashtag.percentage)}%
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 relative group">
