@@ -18,22 +18,36 @@ const DatePicker: React.FC<DatePickerProps> = ({
   max,
   disabled = false
 }) => {
+  // Add client-side only marker
+  const [isClient, setIsClient] = useState(false);
+  
+  // Initialize states but don't compute dates during server rendering
   const [showCalendar, setShowCalendar] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState<Date>(() => {
-    return value ? new Date(value) : new Date();
-  });
+  const [currentMonth, setCurrentMonth] = useState<Date | null>(null);
   const [inputValue, setInputValue] = useState(value || '');
+  
+  // Only run date calculations on the client
+  useEffect(() => {
+    setIsClient(true);
+    if (value) {
+      setCurrentMonth(new Date(value));
+    } else {
+      setCurrentMonth(new Date());
+    }
+  }, []);
   
   // Update internal state when external value changes
   useEffect(() => {
     setInputValue(value || '');
-    if (value) {
+    if (value && isClient) {
       setCurrentMonth(new Date(value));
     }
-  }, [value]);
+  }, [value, isClient]);
 
   // Generate days for the current month view
   const generateCalendarDays = () => {
+    if (!currentMonth) return [];
+    
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
     
@@ -85,14 +99,17 @@ const DatePicker: React.FC<DatePickerProps> = ({
     return calendarDays;
   };
 
-  // Format date for display
+  // Format date for display - ensure consistency between server and client
   const formatDate = (date: Date): string => {
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
   
   // Format date for input display (dd/mm/yyyy)
   const formatDateForDisplay = (dateStr: string): string => {
-    if (!dateStr) return '';
+    if (!dateStr || !isClient) return dateStr; // Return as-is if server-side
     
     try {
       const date = new Date(dateStr);
@@ -151,12 +168,16 @@ const DatePicker: React.FC<DatePickerProps> = ({
   
   // Navigate to previous month
   const goToPreviousMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+    if (currentMonth) {
+      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+    }
   };
   
   // Navigate to next month
   const goToNextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+    if (currentMonth) {
+      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+    }
   };
   
   // Handle manual input changes
@@ -192,7 +213,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
   
   // Get the localized month name
   const getMonthName = (date: Date): string => {
-    return date.toLocaleString('default', { month: 'long' });
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                   'July', 'August', 'September', 'October', 'November', 'December'];
+    return months[date.getMonth()];
   };
   
   // Clear the date
@@ -204,6 +227,8 @@ const DatePicker: React.FC<DatePickerProps> = ({
   
   // Set to today
   const handleToday = () => {
+    if (!isClient) return; // Don't run on server
+    
     const today = formatDate(new Date());
     if (max && today > max) {
       onChange(max);
@@ -217,6 +242,8 @@ const DatePicker: React.FC<DatePickerProps> = ({
   
   // Calculate if a date is today
   const isToday = (date: Date): boolean => {
+    if (!isClient) return false; // Don't run on server
+    
     const today = new Date();
     return (
       date.getDate() === today.getDate() &&
@@ -227,7 +254,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
   
   // Calculate if a date is the selected date
   const isSelected = (date: Date): boolean => {
-    if (!value) return false;
+    if (!value || !isClient) return false;
     
     const selectedDate = new Date(value);
     return (
@@ -239,11 +266,30 @@ const DatePicker: React.FC<DatePickerProps> = ({
   
   // Calculate if a date is beyond the max date
   const isDisabled = (date: Date): boolean => {
-    if (!max) return false;
+    if (!max || !isClient) return false;
     
     const maxDate = new Date(max);
     return date > maxDate;
   };
+
+  // Server-side placeholder if necessary
+  if (!isClient) {
+    return (
+      <div className="flex items-center relative">
+        <span className="text-sm text-gray-500 mr-2">{label}</span>
+        <div className="relative">
+          <TextInput
+            type="text"
+            id={id}
+            placeholder="dd/mm/yyyy"
+            value={value}
+            disabled={true}
+            className="pr-10"
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center relative">
@@ -283,7 +329,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
           </svg>
         </button>
         
-        {showCalendar && (
+        {showCalendar && currentMonth && (
           <div className="absolute z-10 mt-1 bg-white border rounded-lg shadow-lg p-4 w-64">
             {/* Month and year selector */}
             <div className="flex justify-between items-center mb-4">
