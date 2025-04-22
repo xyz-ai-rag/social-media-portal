@@ -6,6 +6,7 @@ import SharedPostList from "../SharedPostList";
 import PostCard from "./PostCard";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "../SharedPostList";
+import PostPreviewCard from "./PostPreviewCard";
 import { useFilters } from "@/context/FilterSelectContext";
 
 interface BusinessPostsProps {
@@ -46,6 +47,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
 
   // State for the modal
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [modalRowData, setModalRowData] = useState<any>({});
 
   // NEW: State to store adjacent pages' posts
@@ -291,6 +293,21 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     setIsModalOpen(false);
   };
 
+  const openPreviewModal = (row: any) => {
+    // Add contextual IDs to row data for the modal
+    setModalRowData({
+      ...row,
+      clientId,
+      businessId,
+    });
+    setIsPreviewModalOpen(true);
+  };
+
+  // Handle closing the modal
+  const closePreviewModal = () => {
+    setIsPreviewModalOpen(false);
+  };
+
   // Add event listener to update the modal content without closing it
   useEffect(() => {
     const handleUpdateModal = (event: CustomEvent<{ data: any }>) => {
@@ -407,12 +424,23 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         }}
         onRefresh={fetchPosts}
         openModal={openModal} // Pass the openModal function
+        openPreviewModal={openPreviewModal} // Pass the openPreviewModal function
       />
 
       {/* Render PostCard independently */}
       <PostCard
         isOpen={isModalOpen}
         onClose={closeModal}
+        rowData={modalRowData}
+        listData={posts} // Pass the list data for navigation
+        onCrossPageNext={() => handleCrossPageNavigation("next")}
+        onCrossPagePrev={() => handleCrossPageNavigation("prev")}
+        isLoadingAdjacentPages={adjacentPagesLoading}
+        pagination={pagination}
+      />
+      <PostPreviewCard
+        isOpen={isPreviewModalOpen}
+        onClose={closePreviewModal}
         rowData={modalRowData}
         listData={posts} // Pass the list data for navigation
         onCrossPageNext={() => handleCrossPageNavigation("next")}
