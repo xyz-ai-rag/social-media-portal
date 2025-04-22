@@ -79,55 +79,68 @@ export default function Header() {
     );
   };
   return (
-    <header className="flex items-center justify-between px-6 bg-white border-b border-gray-200">
-      {/* Left side (Logo and Business Info) */}
-      <div className="flex items-center space-x-4">
-        {/* Business Logo */}
-        <Avatar name={currentBusinessName}></Avatar>
-        {/* <div className="bg-orange-100 rounded-full p-2">🍔</div> */}
+<header className="flex h-20 items-center bg-white border-b border-gray-200">
+{/* Right side */}
+      <div className="ml-auto flex flex-col items-end space-y-1 px-4">
+        {/* (Logo and Business Info)  */}
+        <div className="flex ml-auto space-x-4 items-center">
+          {/* Business Logo */}
+          <Avatar name={currentBusinessName}></Avatar>
+          {/* <div className="bg-orange-100 rounded-full p-2">🍔</div> */}
 
-        {/* Custom Business Dropdown - only on dashboard pages with available businesses */}
-        {showBusinessSelector && hasBusinesses && (
-          <div className="relative" ref={dropdownRef}>
-            {/* Dropdown trigger */}
-            <div
-              onClick={toggleDropdown}
-              className="flex items-center cursor-pointer py-1 px-2 hover:bg-gray-50 rounded-md transition-colors duration-150"
-            >
-              <span className="text-gray-800 font-medium text-sm mr-1.5">
-                {currentBusinessName}
-              </span>
-              <FiChevronDown
-                className={`text-gray-500 transform transition-transform duration-200 ${
-                  isDropdownOpen ? "rotate-180" : ""
-                }`}
-              />
-            </div>
-
-            {/* Dropdown menu */}
-            {isDropdownOpen && (
-              <div className="absolute top-full left-0 mt-1 bg-white shadow-lg rounded-md py-1 z-50 min-w-[180px] border border-gray-100 overflow-hidden">
-                {clientDetails.businesses.map((biz) => (
-                  <div
-                    key={biz.business_id}
-                    className={`px-4 py-2.5 text-sm cursor-pointer transition-colors duration-150 ${
-                      biz.business_id === currentBusinessId
-                        ? "bg-blue-50 text-blue-600 font-medium"
-                        : "text-gray-700 hover:bg-gray-50"
+          {/* Custom Business Dropdown - only on dashboard pages with available businesses */}
+          {showBusinessSelector && hasBusinesses && (
+            <div className="relative" ref={dropdownRef}>
+              {/* Dropdown trigger */}
+              <div
+                onClick={toggleDropdown}
+                className="flex items-center cursor-pointer py-1 px-2 hover:bg-gray-50 rounded-sm transition-colors duration-150"
+              >
+                <span className="text-gray-800 font-medium text-sm mr-1.5">
+                  {currentBusinessName}
+                </span>
+                <FiChevronDown
+                  className={`text-gray-500 transform transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""
                     }`}
-                    onClick={() => handleBusinessSelect(biz.business_id)}
-                  >
-                    {biz.business_name}
-                  </div>
-                ))}
+                />
               </div>
-            )}
+
+              {/* Dropdown menu */}
+              {isDropdownOpen && (
+                <div className="absolute top-full right-0 mt-2 bg-white shadow-lg rounded-md py-1 z-50 min-w-[200px] border border-gray-100 overflow-hidden">
+                  {clientDetails.businesses.map((biz) => (
+                    <div
+                      key={biz.business_id}
+                      className={`px-4 py-2.5 text-sm cursor-pointer transition-colors duration-150 ${biz.business_id === currentBusinessId
+                          ? "bg-blue-50 text-blue-600 font-medium"
+                          : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                      onClick={() => handleBusinessSelect(biz.business_id)}
+                    >
+                      {biz.business_name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
+        {/* User Info */}
+        <div>
+        {user?.email && (
+          <div className="text-sm text-gray-600 hidden md:block px-2">
+            <span className="font-medium">Logged in as: </span>
+            {user.email}
           </div>
         )}
       </div>
+      </div>
+
+      
 
       {/* Right side (Company Name and User Info) */}
-      <div className="items-center space-x-4 text-right py-2">
+      {/* <div className="items-center space-x-4 text-right py-2">
         <span className="text-gray-800 font-semibold text-2xl">
           Hyprdata.ai
         </span>
@@ -137,7 +150,7 @@ export default function Header() {
             {user.email}
           </div>
         )}
-      </div>
+      </div> */}
     </header>
   );
 }

@@ -104,7 +104,7 @@ export default function Sidebar() {
   const currentBusinessId = urlParts.length >= 2 ? urlParts[1] : null;
 
   // Check if a business is selected
-  const hasSelectedBusiness = currentClientId && currentBusinessId;
+  const hasSelectedBusiness = currentClientId != null && currentBusinessId != null;
 
   // Initialize state from localStorage on component mount
   useEffect(() => {
@@ -113,6 +113,10 @@ export default function Sidebar() {
       setCollapsed(JSON.parse(savedState));
     }
   }, []);
+
+  useEffect(() => {
+    console.log("status", isBusinessSelectionPage, hasSelectedBusiness);
+  }, [isBusinessSelectionPage, hasSelectedBusiness]);
 
   // Save state to localStorage when it changes
   const toggleCollapsed = (): void => {
@@ -156,23 +160,25 @@ export default function Sidebar() {
       className={`bg-[#F1F2F7] border-r border-gray-200 fixed top-0 bottom-0 left-0 flex flex-col ${collapsed ? "w-20 overflow-visible" : "w-60"
         } transition-all duration-300 z-10`}
     >
-      {/* Top: Client Info */}
-      <div className="p-4 border-b border-gray-200">
-        <div className={`flex items-center ${collapsed ? "justify-center" : "justify-start"}`}>
-          {collapsed ? (
+      {/* Top:  Logo */}
+      <div className="h-20 border-b border-gray-200 flex items-center">
+        {collapsed ? (
+          <div className="p-4 flex justify-center w-full">
             <img
               src="/hyprdata_icon_transparent.svg"
-              className="h-10 object-contain mx-auto"
+              className="h-10 object-contain"
             />
-          ) : (
+          </div>
+        ) : (
+          <div className="flex items-center p-4">
             <img
               src="/hyprdata_logo_transparent.svg"
-              className="h-10 object-contain ml-2"
+              className="h-10 object-contain px-2"
             />
-          )}
-
-        </div>
+          </div>
+        )}
       </div>
+
 
       {/* Middle: Menu Section with scrolling */}
       <div
