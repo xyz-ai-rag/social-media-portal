@@ -452,7 +452,6 @@ const SharedPostList: FC<SharedPostListProps> = ({
             </svg>
           </button>
         </div>
-
       </div>
 
       {/* Active Filters Display */}
@@ -506,7 +505,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
       <div className="mt-6 bg-white rounded shadow overflow-x-auto">
         <Table hoverable className="w-full table-fixed">
           <Table.Head>
-          <Table.HeadCell className="w-28 md:w-30 lg:w-38 xl:w-44">
+            <Table.HeadCell className="w-28 md:w-30 lg:w-38 xl:w-44">
               Date
               <div className="pl-2 flex flex-col">
                 <svg
@@ -539,13 +538,21 @@ const SharedPostList: FC<SharedPostListProps> = ({
                 </svg>
               </div>
             </Table.HeadCell>
-            <Table.HeadCell className="w-32 text-center">Platform</Table.HeadCell>
+            <Table.HeadCell className="w-32 text-center">
+              Platform
+            </Table.HeadCell>
             <Table.HeadCell className="w-52 text-center">User</Table.HeadCell>
             <Table.HeadCell className="w-96">Post</Table.HeadCell>
-            <Table.HeadCell className="w-32 text-center">Original Language</Table.HeadCell>
-            <Table.HeadCell className="w-32 text-center">Relevance Score</Table.HeadCell>
-            <Table.HeadCell className="w-32 text-center">Sentiment</Table.HeadCell>
-            
+            <Table.HeadCell className="w-32 text-center">
+              Original Language
+            </Table.HeadCell>
+            <Table.HeadCell className="w-32 text-center">
+              Relevance Score
+            </Table.HeadCell>
+            <Table.HeadCell className="w-32 text-center">
+              Sentiment
+            </Table.HeadCell>
+
             {/* <Table.HeadCell className="w-24">Criticism</Table.HeadCell>
             <Table.HeadCell className="w-16">URL</Table.HeadCell> */}
           </Table.Head>
@@ -580,7 +587,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
                     <Table.Cell className="text-[#DD9A19] align-middle whitespace-nowrap">
                       {item.showDate}
                     </Table.Cell>
-                    
+
                     <Table.Cell className="text-center align-middle">
                       <a
                         href={item.url}
@@ -592,9 +599,9 @@ const SharedPostList: FC<SharedPostListProps> = ({
                     </Table.Cell>
 
                     <Table.Cell className="align-middle">
-                    <div className="line-clamp-2 text-sm break-words text-right md:text-center">
+                      <div className="line-clamp-2 text-sm break-words text-right md:text-center">
                         {item.nickname}
-                    </div>
+                      </div>
                     </Table.Cell>
 
                     {/* Updated Post Cell with Multi-line Support */}
@@ -615,8 +622,12 @@ const SharedPostList: FC<SharedPostListProps> = ({
                         Original
                       </button>
                     </Table.Cell>
-                    <Table.Cell className="text-center align-middle">{item.relvance}</Table.Cell>
-                    <Table.Cell className="text-center align-middle">{item.sentiment}</Table.Cell>
+                    <Table.Cell className="text-center align-middle">
+                      {item.relvance}
+                    </Table.Cell>
+                    <Table.Cell className="text-center align-middle">
+                      {item.sentiment}
+                    </Table.Cell>
                     <Table.Cell className="text-center align-middle">
                       {item.hasCriticism ? (
                         <span className="bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-red-900 dark:text-red-300">
