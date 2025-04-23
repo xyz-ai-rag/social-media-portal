@@ -13,7 +13,7 @@ export const BusinessPostModel = sequelizeDbConnection.define<BusinessPostInstan
   {
     platform: { type: DataTypes.TEXT, allowNull: false },
     note_id: { type: DataTypes.TEXT, allowNull: false, primaryKey: true },
-    mapped_note_id: { type: DataTypes.UUID, allowNull: true },
+    original_note_id: { type: DataTypes.UUID, allowNull: true },
     type: { type: DataTypes.TEXT, allowNull: true },
     title: { type: DataTypes.TEXT, allowNull: true },
     description: { type: DataTypes.TEXT, allowNull: true },
