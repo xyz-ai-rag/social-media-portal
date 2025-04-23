@@ -94,28 +94,53 @@ export default function Sidebar() {
   const { logout, clientDetails } = useAuth();
   const pathname = usePathname();
 
-  // Check if we're on the business selection page
-  const isBusinessSelectionPage = pathname === "/businesses";
-
   // Extract client and business ID from URL for dynamic routing
   const urlParts = pathname.split("/").filter(Boolean);
   const currentClientId = urlParts.length >= 2 ? urlParts[0] : null;
   const currentBusinessId = urlParts.length >= 2 ? urlParts[1] : null;
 
-  // Check if a business is selected
-  const hasSelectedBusiness = currentClientId != null && currentBusinessId != null;
-
-  // Initialize state from localStorage on component mount
+  // Check if we're on the business selection page
+  const isBusinessSelectionPage = pathname === "/businesses";
+  const isSettingsPage = pathname === "/settings";
+  
+  // Check if a business is selected or retrieve from localStorage
+  const [hasSelectedBusiness, setHasSelectedBusiness] = useState<boolean>(false);
+  const [lastClientId, setLastClientId] = useState<string | null>(null);
+  const [lastBusinessId, setLastBusinessId] = useState<string | null>(null);
+  
+  // Initialize states from localStorage on component mount
   useEffect(() => {
     const savedState = localStorage.getItem("sidebarCollapsed");
     if (savedState !== null) {
       setCollapsed(JSON.parse(savedState));
     }
+    
+    // Retrieve last selected business from localStorage
+    const savedClientId = localStorage.getItem("lastClientId");
+    const savedBusinessId = localStorage.getItem("lastBusinessId");
+    
+    if (savedClientId && savedBusinessId) {
+      setLastClientId(savedClientId);
+      setLastBusinessId(savedBusinessId);
+    }
   }, []);
-
+  
+  // Save current business selection to localStorage when navigating
   useEffect(() => {
-    console.log("status", isBusinessSelectionPage, hasSelectedBusiness);
-  }, [isBusinessSelectionPage, hasSelectedBusiness]);
+    // Only update if we're on a business-specific page
+    if (currentClientId && currentBusinessId && !isBusinessSelectionPage && !isSettingsPage) {
+      localStorage.setItem("lastClientId", currentClientId);
+      localStorage.setItem("lastBusinessId", currentBusinessId);
+      setLastClientId(currentClientId);
+      setLastBusinessId(currentBusinessId);
+      setHasSelectedBusiness(true);
+    }
+  }, [currentClientId, currentBusinessId, isBusinessSelectionPage, isSettingsPage]);
+  
+  // Determine if we have a business selected (either current or from history)
+  const effectiveClientId = currentClientId || lastClientId;
+  const effectiveBusinessId = currentBusinessId || lastBusinessId;
+  const hasBusiness = Boolean(effectiveClientId && effectiveBusinessId);
 
   // Save state to localStorage when it changes
   const toggleCollapsed = (): void => {
@@ -143,16 +168,37 @@ export default function Sidebar() {
   // Handle click on disabled menu items
   const handleDisabledClick = (e: React.MouseEvent): void => {
     e.preventDefault();
-    // You could add a toast notification here
-    console.log("Please select a business first");
+    // console.log("Please select a business first");
   };
 
   // Get current business name
-  const currentBusiness = hasSelectedBusiness
+  const currentBusiness = hasBusiness
     ? clientDetails?.businesses?.find(
-      (biz) => biz.business_id === currentBusinessId
+      (biz) => biz.business_id === effectiveBusinessId
     )
     : null;
+    
+  // Build destination URLs based on effective IDs
+  const getDashboardUrl = () => {
+    if (hasBusiness) {
+      return `/${effectiveClientId}/${effectiveBusinessId}/dashboard`;
+    }
+    return "/businesses";
+  };
+  
+  const getPostsUrl = () => {
+    if (hasBusiness) {
+      return `/${effectiveClientId}/${effectiveBusinessId}/posts`;
+    }
+    return "/businesses";
+  };
+  
+  const getCompetitorsUrl = () => {
+    if (hasBusiness) {
+      return `/${effectiveClientId}/${effectiveBusinessId}/competitors`;
+    }
+    return "/businesses";
+  };
 
   return (
     <aside
@@ -192,45 +238,33 @@ export default function Sidebar() {
           )}
           <nav className="space-y-2">
             <MenuItem
-              href={
-                hasSelectedBusiness
-                  ? `/${currentClientId}/${currentBusinessId}/dashboard`
-                  : "#"
-              }
+              href={getDashboardUrl()}
               icon={<FiGrid />}
               label="Dashboard"
               isActive={isActive("/[clientId]/[businessId]/dashboard")}
-              disabled={!hasSelectedBusiness && !isBusinessSelectionPage}
+              disabled={!hasBusiness && !isSettingsPage}
               collapsed={collapsed}
-              onClick={!hasSelectedBusiness ? handleDisabledClick : undefined}
+              onClick={!hasBusiness ? handleDisabledClick : undefined}
             />
 
             <MenuItem
-              href={
-                hasSelectedBusiness
-                  ? `/${currentClientId}/${currentBusinessId}/posts`
-                  : "#"
-              }
+              href={getPostsUrl()}
               icon={<FiList />}
               label="All Posts"
               isActive={isActive("/[clientId]/[businessId]/posts")}
-              disabled={!hasSelectedBusiness && !isBusinessSelectionPage}
+              disabled={!hasBusiness && !isSettingsPage}
               collapsed={collapsed}
-              onClick={!hasSelectedBusiness ? handleDisabledClick : undefined}
+              onClick={!hasBusiness ? handleDisabledClick : undefined}
             />
 
             <MenuItem
-              href={
-                hasSelectedBusiness
-                  ? `/${currentClientId}/${currentBusinessId}/competitors`
-                  : "#"
-              }
+              href={getCompetitorsUrl()}
               icon={<FiUsers />}
               label="Competitors"
               isActive={isActive("/[clientId]/[businessId]/competitors")}
-              disabled={!hasSelectedBusiness && !isBusinessSelectionPage}
+              disabled={!hasBusiness && !isSettingsPage}
               collapsed={collapsed}
-              onClick={!hasSelectedBusiness ? handleDisabledClick : undefined}
+              onClick={!hasBusiness ? handleDisabledClick : undefined}
             />
           </nav>
         </div>
@@ -275,7 +309,7 @@ export default function Sidebar() {
       </div>
 
       {/* Change Business Link - only when a business is selected */}
-      {hasSelectedBusiness && !collapsed && (
+      {hasBusiness && !collapsed && (
         <div className="border-t border-gray-200 p-4">
           <Link
             href="/businesses"
@@ -288,7 +322,7 @@ export default function Sidebar() {
       )}
 
       {/* Change Business Icon - when collapsed */}
-      {hasSelectedBusiness && collapsed && (
+      {hasBusiness && collapsed && (
         <div className="border-t border-gray-200 p-4 flex justify-center">
           <Link href="/businesses" className="relative group">
             <FiChevronRight className="text-blue-600" />
