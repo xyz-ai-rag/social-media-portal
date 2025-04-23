@@ -12,8 +12,8 @@ import {
   Button,
   Alert,
 } from "flowbite-react";
-import { useAuth } from '@/context/AuthContext';
-import DatePicker from './DatePicker';
+import { useAuth } from "@/context/AuthContext";
+import DatePicker from "./DatePicker";
 import PreviewModal from "./PreviewModal";
 // Base post data structure shared between components
 export interface PostData {
@@ -369,7 +369,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
           onChange={(e) => handlePlatform(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">Platforms</option>
+          <option value="">Platform</option>
           {platformData.map((item, index) => {
             return <option key={index}>{item}</option>;
           })}
@@ -384,7 +384,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
           onChange={(e) => handleSentiment(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">Sentiments</option>
+          <option value="">Sentiment</option>
           {sentimentData.map((item, index) => {
             return <option key={index}>{item}</option>;
           })}
