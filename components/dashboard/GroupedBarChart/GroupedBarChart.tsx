@@ -47,11 +47,11 @@ export default function GroupedBarChart({
 
   // Format the raw date strings for display.
   const formattedStart = useMemo(
-    () => format(new Date(dateRange.startDate), "d MMM"),
+    () => format(new Date(dateRange.startDate), "MMM d"),
     [dateRange.startDate]
   );
   const formattedEnd = useMemo(
-    () => format(new Date(dateRange.endDate), "d MMM"),
+    () => format(new Date(dateRange.endDate), "MMM d"),
     [dateRange.endDate]
   );
   const startDateProcessed = useMemo(
@@ -64,19 +64,38 @@ export default function GroupedBarChart({
   );
   // Fetch daily posts data from the API.
   useEffect(() => {
+    let isCurrent = true; // Flag to control whether the request is still valid
+
     async function fetchChartData() {
+      setIsLoading(true); // Set loading state when the request is made
+
       try {
         const url = `/api/charts/grouped-bar-chart?business_id=${businessId}&start_date=${startDateProcessed}&end_date=${endDateProcessed}`;
         const response = await fetch(url);
         const data = await response.json();
-        setChartData(data);
+
+        if (isCurrent) {
+          setChartData(data); // Only update state if this is the current request
+        } else {
+          console.log("Ignore an invalid request");
+        }
       } catch (error) {
-        console.error("Error fetching chart data:", error);
+        if (isCurrent) {
+          console.error("Error fetching chart data:", error);
+        }
       } finally {
-        setIsLoading(false);
+        if (isCurrent) {
+          setIsLoading(false);
+        }
       }
     }
+
     fetchChartData();
+
+    // Cleanup function: Mark the previous request as invalid when a new one is made
+    return () => {
+      isCurrent = false;
+    };
   }, [businessId, startDateProcessed, endDateProcessed]);
 
   // Compute the total number of posts in the current period.
@@ -117,9 +136,15 @@ export default function GroupedBarChart({
       },
       xAxis: {
         type: "category",
-        data: xAxisData,
         axisLine: { show: false },
         axisTick: { show: false },
+        axisLabel: {
+          formatter: function (value: any) {
+            // Only store MM-DD
+            return value.slice(5); // "2024-04-22" -> "04-22"
+          },
+        },
+        data: xAxisData, // such as ["2024-04-20", "2024-04-21", "2024-04-22"]
       },
       yAxis: {
         type: "value",
@@ -153,9 +178,7 @@ export default function GroupedBarChart({
     <div className="bg-white p-6 rounded-lg shadow-md h-full">
       {/* Title */}
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-base font-medium text-gray-800">
-          Number of Posts in Current Period
-        </h2>
+        <h2 className="text-base font-medium text-gray-800">Posts Per Day</h2>
       </div>
       {/* Subheading: show date range */}
       <div className="text-sm text-gray-600 mb-4">

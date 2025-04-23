@@ -1,4 +1,3 @@
-// /api/charts/piechart/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { Op } from 'sequelize';
 import { BusinessPostModel } from '@/feature/sqlORM/modelorm';
@@ -23,15 +22,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
 
+    console.log(`[PieChart] Query params: business_id=${business_id}, start_date=${start_date}, end_date=${end_date}`);
+    console.log(`[PieChart] Parsed dates: startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
+
     // Query only the necessary field: platform.
     const rows = await BusinessPostModel.findAll({
-      attributes: ['platform'],
+      attributes: ['platform', 'note_id'], // Added note_id for comparison
       where: {
         business_id,
-        is_relevant:true,
+        is_relevant: true,
         last_update_time: { [Op.between]: [startDate, endDate] }
       }
     });
+    
+    console.log(`[PieChart] Total posts found: ${rows.length}`);
+    // console.log(`[PieChart] First 5 posts:`, rows.slice(0, 5).map(r => ({
+    //   note_id: r.getDataValue('note_id'),
+    //   platform: r.getDataValue('platform')
+    // })));
 
     // Define the mapping. In this case, we remap 'xhs' to 'rednote'.
     const platformMapping: Record<string, string> = {
@@ -50,7 +58,14 @@ export async function GET(request: NextRequest) {
     // Count posts per platform.
     const counts: Record<string, number> = { Rednote: 0, Weibo: 0, Douyin: 0 };
 
+    // Track unique note_ids to check for duplicates
+    const uniqueNoteIds = new Set<string>();
+
     rows.forEach(row => {
+      // Track note_ids
+      const noteId = row.getDataValue("note_id");
+      uniqueNoteIds.add(noteId);
+      
       // Get the raw platform value and normalize it to lowercase.
       let platform = (row.getDataValue("platform") || "").toLowerCase();
       // Map the DB value.
@@ -58,13 +73,16 @@ export async function GET(request: NextRequest) {
         platform = platformMapping[platform];
       } else {
         // If platform is not recognized, you could default to 'rednote', or ignore.
-        platform = "rednote";
+        platform = "Rednote"; // Changed to match case in counts
       }
       if (platform in counts) {
         counts[platform]++;
       }
     });
 
+    console.log(`[PieChart] Platform counts:`, counts);
+    console.log(`[PieChart] Total unique note_ids: ${uniqueNoteIds.size}`);
+    
     // Build pie chart data array.
     const pieData = Object.entries(counts).map(([platform, value]) => ({
       name: platform,
@@ -72,8 +90,12 @@ export async function GET(request: NextRequest) {
       color: platformColors[platform] || '#5470c6'
     }));
 
+    const totalPosts = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    console.log(`[PieChart] Total posts in pieData: ${totalPosts}`);
+
     return NextResponse.json(pieData);
   } catch (err: any) {
+    console.error(`[PieChart] Error:`, err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

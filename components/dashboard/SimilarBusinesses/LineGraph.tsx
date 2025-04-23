@@ -69,13 +69,13 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
     [dateRange.endDate]
   );
   const formattedStart = useMemo(
-      () => format(new Date(dateRange.startDate), "d MMM"),
-      [dateRange.startDate]
-    );
-    const formattedEnd = useMemo(
-      () => format(new Date(dateRange.endDate), "d MMM"),
-      [dateRange.endDate]
-    );
+    () => format(new Date(dateRange.startDate), "MMM d"),
+    [dateRange.startDate]
+  );
+  const formattedEnd = useMemo(
+    () => format(new Date(dateRange.endDate), "MMM d"),
+    [dateRange.endDate]
+  );
   // Derive the similar business ids from clientDetails:
   const { similar_businesses } = useMemo(() => {
     if (!clientDetails || !clientDetails.businesses)
@@ -90,22 +90,46 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
 
   // Fetch data from the API route.
   useEffect(() => {
+    let isCurrent = true; // Flag to control whether the request is still valid
+
     async function fetchLineData() {
+      setIsLoading(true); // Set loading state when the request is made
+
       try {
         // Pass the current business id separately and the similar business ids as a comma-separated list.
         const similarBizParam = similar_businesses.join(",");
-        const url = `/api/charts/line-graph?business_id=${businessId}&similar_business_ids=${similarBizParam}&start_date=${startDateProcessed}&end_date=${endDateProcessed}`;
+        const url = `/api/charts/line-graph?business_id=${encodeURIComponent(
+          businessId
+        )}&similar_business_ids=${encodeURIComponent(
+          similarBizParam
+        )}&start_date=${encodeURIComponent(
+          startDateProcessed
+        )}&end_date=${encodeURIComponent(endDateProcessed)}`;
+
         const res = await fetch(url);
         const data: LineGraphData = await res.json();
-    
-        setGraphData(data);
+
+        // Only update state if this is the current request
+        if (isCurrent) {
+          setGraphData(data);
+        }
       } catch (err) {
-        console.error("Error fetching line graph data:", err);
+        if (isCurrent) {
+          console.error("Error fetching line graph data:", err);
+        }
       } finally {
-        setIsLoading(false);
+        if (isCurrent) {
+          setIsLoading(false);
+        }
       }
     }
+
     fetchLineData();
+
+    // Cleanup function: Mark the previous request as invalid when a new one is made
+    return () => {
+      isCurrent = false;
+    };
   }, [businessId, similar_businesses, startDateProcessed, endDateProcessed]);
 
   // Build and initialize the chart using ECharts.
@@ -191,11 +215,11 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
     <div className="bg-white p-6 rounded-lg shadow-md h-full">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-base font-medium text-gray-800">
-          Similar Businesses Comparison
+          Vs Similar Businesses
         </h2>
       </div>
       <div className="text-sm text-gray-600 mb-4">
-         Posts from {formattedStart} to {formattedEnd}
+        Posts from {formattedStart} to {formattedEnd}
       </div>
       <div className="h-64">
         <div ref={chartRef} style={{ width: "100%", height: "100%" }} />
