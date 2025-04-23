@@ -6,7 +6,7 @@ import SharedPostList from "../SharedPostList";
 import PostCard from "./PostCard";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "../SharedPostList";
-import PostPreviewCard from "./PostPreviewCard";
+import PostPreviewCard from "../PostPreviewCard";
 import { useFilters } from "@/context/FilterSelectContext";
 
 interface BusinessPostsProps {

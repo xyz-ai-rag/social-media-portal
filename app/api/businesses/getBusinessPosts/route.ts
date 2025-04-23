@@ -148,21 +148,23 @@ export async function GET(request: NextRequest) {
     const { rows } = await BusinessPostModel.findAndCountAll({
       where: whereConditions,
       attributes: [
-        "business_id",
-        "note_id",
-        "description",
-        "title",
-        "english_desc",
-        "english_title",
-        "tag_list",
-        "english_tag_list",
-        "last_update_time",
-        "english_sentiment",
-        "nickname",
-        "relevance_percentage",
-        "platform",
-        "has_negative_or_criticism",
-        "note_url",
+        'business_id',
+        'note_id',
+        'description',
+        'title',
+        'english_desc',
+        'english_preview_text',
+        'english_title',
+        'tag_list',
+        'english_tag_list',
+        'last_update_time',
+        'english_sentiment',
+        'nickname',
+        'relevance_percentage',
+        'platform',
+        'has_negative_or_criticism',
+        'negative_feedback_summary',
+        'note_url'
       ],
       order: [["last_update_time", sortOrder === "asc" ? "ASC" : "DESC"]],
       limit: pageSize,
@@ -190,9 +192,9 @@ export async function GET(request: NextRequest) {
       return {
         id: postData.note_id,
         businessId: postData.business_id,
-        description: postData.description, // Original description (preserving white spaces)
-        englishDesc: postData.english_desc, // English description
-        post: postData.english_desc || postData.description,
+        description: postData.description,         // Original description (preserving white spaces)
+        englishDesc: postData.english_desc,         // English description
+        post: postData.english_preview_text || postData.english_desc || postData.description,
         title: postData.title,
         englishTitle: postData.english_title,
         displayTitle: postData.english_title || postData.title,
@@ -207,7 +209,8 @@ export async function GET(request: NextRequest) {
         platform: displayPlatform,
         dbPlatform: postData.platform,
         hasCriticism: postData.has_negative_or_criticism,
-        url: postData.note_url,
+        criticismSummary: postData.negative_feedback_summary,
+        url: postData.note_url
       };
     });
 

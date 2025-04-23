@@ -241,7 +241,6 @@ const CompetitorPostCard = ({
       rowData={rowData}
       headerTitle={headerTitle}
       additionalContent={competitorInfoContent}
-      showCompetitiveInsights={competitiveInsights !== null}
       onPrevious={handlePrevious}
       onNext={handleNext}
       hasPrevious={true} // Always enable - will handle circular navigation

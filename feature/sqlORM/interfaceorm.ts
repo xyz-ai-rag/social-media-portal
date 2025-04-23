@@ -3,7 +3,7 @@ import { Model } from 'sequelize';
 export interface BusinessPostInstance extends Model {
   platform: string;
   note_id: string;
-  mapped_note_id: string; // uuid
+  original_note_id: string; // uuid
   type: string;
   title: string;
   description: string;

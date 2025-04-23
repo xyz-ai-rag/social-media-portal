@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { PostData } from "../SharedPostList";
-import PreviewModal from "../PreviewModal";
+import { PostData } from "./SharedPostList";
+import PreviewModal from "./PreviewModal";
 
 interface PaginationInfo {
   totalCount: number;
@@ -195,7 +195,6 @@ const PostPreviewCard = ({
       onClose={onClose}
       rowData={rowData}
       headerTitle={rowData?.platform || "Post Details"}
-      showCompetitiveInsights={false}
       onPrevious={handlePrevious}
       onNext={handleNext}
       hasPrevious={true} // Always enable - will handle circular navigation
