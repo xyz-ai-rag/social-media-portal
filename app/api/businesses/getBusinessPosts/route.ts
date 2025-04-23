@@ -148,6 +148,7 @@ export async function GET(request: NextRequest) {
         'description',
         'title',
         'english_desc',
+        'english_preview_text',
         'english_title',
         'tag_list',
         'english_tag_list',
@@ -157,6 +158,7 @@ export async function GET(request: NextRequest) {
         'relevance_percentage',
         'platform',
         'has_negative_or_criticism',
+        'negative_feedback_summary',
         'note_url'
       ],
       order: [['last_update_time', sortOrder === 'asc' ? 'ASC' : 'DESC']],
@@ -187,7 +189,7 @@ export async function GET(request: NextRequest) {
         businessId: postData.business_id,
         description: postData.description,         // Original description (preserving white spaces)
         englishDesc: postData.english_desc,         // English description
-        post: postData.english_desc || postData.description,
+        post: postData.english_preview_text || postData.english_desc || postData.description,
         title: postData.title,
         englishTitle: postData.english_title,
         displayTitle: postData.english_title || postData.title,
@@ -202,6 +204,7 @@ export async function GET(request: NextRequest) {
         platform: displayPlatform,
         dbPlatform: postData.platform,
         hasCriticism: postData.has_negative_or_criticism,
+        criticismSummary: postData.negative_feedback_summary,
         url: postData.note_url
       };
     });

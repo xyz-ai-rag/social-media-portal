@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "../SharedPostList";
 import { useFilters } from "@/context/FilterSelectContext";
-
+import PostPreviewCard from "../PostPreviewCard";
 interface CompetitorPostsProps {
   clientId: string;
   businessId: string;
@@ -63,7 +63,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   // State for the modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalRowData, setModalRowData] = useState<any>({});
-
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   // NEW: State to store adjacent pages' posts
   const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
   const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
@@ -449,7 +449,19 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
       page: 1,
     }));
   };
-
+  const openPreviewModal = (row: any) => {
+    setModalRowData({
+      ...row,
+      clientId,
+      businessId,
+      competitorId,
+    });
+    setIsPreviewModalOpen(true);
+  };
+  
+  const closePreviewModal = () => {
+    setIsPreviewModalOpen(false);
+  };
   // Handle filter changes from the SharedPostList component
   const handleFilterChange = (newFilters: any) => {
     // Ensure we never send a date after yesterday
@@ -532,8 +544,18 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         }}
         onRefresh={fetchCompetitorPosts}
         openModal={openModal} // NEW: Pass the openModal function
+        openPreviewModal={openPreviewModal}
       />
-
+      <PostPreviewCard
+        isOpen={isPreviewModalOpen}
+        onClose={closePreviewModal}
+        rowData={modalRowData}
+        listData={posts}
+        onCrossPageNext={() => handleCrossPageNavigation("next")}
+        onCrossPagePrev={() => handleCrossPageNavigation("prev")}
+        isLoadingAdjacentPages={adjacentPagesLoading}
+        pagination={pagination}
+      />
       {/* NEW: Render CompetitorPostCard independently */}
       <CompetitorPostCard
         isOpen={isModalOpen}

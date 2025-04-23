@@ -15,7 +15,6 @@ export interface PreviewModalProps {
   };
   headerTitle?: string;
   additionalContent?: ReactNode;
-  showCompetitiveInsights?: boolean;
   onPrevious?: () => void;
   onNext?: () => void;
   hasPrevious?: boolean;
@@ -29,7 +28,6 @@ const PreviewModal = ({
   rowData,
   headerTitle,
   additionalContent,
-  showCompetitiveInsights = false,
   onPrevious,
   onNext,
   hasPrevious = true,
@@ -148,20 +146,6 @@ const PreviewModal = ({
                 </span>
               </div>
 
-              {/* Negative Feedback Summary !!!!! Need Test */}
-              {rowData.hasCriticism && rowData.criticismSummary && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <h3 className="text-md font-medium text-red-700 mb-2">
-                    Negative feedback or criticism:
-                  </h3>
-                  <div className="bg-red-50 p-3 rounded-md">
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                      {rowData.criticismSummary}
-                    </p>
-                  </div>
-                </div>
-              )}
-
               {/* Additional Information */}
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <div className="grid grid-cols-2 gap-4">
@@ -183,36 +167,21 @@ const PreviewModal = ({
                         : "Not specified"}
                     </p>
                   </div>
-                  <div>
+                  {/* Negative Feedback Summary */}
+                  <div className="col-span-2">
                     <p className="text-sm font-medium text-gray-500">
-                      Feedback
+                      Negative feedback or criticism
                     </p>
                     <p className="text-sm text-gray-900">
-                      {rowData.hasCriticism !== undefined
-                        ? rowData.hasCriticism
-                          ? "Has negative feedback"
-                          : "No negative feedback"
-                        : "Not specified"}
+                      {rowData.hasCriticism && rowData.criticismSummary
+                        ? rowData.criticismSummary
+                        : "No negative feedback"}
                     </p>
                   </div>
+                    
                 </div>
               </div>
 
-              {/* Competitive Analysis Section - Only for competitor posts */}
-              {showCompetitiveInsights && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <h3 className="text-md font-medium text-gray-700 mb-2">
-                    Competitive Insights
-                  </h3>
-                  <div className="bg-gray-50 p-3 rounded-md">
-                    <p className="text-sm text-gray-600">
-                      Compare this competitor post against your business's
-                      social media strategy. Look for differences in approach,
-                      messaging, and engagement.
-                    </p>
-                  </div>
-                </div>
-              )}
             </Modal.Body>
 
             {/* Modal.Footer with Navigation */}

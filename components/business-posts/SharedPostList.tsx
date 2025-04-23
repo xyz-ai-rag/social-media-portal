@@ -503,7 +503,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
 
       {/* Table */}
       <div className="mt-6 bg-white rounded shadow overflow-x-auto">
-        <Table hoverable className="w-full table-fixed">
+        <Table hoverable className="w-full table-auto min-w-[800px]">
           <Table.Head>
             <Table.HeadCell className="w-28 md:w-30 lg:w-38 xl:w-44">
               Date
@@ -538,28 +538,28 @@ const SharedPostList: FC<SharedPostListProps> = ({
                 </svg>
               </div>
             </Table.HeadCell>
-            <Table.HeadCell className="w-32 text-center">
+            <Table.HeadCell className="w-20 text-center">
               Platform
             </Table.HeadCell>
-            <Table.HeadCell className="w-52 text-center">User</Table.HeadCell>
-            <Table.HeadCell className="w-96">Post</Table.HeadCell>
-            <Table.HeadCell className="w-32 text-center">
+            <Table.HeadCell className="w-40 text-center">User</Table.HeadCell>
+            <Table.HeadCell className="w-auto">Post</Table.HeadCell>
+            <Table.HeadCell className="w-28 text-center">
               Original Language
             </Table.HeadCell>
-            <Table.HeadCell className="w-32 text-center">
+            <Table.HeadCell className="w-24 text-center">
               Relevance Score
             </Table.HeadCell>
             <Table.HeadCell className="w-32 text-center">
               Sentiment
             </Table.HeadCell>
-
-            {/* <Table.HeadCell className="w-24">Criticism</Table.HeadCell>
-            <Table.HeadCell className="w-16">URL</Table.HeadCell> */}
+            {/* <Table.HeadCell className="w-24 text-center">
+              Feedback
+            </Table.HeadCell> */}
           </Table.Head>
           <Table.Body className="divide-y">
             {isLoading ? (
               <Table.Row>
-                <Table.Cell colSpan={10} className="text-center py-10">
+                <Table.Cell colSpan={8} className="text-center py-10">
                   <div className="flex flex-col items-center justify-center">
                     <Spinner size="xl" color="purple" />
                     <p className="mt-2 text-gray-500">Loading posts...</p>
@@ -568,7 +568,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
               </Table.Row>
             ) : listData.length === 0 ? (
               <Table.Row>
-                <Table.Cell colSpan={10} className="text-center py-10">
+                <Table.Cell colSpan={8} className="text-center py-10">
                   <p className="text-gray-500">
                     No posts found. Try adjusting your filters.
                   </p>
@@ -593,6 +593,10 @@ const SharedPostList: FC<SharedPostListProps> = ({
                         href={item.url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        className="underline hover:text-black-600"
+                        onClick={(e) => {
+                          e.stopPropagation(); // This prevents the click from reaching the row
+                        }}
                       >
                         {item.platform}
                       </a>
@@ -606,7 +610,7 @@ const SharedPostList: FC<SharedPostListProps> = ({
 
                     {/* Updated Post Cell with Multi-line Support */}
                     <Table.Cell className="align-middle">
-                      <div className="line-clamp-3 text-sm break-words">
+                      <div className="line-clamp-5 text-sm break-words">
                         {item.post}
                       </div>
                     </Table.Cell>
@@ -625,18 +629,28 @@ const SharedPostList: FC<SharedPostListProps> = ({
                     <Table.Cell className="text-center align-middle">
                       {item.relvance}
                     </Table.Cell>
+                    {/* Sentiment */}
                     <Table.Cell className="text-center align-middle">
                       {item.sentiment}
                     </Table.Cell>
-                    <Table.Cell className="text-center align-middle">
-                      {item.hasCriticism ? (
-                        <span className="bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-red-900 dark:text-red-300">
-                          Has negative feedback
-                        </span>
-                      ) : (
-                        <></>
-                      )}
-                    </Table.Cell>
+                    {/* Feedback */}
+                    <Table.Cell
+                    // always center & no wrap
+                    className={`
+                      text-center 
+                      align-middle 
+                      whitespace-nowrap 
+                      transition-all duration-200
+                      ${item.hasCriticism ? 'w-max' : 'w-min'}
+                    `}
+                  >
+                    {item.hasCriticism && (
+                      <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-sm dark:bg-red-900 dark:text-red-300">
+                        Has negative feedback
+                      </span>
+                    )}
+                  </Table.Cell>
+                              
                   </Table.Row>
                 );
               })

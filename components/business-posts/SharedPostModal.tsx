@@ -29,7 +29,6 @@ const SharedPostModal = ({
   rowData,
   headerTitle,
   additionalContent,
-  showCompetitiveInsights = false,
   onPrevious,
   onNext,
   hasPrevious = true,
@@ -171,36 +170,19 @@ const SharedPostModal = ({
                         : "Not specified"}
                     </p>
                   </div>
-                  <div>
+                  <div className="col-span-2">
                     <p className="text-sm font-medium text-gray-500">
-                      Feedback
+                      Negative feedback or criticism
                     </p>
                     <p className="text-sm text-gray-900">
-                      {rowData.hasCriticism !== undefined
-                        ? rowData.hasCriticism
-                          ? "Has negative feedback"
-                          : "No negative feedback"
-                        : "Not specified"}
+                      {rowData.hasCriticism && rowData.criticismSummary
+                        ? rowData.criticismSummary
+                        : "No negative feedback"}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Competitive Analysis Section - Only for competitor posts */}
-              {showCompetitiveInsights && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <h3 className="text-md font-medium text-gray-700 mb-2">
-                    Competitive Insights
-                  </h3>
-                  <div className="bg-gray-50 p-3 rounded-md">
-                    <p className="text-sm text-gray-600">
-                      Compare this competitor post against your business's
-                      social media strategy. Look for differences in approach,
-                      messaging, and engagement.
-                    </p>
-                  </div>
-                </div>
-              )}
             </Modal.Body>
 
             {/* Modal.Footer with Navigation */}
