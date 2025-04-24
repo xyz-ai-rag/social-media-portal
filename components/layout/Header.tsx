@@ -14,7 +14,9 @@ export default function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Only show business selector on dashboard pages
-  const showBusinessSelector = pathname.includes("/dashboard");
+  const showBusinessSelector = pathname.includes("/dashboard") || 
+                            pathname.includes("/posts") || 
+                            pathname.includes("/competitors");
 
   // Get the current business ID from params
   const currentBusinessId = params.businessId as string;
@@ -28,7 +30,17 @@ export default function Header() {
   // Handle business selection
   const handleBusinessSelect = (businessId: string) => {
     if (businessId && clientDetails?.id) {
-      router.push(`/${clientDetails.id}/${businessId}/dashboard`);
+      // Get the current path segments
+      const pathSegments = pathname.split('/');
+      
+      // The current page type is typically the 4th segment in the URL: /clientId/businessId/pageType
+      // If there are more segments (like /clientId/businessId/pageType/subpage), we preserve them
+      const currentPagePath = pathSegments.slice(3).join('/');
+      
+      // Build the new URL with the same page type but new business ID
+      const newPath = `/${clientDetails.id}/${businessId}/${currentPagePath || 'dashboard'}`;
+      
+      router.push(newPath);
       setIsDropdownOpen(false);
     }
   };
