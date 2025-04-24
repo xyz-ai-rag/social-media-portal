@@ -69,6 +69,9 @@ export async function GET(request: NextRequest) {
       const key = dt.toISOString().slice(0, 10);
       if (counts[key] !== undefined) {
         counts[key]++;
+      } else {
+        // Log posts that don't match any key
+        console.log(`[BarChart] Post with date ${dt.toISOString()} (key: ${key}) doesn't match any initialized day`);
       }
     });
 
