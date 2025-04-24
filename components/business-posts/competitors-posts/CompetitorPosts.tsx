@@ -7,7 +7,7 @@ import CompetitorPostCard from "./CompetitorsPostCard";
 import { useAuth } from "@/context/AuthContext";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "../SharedPostList";
-import { useFilters } from "@/context/FilterSelectContext";
+
 import PostPreviewCard from "../PostPreviewCard";
 interface CompetitorPostsProps {
   clientId: string;
@@ -81,21 +81,36 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     date.setDate(date.getDate() - 30);
     return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
   }, []);
-  // Initialize with empty filters - the API will apply defaults (last 7 days)
-  // const [filters, setFilters] = useState({
-  //   startDate: sevenDaysAgo,
-  //   endDate: yesterday,
-  //   platform: '',
-  //   sentiment: '',
-  //   relevance: '',
-  //   hasCriticism: '',
-  //   search: '',
-  //   sortOrder: 'desc',
-  //   page: 1
-  // });
-
-  // Use context useFilters(), when filters components changed, also can use same setFilters function build before.
-  const { filters, setFilters } = useFilters();
+  const [filters, setFilters] = useState(() => {
+    if (typeof window !== "undefined") {
+      const savedFilters = sessionStorage.getItem("competitors_page_filters");
+      return savedFilters
+        ? JSON.parse(savedFilters)
+        : {
+            platform: "",
+            sentiment: "",
+            relevance: "",
+            hasCriticism: "",
+            search: "",
+            sortOrder: "desc",
+            page: 1,
+          };
+    }
+    return {
+      platform: "",
+      sentiment: "",
+      relevance: "",
+      hasCriticism: "",
+      search: "",
+      sortOrder: "desc",
+      page: 1,
+    };
+  });
+  
+  // Add this effect to save filters to session storage when they change
+  useEffect(() => {
+    sessionStorage.setItem("competitors_page_filters", JSON.stringify(filters));
+  }, [filters]);
   // setting default date
   const [dateRange, setDateRange] = useState(() => {
     if (typeof window !== "undefined") {
@@ -444,7 +459,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   const handleCompetitorChange = (selectedId: string) => {
     setCompetitorId(selectedId);
     // Reset to page 1 when changing competitor
-    setFilters((prev) => ({
+    setFilters((prev:any) => ({
       ...prev,
       page: 1,
     }));
@@ -483,7 +498,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     }
 
     // Pass non-date fields to context management
-    setFilters((prev) => ({
+    setFilters((prev:any) => ({
       ...prev,
       ...otherFilters,
       // If filters other than page change, reset to page 1

@@ -7,7 +7,6 @@ import PostCard from "./PostCard";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "../SharedPostList";
 import PostPreviewCard from "../PostPreviewCard";
-import { useFilters } from "@/context/FilterSelectContext";
 
 interface BusinessPostsProps {
   clientId: string;
@@ -68,21 +67,34 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
   }, []);
 
-  // Initialize with empty filters - the API will apply defaults (last 30 days)
-  // const [filters, setFilters] = useState({
-  //   startDate: thirtyDaysAgo,
-  //   endDate: yesterday,
-  //   platform: "",
-  //   sentiment: "",
-  //   relevance: "",
-  //   hasCriticism: "",
-  //   search: "",
-  //   sortOrder: "desc",
-  //   page: 1,
-  // });
-
-  // Use context useFilters(), when filters components changed, also can use same setFilters function build before.
-  const { filters, setFilters } = useFilters();
+  const [filters, setFilters] = useState(() => {
+    if (typeof window !== "undefined") {
+      const savedFilters = sessionStorage.getItem("business_page_filters");
+      return savedFilters
+        ? JSON.parse(savedFilters)
+        : {
+            platform: "",
+            sentiment: "",
+            relevance: "",
+            hasCriticism: "",
+            search: "",
+            sortOrder: "desc",
+            page: 1,
+          };
+    }
+    return {
+      platform: "",
+      sentiment: "",
+      relevance: "",
+      hasCriticism: "",
+      search: "",
+      sortOrder: "desc",
+      page: 1,
+    };
+  });
+  useEffect(() => {
+    sessionStorage.setItem("business_page_filters", JSON.stringify(filters));
+  }, [filters]);
   // setting default date
   const [dateRange, setDateRange] = useState(() => {
     if (typeof window !== "undefined") {
@@ -392,7 +404,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       }));
     }
 
-    setFilters((prev) => ({
+    setFilters((prev:any) => ({
       ...prev,
       ...otherFilters,
       // If filters other than page change, reset to page 1
