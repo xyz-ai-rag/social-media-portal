@@ -20,7 +20,6 @@ interface TopCitiesChartProps {
 const TopCitiesChart = ({ clientId, businessId }: TopCitiesChartProps) => {
   const [cities, setCities] = useState<CityData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCity, setSelectedCity] = useState<CityData | null>(null);
 
   // Get the date range from context
   const { dateRange } = useDateRange();
@@ -148,10 +147,13 @@ const TopCitiesChart = ({ clientId, businessId }: TopCitiesChartProps) => {
                   Math.min(14, 10 + city.percentage * 0.2)
                 );
 
+                // Round the percentage to the nearest integer
+                const roundedPercentage = Math.round(city.percentage);
+
                 return (
                   <div
                     key={index}
-                    className="absolute transform -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:shadow-lg"
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center transition-all duration-300 hover:shadow-lg"
                     style={{
                       left: `${x}%`,
                       top: `${y}%`,
@@ -160,14 +162,13 @@ const TopCitiesChart = ({ clientId, businessId }: TopCitiesChartProps) => {
                       backgroundColor: getColor(index),
                       zIndex: 10 - index,
                     }}
-                    onClick={() => setSelectedCity(city)}
                   >
                     <div className="text-center text-white">
                       <div
                         className="font-bold leading-tight"
                         style={{ fontSize: `${fontSize}px` }}
                       >
-                        {index + 1}
+                        {roundedPercentage}%
                       </div>
                       <div
                         className="text-white text-opacity-90 leading-tight"
@@ -196,37 +197,6 @@ const TopCitiesChart = ({ clientId, businessId }: TopCitiesChartProps) => {
                 style={{ width: "75%", height: "75%", zIndex: 1 }}
               />
             </div>
-
-            {/* Selected city info popup */}
-            {selectedCity && (
-              <div className="absolute bottom-2 right-2 bg-white p-3 rounded-lg shadow-lg z-20 max-w-xs">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-medium text-gray-900">
-                    {selectedCity.city}
-                  </h3>
-                  <button
-                    className="text-gray-500 hover:text-gray-700 ml-2"
-                    onClick={() => setSelectedCity(null)}
-                  >
-                    ×
-                  </button>
-                </div>
-                <div className="text-sm mt-1 text-gray-600">
-                  <div>
-                    Posts:{" "}
-                    <span className="font-medium text-gray-900">
-                      {selectedCity.count}
-                    </span>
-                  </div>
-                  <div>
-                    Percentage:{" "}
-                    <span className="font-medium text-gray-900">
-                      {selectedCity.percentage}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
