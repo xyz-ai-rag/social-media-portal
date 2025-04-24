@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import { ReactNode, useState, useEffect } from "react";
-import { FilterProvider } from "@/context/FilterSelectContext";
 
 export default function LayoutClientWrapper({
   children,
@@ -64,9 +63,9 @@ export default function LayoutClientWrapper({
         } transition-all duration-300 flex-1 flex flex-col`}
       >
         <Header /> {/* Top Header */}
-        <FilterProvider>
+        
           <main className="p-6 bg-white flex-1">{children}</main>
-        </FilterProvider>
+        
       </div>
     </div>
   );
