@@ -25,9 +25,17 @@ export async function GET(request: NextRequest) {
     console.log(`[PieChart] Query params: business_id=${business_id}, start_date=${start_date}, end_date=${end_date}`);
     console.log(`[PieChart] Parsed dates: startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
 
-    // Query only the necessary field: platform.
+    // Create an array of valid date keys (same logic as bar chart)
+    const dailyKeys: string[] = [];
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      dailyKeys.push(key);
+    }
+    console.log(`[PieChart] Valid date keys:`, dailyKeys);
+
+    // Query only the necessary fields: platform, note_id and last_update_time
     const rows = await BusinessPostModel.findAll({
-      attributes: ['platform', 'note_id'], // Added note_id for comparison
+      attributes: ['platform', 'note_id', 'last_update_time'], // Added last_update_time for filtering
       where: {
         business_id,
         is_relevant: true,
@@ -36,10 +44,6 @@ export async function GET(request: NextRequest) {
     });
     
     console.log(`[PieChart] Total posts found: ${rows.length}`);
-    // console.log(`[PieChart] First 5 posts:`, rows.slice(0, 5).map(r => ({
-    //   note_id: r.getDataValue('note_id'),
-    //   platform: r.getDataValue('platform')
-    // })));
 
     // Define the mapping. In this case, we remap 'xhs' to 'rednote'.
     const platformMapping: Record<string, string> = {
@@ -60,11 +64,24 @@ export async function GET(request: NextRequest) {
 
     // Track unique note_ids to check for duplicates
     const uniqueNoteIds = new Set<string>();
+    
+    // Count of excluded posts
+    let excludedCount = 0;
 
     rows.forEach(row => {
       // Track note_ids
       const noteId = row.getDataValue("note_id");
       uniqueNoteIds.add(noteId);
+      
+      // Check if this post's date is in the valid range
+      const postDate = new Date(row.getDataValue("last_update_time"));
+      const postDateKey = postDate.toISOString().slice(0, 10);
+      
+      if (!dailyKeys.includes(postDateKey)) {
+        console.log(`[PieChart] Excluding post with date ${postDate.toISOString()} (key: ${postDateKey})`);
+        excludedCount++;
+        return; // Skip this post
+      }
       
       // Get the raw platform value and normalize it to lowercase.
       let platform = (row.getDataValue("platform") || "").toLowerCase();
@@ -82,6 +99,7 @@ export async function GET(request: NextRequest) {
 
     console.log(`[PieChart] Platform counts:`, counts);
     console.log(`[PieChart] Total unique note_ids: ${uniqueNoteIds.size}`);
+    console.log(`[PieChart] Excluded posts: ${excludedCount}`);
     
     // Build pie chart data array.
     const pieData = Object.entries(counts).map(([platform, value]) => ({
