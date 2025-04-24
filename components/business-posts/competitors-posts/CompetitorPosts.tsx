@@ -7,7 +7,7 @@ import CompetitorPostCard from "./CompetitorsPostCard";
 import { useAuth } from "@/context/AuthContext";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "../SharedPostList";
-
+import CompetitorStatsCard from "./CompetitorStatsCard";
 import PostPreviewCard from "../PostPreviewCard";
 interface CompetitorPostsProps {
   clientId: string;
@@ -540,8 +540,20 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
 
   return (
     <>
+      <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-4">{competitorName}</h1>
+      {competitorId && (
+              <div className="mt-8">
+                <CompetitorStatsCard 
+                  competitorId={competitorId}
+                  competitorName={competitorName}
+                  businessId={businessId}
+                  startDate={dateRange.startDate}
+                  endDate={dateRange.endDate}
+                />
+              </div>
+            )}
       <SharedPostList
-        title={competitorName}
+        title=""
         clientId={clientId}
         businessId={businessId}
         competitorId={competitorId}
@@ -561,6 +573,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         openModal={openModal} // NEW: Pass the openModal function
         openPreviewModal={openPreviewModal}
       />
+
       <PostPreviewCard
         isOpen={isPreviewModalOpen}
         onClose={closePreviewModal}
