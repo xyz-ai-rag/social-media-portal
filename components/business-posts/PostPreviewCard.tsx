@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { PostData } from "./SharedPostList";
+import { PostData } from "./SharedFilter"; 
 import PreviewModal from "./PreviewModal";
 
 interface PaginationInfo {
@@ -12,16 +12,17 @@ interface PaginationInfo {
   pageSize: number;
 }
 
-interface PostCardProps {
+interface PostPreviewCardProps {
   isOpen: boolean;
   onClose: () => void;
   rowData: PostData & {
     clientId?: string;
     businessId?: string;
+    competitorId?: string; // Added competitorId for competitor view support
   };
   // Navigation properties
   listData?: PostData[];
-  // NEW: Cross-page navigation handlers
+  // Cross-page navigation handlers
   onCrossPageNext?: () => void;
   onCrossPagePrev?: () => void;
   isLoadingAdjacentPages?: boolean;
@@ -37,7 +38,7 @@ const PostPreviewCard = ({
   onCrossPagePrev,
   isLoadingAdjacentPages = false,
   pagination,
-}: PostCardProps) => {
+}: PostPreviewCardProps) => {
   // Get auth context
   const { clientDetails } = useAuth();
   const [businessName, setBusinessName] = useState<string | null>(null);
@@ -46,16 +47,23 @@ const PostPreviewCard = ({
 
   // Find the business and client name when component mounts or rowData changes
   useEffect(() => {
-    if (clientDetails && rowData?.businessId) {
-      // Find the business with matching ID
-      const business = clientDetails.businesses.find(
-        (b) => b.business_id === rowData.businessId
-      );
+    if (clientDetails && (rowData?.businessId || rowData?.competitorId)) {
+      // Find the business with matching ID (handling both business and competitor IDs)
+      const targetId = rowData.competitorId || rowData.businessId;
+      
+      if (targetId) {
+        // First check in client's businesses
+        const business = clientDetails.businesses.find(
+          (b) => b.business_id === targetId
+        );
 
-      if (business) {
-        setBusinessName(business.business_name);
-      } else {
-        setBusinessName(null);
+        if (business) {
+          setBusinessName(business.business_name);
+        } else {
+          // If not found (might be a competitor not in main businesses), 
+          // we keep the current name or set it to null
+          setBusinessName(null);
+        }
       }
 
       // Set client name if client ID matches
@@ -63,7 +71,7 @@ const PostPreviewCard = ({
         setClientName(clientDetails.client_name);
       }
     }
-  }, [clientDetails, rowData?.businessId, rowData?.clientId]);
+  }, [clientDetails, rowData?.businessId, rowData?.competitorId, rowData?.clientId]);
 
   // Find current index in the list data when rowData changes
   useEffect(() => {
@@ -109,11 +117,12 @@ const PostPreviewCard = ({
 
       const previousItem = listData[newIndex];
       if (previousItem) {
-        // Add clientId and businessId if they were in rowData
+        // Add contextual IDs from current rowData
         const updatedItem = {
           ...previousItem,
           clientId: rowData.clientId,
           businessId: rowData.businessId,
+          competitorId: rowData.competitorId, // Include competitorId if present
         };
 
         // Update the current index directly
@@ -162,11 +171,12 @@ const PostPreviewCard = ({
 
       const nextItem = listData[newIndex];
       if (nextItem) {
-        // Add clientId and businessId if they were in rowData
+        // Add contextual IDs from current rowData
         const updatedItem = {
           ...nextItem,
           clientId: rowData.clientId,
           businessId: rowData.businessId,
+          competitorId: rowData.competitorId, // Include competitorId if present
         };
 
         // Update the current index directly

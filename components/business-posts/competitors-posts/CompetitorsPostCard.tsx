@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useAuth } from '@/context/AuthContext';
-import { PostData } from "../SharedPostList";
+import { PostData } from "../SharedFilter";
 import { constructVercelURL } from "@/utils/generateURL";
 import SharedPostModal from "../SharedPostModal";
 

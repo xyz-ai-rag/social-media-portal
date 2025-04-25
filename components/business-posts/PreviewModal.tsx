@@ -2,7 +2,7 @@
 
 import React, { ReactNode, useRef, useEffect } from "react";
 import { Modal, Spinner } from "flowbite-react";
-import { PostData } from "./SharedPostList";
+import { PostData } from "./SharedFilter"; 
 
 // Base interface for shared post data
 export interface PreviewModalProps {
@@ -19,7 +19,8 @@ export interface PreviewModalProps {
   onNext?: () => void;
   hasPrevious?: boolean;
   hasNext?: boolean;
-  isNavigating?: boolean; // NEW: Flag to show loading state during navigation
+  isNavigating?: boolean; // Flag to show loading state during navigation
+  showCompetitorBadge?: boolean; // Optional flag to show competitor indicator
 }
 
 const PreviewModal = ({
@@ -32,7 +33,8 @@ const PreviewModal = ({
   onNext,
   hasPrevious = true,
   hasNext = true,
-  isNavigating = false, // NEW: Default to false
+  isNavigating = false,
+  showCompetitorBadge = false,
 }: PreviewModalProps) => {
   // Handle case where rowData might be empty or undefined
   if (!rowData) return null;
@@ -103,7 +105,17 @@ const PreviewModal = ({
             style={{ maxHeight: "90vh" }}
           >
             {/* Modal.Header */}
-            <Modal.Header>{title}</Modal.Header>
+            <Modal.Header>
+              <div className="flex items-center">
+                {title}
+                {/* Show competitor badge if specified */}
+                {showCompetitorBadge && (
+                  <span className="ml-3 bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                    Competitor
+                  </span>
+                )}
+              </div>
+            </Modal.Header>
 
             {/* Modal.Body */}
             <Modal.Body className="overflow-auto">

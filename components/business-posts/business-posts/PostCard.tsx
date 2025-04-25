@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { PostData } from "../SharedPostList";
+import { PostData } from "../SharedFilter";
 import SharedPostModal from "../SharedPostModal";
 
 interface PaginationInfo {

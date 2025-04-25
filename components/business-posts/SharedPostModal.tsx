@@ -2,7 +2,7 @@
 
 import React, { ReactNode, useRef, useEffect } from "react";
 import { Modal, Spinner } from "flowbite-react";
-import { PostData } from "./SharedPostList";
+import { PostData } from "./SharedFilter";
 
 // Base interface for shared post data
 export interface BasePostModalProps {
