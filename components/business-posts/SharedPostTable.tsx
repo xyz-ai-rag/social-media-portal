@@ -106,9 +106,9 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
             <Table.HeadCell className="w-32 text-center">
               Sentiment
             </Table.HeadCell>
-            <Table.HeadCell className="w-24 text-center">
+            {/* <Table.HeadCell className="w-24 text-center">
               Feedback
-            </Table.HeadCell>
+            </Table.HeadCell> */}
           </Table.Head>
           <Table.Body className="divide-y">
             {isLoading ? (
