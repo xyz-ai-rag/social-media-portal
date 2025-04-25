@@ -1,14 +1,17 @@
 "use client";
 
 import { FC, useState, useEffect, useCallback, useMemo } from "react";
-import { Select } from "flowbite-react";
-import SharedPostList from "../SharedPostList";
+import { Select, Button } from "flowbite-react";
+import SharedFilter from "../SharedFilter";
+import SharedPostTable from "../SharedPostTable";
 import CompetitorPostCard from "./CompetitorsPostCard";
 import { useAuth } from "@/context/AuthContext";
 import { constructVercelURL } from "@/utils/generateURL";
-import { PostData } from "../SharedPostList";
+import { PostData } from "../SharedFilter";
 import CompetitorStatsCard from "./CompetitorStatsCard";
 import PostPreviewCard from "../PostPreviewCard";
+import { FaSync } from "react-icons/fa";
+
 interface CompetitorPostsProps {
   clientId: string;
   businessId: string;
@@ -64,10 +67,11 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalRowData, setModalRowData] = useState<any>({});
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  // NEW: State to store adjacent pages' posts
+  // State to store adjacent pages' posts
   const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
   const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
   const [adjacentPagesLoading, setAdjacentPagesLoading] = useState(false);
+  
   // Calculate yesterday's date for date limits
   const yesterday = useMemo(() => {
     const date = new Date();
@@ -75,12 +79,13 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
   }, []);
 
-  // Calculate default 7 days ago date
+  // Calculate default 30 days ago date
   const thirtyDaysAgo = useMemo(() => {
     const date = new Date();
     date.setDate(date.getDate() - 30);
     return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
   }, []);
+
   const [filters, setFilters] = useState(() => {
     if (typeof window !== "undefined") {
       const savedFilters = sessionStorage.getItem("competitors_page_filters");
@@ -111,6 +116,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   useEffect(() => {
     sessionStorage.setItem("competitors_page_filters", JSON.stringify(filters));
   }, [filters]);
+
   // setting default date
   const [dateRange, setDateRange] = useState(() => {
     if (typeof window !== "undefined") {
@@ -192,7 +198,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     };
 
     fetchCompetitors();
-  }, [clientDetails, businessId]);
+  }, [clientDetails, businessId, competitorId]);
 
   // Get the competitor name directly from the state without showing loading
   const competitorName = useMemo(() => {
@@ -252,7 +258,6 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         }
 
         const data = await response.json();
-        // console.log(data);
         return {
           posts: data.posts || [],
           pagination: data.pagination,
@@ -263,13 +268,16 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         return { posts: [], pagination: null, appliedFilters: null };
       }
     },
-    [competitorId, filters, yesterday]
+    [competitorId, filters, dateRange, yesterday]
   );
 
   // Main fetch function for competitor posts
   const fetchCompetitorPosts = useCallback(async () => {
     if (!competitorId) {
-      return { posts: [], pagination: null, appliedFilters: null };
+      setPosts([]);
+      setError("No competitor selected");
+      setIsLoading(false);
+      return;
     }
 
     try {
@@ -300,7 +308,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     }
   }, [competitorId, filters.page, fetchPostsForPage]);
 
-  // NEW: Function to fetch adjacent pages
+  // Function to fetch adjacent pages
   const fetchAdjacentPages = useCallback(async () => {
     if (pagination.totalPages <= 1) return;
 
@@ -331,14 +339,14 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     fetchCompetitorPosts();
   }, [fetchCompetitorPosts]);
 
-  // NEW: Fetch adjacent pages when modal is opened or current page changes
+  // Fetch adjacent pages when modal is opened or current page changes
   useEffect(() => {
     if (isModalOpen && pagination.totalPages > 1) {
       fetchAdjacentPages();
     }
   }, [isModalOpen, pagination.currentPage, fetchAdjacentPages]);
 
-  // NEW: Handle opening the modal
+  // Handle opening the modal
   const openModal = (row: any) => {
     // Add contextual IDs to row data for the modal
     setModalRowData({
@@ -350,12 +358,12 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     setIsModalOpen(true);
   };
 
-  // NEW: Handle closing the modal
+  // Handle closing the modal
   const closeModal = () => {
     setIsModalOpen(false);
   };
 
-  // NEW: Add event listener to update the modal content without closing it
+  // Add event listener to update the modal content without closing it
   useEffect(() => {
     const handleUpdateModal = (event: CustomEvent<{ data: any }>) => {
       if (event.detail && event.detail.data) {
@@ -376,7 +384,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     };
   }, []);
 
-  // NEW: Function to handle cross-page navigation
+  // Function to handle cross-page navigation
   const handleCrossPageNavigation = useCallback(
     (direction: "prev" | "next") => {
       // Calculate the new page number
@@ -427,43 +435,16 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     ]
   );
 
-  // NEW: Fetch adjacent pages when modal is opened or current page changes
-  useEffect(() => {
-    if (isModalOpen && pagination.totalPages > 1) {
-      fetchAdjacentPages();
-    }
-  }, [isModalOpen, pagination.currentPage, fetchAdjacentPages]);
-
-  // NEW: Add event listener to update the modal content without closing it
-  useEffect(() => {
-    const handleUpdateModal = (event: CustomEvent<{ data: any }>) => {
-      if (event.detail && event.detail.data) {
-        setModalRowData(event.detail.data);
-      }
-    };
-
-    document.addEventListener(
-      "updatePostModal",
-      handleUpdateModal as EventListener
-    );
-
-    return () => {
-      document.removeEventListener(
-        "updatePostModal",
-        handleUpdateModal as EventListener
-      );
-    };
-  }, []);
-
   // Handle competitor change
   const handleCompetitorChange = (selectedId: string) => {
     setCompetitorId(selectedId);
     // Reset to page 1 when changing competitor
-    setFilters((prev:any) => ({
+    setFilters((prev: any) => ({
       ...prev,
       page: 1,
     }));
   };
+
   const openPreviewModal = (row: any) => {
     setModalRowData({
       ...row,
@@ -477,6 +458,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   const closePreviewModal = () => {
     setIsPreviewModalOpen(false);
   };
+
   // Handle filter changes from the SharedPostList component
   const handleFilterChange = (newFilters: any) => {
     // Ensure we never send a date after yesterday
@@ -498,7 +480,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     }
 
     // Pass non-date fields to context management
-    setFilters((prev:any) => ({
+    setFilters((prev: any) => ({
       ...prev,
       ...otherFilters,
       // If filters other than page change, reset to page 1
@@ -509,6 +491,11 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   // Handle page change specifically
   const handlePageChange = (page: number) => {
     handleFilterChange({ page });
+  };
+
+  // Handle sort order change
+  const handleSortOrderChange = (order: string) => {
+    handleFilterChange({ sortOrder: order });
   };
 
   // Competitor dropdown component
@@ -541,39 +528,52 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   return (
     <>
       <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-4">{competitorName}</h1>
-      {competitorId && (
-              <div className="mt-8">
-                <CompetitorStatsCard 
-                  competitorId={competitorId}
-                  competitorName={competitorName}
-                  businessId={businessId}
-                  startDate={dateRange.startDate}
-                  endDate={dateRange.endDate}
-                />
-              </div>
-            )}
-      <SharedPostList
+      
+      {/* Filters */}
+      <SharedFilter
         title=""
         clientId={clientId}
         businessId={businessId}
         competitorId={competitorId}
         additionalFilters={CompetitorFilter}
-        postCardComponent={CompetitorPostCard}
-        onFilterChange={handleFilterChange}
-        initialData={posts}
         isLoading={isLoading}
         error={error}
         appliedFilters={appliedFilters}
+        onFilterChange={handleFilterChange}
+        onRefresh={fetchCompetitorPosts}
+        onSortOrderChange={handleSortOrderChange}
+      />
+      
+      {/* Stats Card */}
+      {competitorId && (
+        <div className="mt-6 mb-6">
+          <CompetitorStatsCard 
+            competitorId={competitorId}
+            competitorName={competitorName}
+            businessId={businessId}
+            startDate={dateRange.startDate}
+            endDate={dateRange.endDate}
+          />
+        </div>
+      )}
+      
+      {/* Posts Table */}
+      <SharedPostTable
+        listData={posts}
+        isLoading={isLoading}
+        postCardComponent={CompetitorPostCard}
         pagination={{
           currentPage: pagination.currentPage,
           totalPages: pagination.totalPages,
           onPageChange: handlePageChange,
         }}
-        onRefresh={fetchCompetitorPosts}
-        openModal={openModal} // NEW: Pass the openModal function
+        sortOrder={filters.sortOrder}
+        onSortOrderChange={handleSortOrderChange}
+        openModal={openModal}
         openPreviewModal={openPreviewModal}
       />
-
+      
+      {/* Modals */}
       <PostPreviewCard
         isOpen={isPreviewModalOpen}
         onClose={closePreviewModal}
@@ -584,12 +584,12 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         isLoadingAdjacentPages={adjacentPagesLoading}
         pagination={pagination}
       />
-      {/* NEW: Render CompetitorPostCard independently */}
+      
       <CompetitorPostCard
         isOpen={isModalOpen}
         onClose={closeModal}
         rowData={modalRowData}
-        listData={posts} // Pass the list data for navigation
+        listData={posts}
         onCrossPageNext={() => handleCrossPageNavigation("next")}
         onCrossPagePrev={() => handleCrossPageNavigation("prev")}
         isLoadingAdjacentPages={adjacentPagesLoading}

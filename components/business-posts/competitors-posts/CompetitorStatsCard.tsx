@@ -308,7 +308,7 @@ const CompetitorStatsCard: React.FC<CompetitorStatsCardProps> = ({
             {competitorStats.negativeFeedback.length > 5 && (
             <div className="mt-2 text-xs text-gray-500 italic">
                 Showing 5 of {competitorStats.negativeFeedback.length} negative feedback points. 
-                Use the &ldquo;Has negative feedback&rdquo; filter below to see posts with criticism.
+                Use the &ldquo;Has negative feedback&rdquo; filter above to see posts with criticism.
             </div>
             )}
         </div>

@@ -1,4 +1,3 @@
-// /api/businesses/getBusinessPostStats/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { Op } from 'sequelize';
 import { BusinessPostModel } from '@/feature/sqlORM/modelorm';
@@ -53,9 +52,25 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Map platform codes to full names
+    const mappedPlatformBreakdown: Record<string, number> = {};
+    
+    // Platform mapping
+    const platformMapping: Record<string, string> = {
+      'xhs': 'Rednote',
+      'wb': 'Weibo',
+      'dy': 'Douyin'
+    };
+    
+    // Apply mapping to the platform breakdown
+    Object.entries(platformBreakdown).forEach(([platform, count]) => {
+      const mappedPlatform = platformMapping[platform] || platform;
+      mappedPlatformBreakdown[mappedPlatform] = count;
+    });
+
     return NextResponse.json({
       totalPosts,
-      platformBreakdown
+      platformBreakdown: mappedPlatformBreakdown
     });
   } catch (err: any) {
     console.error('Error getting business post stats:', err);
