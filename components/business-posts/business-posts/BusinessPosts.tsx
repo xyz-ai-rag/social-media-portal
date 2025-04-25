@@ -2,10 +2,11 @@
 
 import { FC, useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
-import SharedPostList from "../SharedPostList";
+import SharedFilter from "../SharedFilter";
+import SharedPostTable from "../SharedPostTable";
 import PostCard from "./PostCard";
 import { constructVercelURL } from "@/utils/generateURL";
-import { PostData } from "../SharedPostList";
+import { PostData } from "../SharedFilter";
 import PostPreviewCard from "../PostPreviewCard";
 
 interface BusinessPostsProps {
@@ -49,10 +50,11 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [modalRowData, setModalRowData] = useState<any>({});
 
-  // NEW: State to store adjacent pages' posts
+  // State to store adjacent pages' posts
   const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
   const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
   const [adjacentPagesLoading, setAdjacentPagesLoading] = useState(false);
+  
   // Calculate yesterday's date for date limits
   const yesterday = useMemo(() => {
     const date = new Date();
@@ -92,9 +94,11 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       page: 1,
     };
   });
+  
   useEffect(() => {
     sessionStorage.setItem("business_page_filters", JSON.stringify(filters));
   }, [filters]);
+  
   // setting default date
   const [dateRange, setDateRange] = useState(() => {
     if (typeof window !== "undefined") {
@@ -109,6 +113,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   useEffect(() => {
     sessionStorage.setItem("business_page_date", JSON.stringify(dateRange));
   }, [dateRange]);
+  
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
     null
@@ -188,7 +193,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         return { posts: [], pagination: null, appliedFilters: null };
       }
     },
-    [businessId, filters, yesterday]
+    [businessId, filters, dateRange, yesterday]
   );
 
   // Main fetch function for current page
@@ -223,7 +228,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     }
   }, [businessId, filters.page, fetchPostsForPage]);
 
-  // NEW: Function to fetch adjacent pages
+  // Function to fetch adjacent pages
   const fetchAdjacentPages = useCallback(async () => {
     if (pagination.totalPages <= 1) return;
 
@@ -254,40 +259,12 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     fetchPosts();
   }, [fetchPosts]);
 
-  // NEW: Fetch adjacent pages when modal is opened or current page changes
+  // Fetch adjacent pages when modal is opened or current page changes
   useEffect(() => {
-    if (isModalOpen && pagination.totalPages > 1) {
+    if ((isModalOpen || isPreviewModalOpen) && pagination.totalPages > 1) {
       fetchAdjacentPages();
     }
-  }, [isModalOpen, pagination.currentPage, fetchAdjacentPages]);
-
-  // Add event listener to update the modal content without closing it
-  useEffect(() => {
-    const handleUpdateModal = (event: CustomEvent<{ data: any }>) => {
-      if (event.detail && event.detail.data) {
-        setModalRowData(event.detail.data);
-      }
-    };
-
-    document.addEventListener(
-      "updatePostModal",
-      handleUpdateModal as EventListener
-    );
-
-    return () => {
-      document.removeEventListener(
-        "updatePostModal",
-        handleUpdateModal as EventListener
-      );
-    };
-  }, []);
-
-  // NEW: Fetch adjacent pages when modal is opened or current page changes
-  useEffect(() => {
-    if (isModalOpen && pagination.totalPages > 1) {
-      fetchAdjacentPages();
-    }
-  }, [isModalOpen, pagination.currentPage, fetchAdjacentPages]);
+  }, [isModalOpen, isPreviewModalOpen, pagination.currentPage, fetchAdjacentPages]);
 
   // Handle opening the modal
   const openModal = (row: any) => {
@@ -341,7 +318,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     };
   }, []);
 
-  // NEW: Function to handle cross-page navigation
+  // Function to handle cross-page navigation
   const handleCrossPageNavigation = useCallback(
     (direction: "prev" | "next") => {
       // Calculate the new page number
@@ -384,7 +361,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     [pagination, prevPagePosts, nextPagePosts, clientId, businessId]
   );
 
-  // Handle filter changes from the SharedPostList component
+  // Handle filter changes
   const handleFilterChange = (newFilters: any) => {
     // Ensure we never send a date after yesterday
     if (
@@ -404,7 +381,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       }));
     }
 
-    setFilters((prev:any) => ({
+    setFilters((prev: any) => ({
       ...prev,
       ...otherFilters,
       // If filters other than page change, reset to page 1
@@ -417,44 +394,65 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     handleFilterChange({ page });
   };
 
+  // Handle sort order change
+  const handleSortOrderChange = (order: string) => {
+    handleFilterChange({ sortOrder: order });
+  };
+
   return (
     <>
-      <SharedPostList
-        title={`Posts for ${businessName || "Business"}`}
+      {/* Title */}
+      <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-4">
+        {`Posts for ${businessName || "Business"}`}
+      </h1>
+      
+      {/* Filters */}
+      <SharedFilter
+        title=""
         clientId={clientId}
         businessId={businessId}
-        postCardComponent={PostCard}
-        onFilterChange={handleFilterChange}
-        initialData={posts}
         isLoading={isLoading}
         error={error}
         appliedFilters={appliedFilters}
+        onFilterChange={handleFilterChange}
+        onRefresh={fetchPosts}
+        onSortOrderChange={handleSortOrderChange}
+      />
+    
+      
+      {/* Posts Table */}
+      <SharedPostTable
+        listData={posts}
+        isLoading={isLoading}
+        postCardComponent={PostCard}
         pagination={{
           currentPage: pagination.currentPage,
           totalPages: pagination.totalPages,
           onPageChange: handlePageChange,
         }}
-        onRefresh={fetchPosts}
-        openModal={openModal} // Pass the openModal function
-        openPreviewModal={openPreviewModal} // Pass the openPreviewModal function
+        sortOrder={filters.sortOrder}
+        onSortOrderChange={handleSortOrderChange}
+        openModal={openModal}
+        openPreviewModal={openPreviewModal}
       />
-
-      {/* Render PostCard independently */}
+      
+      {/* Modals */}
       <PostCard
         isOpen={isModalOpen}
         onClose={closeModal}
         rowData={modalRowData}
-        listData={posts} // Pass the list data for navigation
+        listData={posts}
         onCrossPageNext={() => handleCrossPageNavigation("next")}
         onCrossPagePrev={() => handleCrossPageNavigation("prev")}
         isLoadingAdjacentPages={adjacentPagesLoading}
         pagination={pagination}
       />
+      
       <PostPreviewCard
         isOpen={isPreviewModalOpen}
         onClose={closePreviewModal}
         rowData={modalRowData}
-        listData={posts} // Pass the list data for navigation
+        listData={posts}
         onCrossPageNext={() => handleCrossPageNavigation("next")}
         onCrossPagePrev={() => handleCrossPageNavigation("prev")}
         isLoadingAdjacentPages={adjacentPagesLoading}
