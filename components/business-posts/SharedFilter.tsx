@@ -336,7 +336,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
           onChange={(e) => handleRelevance(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">Relevance</option>
+          <option value="">Relevance Score</option>
           {relevanceData.map((item, index) => {
             return (
               <option key={index} value={item.value}>
