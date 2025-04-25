@@ -163,7 +163,7 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                     </Table.Cell>
 
                     {/* Updated Post Cell with Multi-line Support */}
-                    <Table.Cell className="align-middle">
+                    <Table.Cell className="align-middle min-w-[45%]">
                       <div className="line-clamp-5 text-sm break-words">
                         {item.post}
                       </div>
