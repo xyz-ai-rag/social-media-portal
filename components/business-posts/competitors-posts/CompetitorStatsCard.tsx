@@ -170,7 +170,19 @@ const CompetitorStatsCard: React.FC<CompetitorStatsCardProps> = ({
     );
   };
 
-  if (isLoading) {
+  // For the no competitor selected case, show a friendly message instead of an error
+  if (!competitorId) {
+    return (
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="text-center p-8 text-gray-500">
+          <p className="mb-2 text-lg">Select a competitor from the dropdown above to view comparison statistics.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only show the loading state if we have a competitorId and we're actually loading
+  if (isLoading && competitorId) {
     return (
       <div className="bg-white rounded-lg shadow p-6 flex items-center justify-center h-64">
         <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
@@ -178,13 +190,18 @@ const CompetitorStatsCard: React.FC<CompetitorStatsCardProps> = ({
     );
   }
 
+  // For other errors, show a less alarming message
   if (error || !competitorStats || !ownBusinessStats) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="text-red-500">{error || "Failed to load data"}</div>
+        <div className="text-center p-8 text-gray-500">
+          <p className="mb-2">No data available for the selected time period.</p>
+          <p className="text-sm">Try selecting a different competitor or time range.</p>
+        </div>
       </div>
     );
   }
+
   const platformMapping: Record<string, string> = {
     'wb': 'Weibo',
     'xhs': 'Rednote',

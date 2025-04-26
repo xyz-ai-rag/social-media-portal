@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useState, useEffect, useCallback, useMemo } from "react";
-import { Select, Button, Tabs } from "flowbite-react"; // Add Tabs import
+import { Select, Button } from "flowbite-react";
 import SharedFilter from "../SharedFilter";
 import SharedPostTable from "../SharedPostTable";
 import CompetitorPostCard from "./CompetitorsPostCard";
@@ -156,7 +156,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
           !currentBusiness.similar_businesses ||
           currentBusiness.similar_businesses.length === 0
         ) {
-          console.log("No similar businesses found");
+          // console.log("No similar businesses found");
           return;
         }
 
@@ -194,7 +194,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         }
       } catch (error) {
         console.error("Error fetching competitors:", error);
-        setError("Failed to load competitors data");
+        // Don't set an error message for users to see
       } finally {
         setLoadingCompetitors(false);
       }
@@ -278,7 +278,8 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   const fetchCompetitorPosts = useCallback(async () => {
     if (!competitorId) {
       setPosts([]);
-      setError("No competitor selected");
+      // Don't set an error message for no competitor selected
+      setError(null);
       setIsLoading(false);
       return;
     }
@@ -298,13 +299,13 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         if (appliedFilters) setAppliedFilters(appliedFilters);
       } else {
         setPosts([]);
-        setError("No posts found for this competitor");
+        // Use a more neutral message
+        setError("No posts found for this selection");
       }
     } catch (error: any) {
       console.error("Error fetching competitor posts:", error);
-      setError(
-        error.message || "An error occurred while fetching competitor posts"
-      );
+      // Use a more neutral message
+      setError("Unable to load data for this selection");
       setPosts([]);
     } finally {
       setIsLoading(false);
@@ -540,7 +541,8 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         competitorId={competitorId}
         additionalFilters={CompetitorFilter}
         isLoading={isLoading}
-        error={error}
+        // Don't pass the "No competitor selected" error to the filter
+        error={error === "No competitor selected" ? null : error}
         appliedFilters={appliedFilters}
         onFilterChange={handleFilterChange}
         onRefresh={fetchCompetitorPosts}
@@ -550,77 +552,92 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
       {/* Tabs Section */}
       <div className="mt-6">
         <div className="mb-4 border-b border-gray-200">
-        <ul className="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
-          <li className="mr-2" role="presentation">
-            <button
-              className={`inline-block p-4 border-b-2 rounded-t-lg ${
-                activeTab === 0
-                  ? "text-blue-600 border-blue-600"
-                  : "hover:text-gray-600 hover:border-gray-300 border-transparent"
-              }`}
-              type="button"
-              role="tab"
-              onClick={() => setActiveTab(0)}
-            >
-              Overview
-            </button>
-          </li>
-          <li className="mr-2" role="presentation">
-            <button
-              className={`inline-block p-4 border-b-2 rounded-t-lg ${
-                activeTab === 1
-                  ? "text-blue-600 border-blue-600"
-                  : "hover:text-gray-600 hover:border-gray-300 border-transparent"
-              }`}
-              type="button"
-              role="tab"
-              onClick={() => setActiveTab(1)}
-            >
-              Competitor Posts
-            </button>
-          </li>
-        </ul>
-      </div>
+          <ul className="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
+            <li className="mr-2" role="presentation">
+              <button
+                className={`inline-block p-4 border-b-2 rounded-t-lg ${
+                  activeTab === 0
+                    ? "text-blue-600 border-blue-600"
+                    : "hover:text-gray-600 hover:border-gray-300 border-transparent"
+                }`}
+                type="button"
+                role="tab"
+                onClick={() => setActiveTab(0)}
+              >
+                Overview
+              </button>
+            </li>
+            <li className="mr-2" role="presentation">
+              <button
+                className={`inline-block p-4 border-b-2 rounded-t-lg ${
+                  activeTab === 1
+                    ? "text-blue-600 border-blue-600"
+                    : "hover:text-gray-600 hover:border-gray-300 border-transparent"
+                }`}
+                type="button"
+                role="tab"
+                onClick={() => setActiveTab(1)}
+              >
+                Competitor Posts
+              </button>
+            </li>
+          </ul>
+        </div>
       
-      {/* Tab content */}
-      <div className="tab-content">
-        {activeTab === 0 && (
-          // Overview Tab Content
-          <>
-            {competitorId && (
-              <div className="mb-6">
-                <CompetitorStatsCard 
-                  competitorId={competitorId}
-                  competitorName={competitorName}
-                  businessId={businessId}
-                  startDate={dateRange.startDate}
-                  endDate={dateRange.endDate}
+        {/* Tab content */}
+        <div className="tab-content">
+          {activeTab === 0 && (
+            // Overview Tab Content
+            <>
+              {!competitorId ? (
+                <div className="bg-white rounded-lg shadow p-6 mb-6">
+                  <div className="text-center p-8 text-gray-500">
+                    <p className="mb-2 text-lg">Select a competitor from the dropdown above to view comparison statistics.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mb-6">
+                  <CompetitorStatsCard 
+                    competitorId={competitorId}
+                    competitorName={competitorName}
+                    businessId={businessId}
+                    startDate={dateRange.startDate}
+                    endDate={dateRange.endDate}
+                  />
+                </div>
+              )}
+            </>
+          )}
+          
+          {activeTab === 1 && (
+            // Competitor Posts Tab Content
+            <div>
+              {!competitorId ? (
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="text-center p-8 text-gray-500">
+                    <p className="mb-2 text-lg">Select a competitor from the dropdown above to view their posts.</p>
+                  </div>
+                </div>
+              ) : (
+                <SharedPostTable
+                  listData={posts}
+                  isLoading={isLoading}
+                  postCardComponent={CompetitorPostCard}
+                  pagination={{
+                    currentPage: pagination.currentPage,
+                    totalPages: pagination.totalPages,
+                    onPageChange: handlePageChange,
+                  }}
+                  sortOrder={filters.sortOrder}
+                  onSortOrderChange={handleSortOrderChange}
+                  openModal={openModal}
+                  openPreviewModal={openPreviewModal}
+                
                 />
-              </div>
-            )}
-          </>
-        )}
-        
-        {activeTab === 1 && (
-          // Competitor Posts Tab Content
-          <div>
-            <SharedPostTable
-              listData={posts}
-              isLoading={isLoading}
-              postCardComponent={CompetitorPostCard}
-              pagination={{
-                currentPage: pagination.currentPage,
-                totalPages: pagination.totalPages,
-                onPageChange: handlePageChange,
-              }}
-              sortOrder={filters.sortOrder}
-              onSortOrderChange={handleSortOrderChange}
-              openModal={openModal}
-              openPreviewModal={openPreviewModal}
-            />
-          </div>
-        )}
-      </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Modals */}
