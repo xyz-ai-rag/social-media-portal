@@ -13,9 +13,16 @@ export const metadata = {
   description: "Analytics and management for social media",
   icons: {
     icon: "/favicon.png",
-  },
+  }
 };
-
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1.0,
+  minimumScale: 0.5, // Allow zooming out to 50%
+  maximumScale: 3.0, // Allow zooming in to 300%
+  userScalable: true, // Allow users to zoom
+  viewportFit: 'cover'
+};
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">

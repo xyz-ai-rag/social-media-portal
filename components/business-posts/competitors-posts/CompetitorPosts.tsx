@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useState, useEffect, useCallback, useMemo } from "react";
-import { Select, Button } from "flowbite-react";
+import { Select, Button, Tabs } from "flowbite-react"; // Add Tabs import
 import SharedFilter from "../SharedFilter";
 import SharedPostTable from "../SharedPostTable";
 import CompetitorPostCard from "./CompetitorsPostCard";
@@ -46,6 +46,9 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
 }) => {
   // Get auth context to access similar businesses
   const { clientDetails } = useAuth();
+
+  // Add state for active tab
+  const [activeTab, setActiveTab] = useState(0);
 
   // Competitor selection state
   const [competitorId, setCompetitorId] = useState<string>("");
@@ -544,34 +547,81 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         onSortOrderChange={handleSortOrderChange}
       />
       
-      {/* Stats Card */}
-      {competitorId && (
-        <div className="mt-6 mb-6">
-          <CompetitorStatsCard 
-            competitorId={competitorId}
-            competitorName={competitorName}
-            businessId={businessId}
-            startDate={dateRange.startDate}
-            endDate={dateRange.endDate}
-          />
-        </div>
-      )}
+      {/* Tabs Section */}
+      <div className="mt-6">
+        <div className="mb-4 border-b border-gray-200">
+        <ul className="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
+          <li className="mr-2" role="presentation">
+            <button
+              className={`inline-block p-4 border-b-2 rounded-t-lg ${
+                activeTab === 0
+                  ? "text-blue-600 border-blue-600"
+                  : "hover:text-gray-600 hover:border-gray-300 border-transparent"
+              }`}
+              type="button"
+              role="tab"
+              onClick={() => setActiveTab(0)}
+            >
+              Overview
+            </button>
+          </li>
+          <li className="mr-2" role="presentation">
+            <button
+              className={`inline-block p-4 border-b-2 rounded-t-lg ${
+                activeTab === 1
+                  ? "text-blue-600 border-blue-600"
+                  : "hover:text-gray-600 hover:border-gray-300 border-transparent"
+              }`}
+              type="button"
+              role="tab"
+              onClick={() => setActiveTab(1)}
+            >
+              Competitor Posts
+            </button>
+          </li>
+        </ul>
+      </div>
       
-      {/* Posts Table */}
-      <SharedPostTable
-        listData={posts}
-        isLoading={isLoading}
-        postCardComponent={CompetitorPostCard}
-        pagination={{
-          currentPage: pagination.currentPage,
-          totalPages: pagination.totalPages,
-          onPageChange: handlePageChange,
-        }}
-        sortOrder={filters.sortOrder}
-        onSortOrderChange={handleSortOrderChange}
-        openModal={openModal}
-        openPreviewModal={openPreviewModal}
-      />
+      {/* Tab content */}
+      <div className="tab-content">
+        {activeTab === 0 && (
+          // Overview Tab Content
+          <>
+            {competitorId && (
+              <div className="mb-6">
+                <CompetitorStatsCard 
+                  competitorId={competitorId}
+                  competitorName={competitorName}
+                  businessId={businessId}
+                  startDate={dateRange.startDate}
+                  endDate={dateRange.endDate}
+                />
+              </div>
+            )}
+          </>
+        )}
+        
+        {activeTab === 1 && (
+          // Competitor Posts Tab Content
+          <div>
+            <SharedPostTable
+              listData={posts}
+              isLoading={isLoading}
+              postCardComponent={CompetitorPostCard}
+              pagination={{
+                currentPage: pagination.currentPage,
+                totalPages: pagination.totalPages,
+                onPageChange: handlePageChange,
+              }}
+              sortOrder={filters.sortOrder}
+              onSortOrderChange={handleSortOrderChange}
+              openModal={openModal}
+              openPreviewModal={openPreviewModal}
+            />
+          </div>
+        )}
+      </div>
+      </div>
       
       {/* Modals */}
       <PostPreviewCard
