@@ -198,13 +198,6 @@ const CompetitorStatsCard: React.FC<CompetitorStatsCardProps> = ({
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      {/* <h2 className="text-xl font-bold mb-4">Competitor Analysis: {competitorName}</h2> */}
-      
-      {/* Date Range Display */}
-      {/* <div className="text-sm text-gray-600 mb-4">
-        Data from {formatDate(startDate)} to {formatDate(endDate)}
-      </div> */}
-      
       {/* Total Posts Section */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold mb-2">Posts during period</h3>
@@ -216,11 +209,11 @@ const CompetitorStatsCard: React.FC<CompetitorStatsCardProps> = ({
         </div>
       </div>
       
-      {/* Platform Breakdown */}
+      {/* Platform Breakdown with absolute positioning */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold mb-2">Platform Breakdown</h3>
         <div className="space-y-2">
-            {allPlatforms.map(platform => {
+          {allPlatforms.map(platform => {
             const competitorCount = competitorStats.postsPerPlatform[platform] || 0;
             const ownCount = ownBusinessStats.postsPerPlatform[platform] || 0;
             const diff = calculateDifference(competitorCount, ownCount);
@@ -229,12 +222,10 @@ const CompetitorStatsCard: React.FC<CompetitorStatsCardProps> = ({
             const displayName = platformMapping[platform] || platform;
             
             return (
-              <div key={platform} className="flex justify-between items-center">
-                <span className="font-medium">{platform}</span>
-                <div className="flex items-baseline">
-                  <span>{competitorCount}</span>
-                  {renderDifference(diff)}
-                </div>
+              <div key={platform} style={{ position: 'relative', height: '28px', display: 'flex', alignItems: 'center' }}>
+                <span style={{ display: 'inline-block', width: '100px', fontWeight: '500' }}>{displayName}</span>
+                <span style={{ display: 'inline-block', width: '30px' }}>{competitorCount}</span>
+                <span>{renderDifference(diff)}</span>
               </div>
             );
           })}
@@ -257,39 +248,46 @@ const CompetitorStatsCard: React.FC<CompetitorStatsCardProps> = ({
         </div>
       </div>
       
-      {/* Top Hashtags */}
+      {/* Top Hashtags - Simple fixed-width divs with centered counts */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold mb-2">Top Hashtags</h3>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
+        <div style={{ display: 'flex' }}>
+          {/* First column - Competitor */}
+          <div style={{ width: '40%' }}>
             <h4 className="font-medium text-sm mb-1">{competitorName}</h4>
-            <ul className="text-sm space-y-1">
-              {competitorStats.topHashtags.length > 0 ? (
-                competitorStats.topHashtags.slice(0, 5).map((tag, idx) => (
-                  <li key={idx} className="flex justify-between">
-                    <span>{tag.tag}</span>
-                    <span className="text-gray-600">{tag.count}</span>
-                  </li>
-                ))
-              ) : (
-                <li className="text-gray-500">No hashtags found</li>
-              )}
-            </ul>
+            {competitorStats.topHashtags.length > 0 ? (
+              competitorStats.topHashtags.slice(0, 5).map((tag, idx) => (
+                <div key={idx} style={{ display: 'flex' }}>
+                  <div style={{ width: '40%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {tag.tag}
+                  </div>
+                  <div style={{ width: '40%', textAlign: 'center' }}>
+                    {tag.count}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-gray-500">No hashtags found</div>
+            )}
           </div>
-          <div>
+          
+          {/* Second column - Your Business */}
+          <div style={{ width: '40%' }}>
             <h4 className="font-medium text-sm mb-1">Your Business</h4>
-            <ul className="text-sm space-y-1">
-              {ownBusinessStats.topHashtags.length > 0 ? (
-                ownBusinessStats.topHashtags.slice(0, 5).map((tag, idx) => (
-                  <li key={idx} className="flex justify-between">
-                    <span>{tag.tag}</span>
-                    <span className="text-gray-600">{tag.count}</span>
-                  </li>
-                ))
-              ) : (
-                <li className="text-gray-500">No hashtags found</li>
-              )}
-            </ul>
+            {ownBusinessStats.topHashtags.length > 0 ? (
+              ownBusinessStats.topHashtags.slice(0, 5).map((tag, idx) => (
+                <div key={idx} style={{ display: 'flex' }}>
+                  <div style={{ width: '40%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {tag.tag}
+                  </div>
+                  <div style={{ width: '40%', textAlign: 'center' }}>
+                    {tag.count}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-gray-500">No hashtags found</div>
+            )}
           </div>
         </div>
       </div>
@@ -297,22 +295,22 @@ const CompetitorStatsCard: React.FC<CompetitorStatsCardProps> = ({
       {/* Negative Feedback */}
       {competitorStats.negativeFeedback.length > 0 && (
         <div>
-            <h3 className="text-lg font-semibold mb-2">Negative Feedback Points</h3>
-            <ul className="space-y-2 text-sm">
+          <h3 className="text-lg font-semibold mb-2">Negative Feedback Points</h3>
+          <ul className="space-y-2 text-sm">
             {competitorStats.negativeFeedback.slice(0, 5).map((feedback, idx) => (
-                <li key={idx} className="bg-red-50 p-2 rounded border-l-2 border-red-400">
+              <li key={idx} className="bg-red-50 p-2 rounded border-l-2 border-red-400">
                 {feedback}
-                </li>
+              </li>
             ))}
-            </ul>
-            {competitorStats.negativeFeedback.length > 5 && (
+          </ul>
+          {competitorStats.negativeFeedback.length > 5 && (
             <div className="mt-2 text-xs text-gray-500 italic">
-                Showing 5 of {competitorStats.negativeFeedback.length} negative feedback points. 
-                Use the &ldquo;Has negative feedback&rdquo; filter above to see posts with criticism.
+              Showing 5 of {competitorStats.negativeFeedback.length} negative feedback points. 
+              Use the &ldquo;Has negative feedback&rdquo; filter above to see posts with criticism.
             </div>
-            )}
+          )}
         </div>
-        )}
+      )}
     </div>
   );
 };

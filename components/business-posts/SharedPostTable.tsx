@@ -163,13 +163,13 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                     </Table.Cell>
 
                     {/* Updated Post Cell with Multi-line Support */}
-                    <Table.Cell className="align-middle min-w-[45%]">
+                    <Table.Cell className="align-middle min-w-[60%]">
                       <div className="line-clamp-5 text-sm break-words">
                         {item.post}
                       </div>
                     </Table.Cell>
 
-                    <Table.Cell className="flex justify-center items-center">
+                    <Table.Cell className=" align-middle">
                       <button
                         className="text-white text-xs bg-[#5D5FEF] shadow-sm w-[69px] h-[32px] justify-center items-center border rounded"
                         onClick={(e) => {

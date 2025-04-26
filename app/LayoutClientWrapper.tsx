@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
+import Footer from "@/components/layout/Footer"; // Import the Footer component
 import { ReactNode, useState, useEffect } from "react";
 
 export default function LayoutClientWrapper({
@@ -63,9 +64,8 @@ export default function LayoutClientWrapper({
         } transition-all duration-300 flex-1 flex flex-col`}
       >
         <Header /> {/* Top Header */}
-        
-          <main className="p-6 bg-white flex-1">{children}</main>
-        
+        <main className="p-6 bg-white flex-1">{children}</main>
+        <Footer /> {/* Added Footer */}
       </div>
     </div>
   );

@@ -45,11 +45,18 @@ export async function GET(request: NextRequest) {
     
     console.log(`[PieChart] Total posts found: ${rows.length}`);
 
-    // Define the mapping. In this case, we remap 'xhs' to 'rednote'.
-    const platformMapping: Record<string, string> = {
-      xhs: "Rednote", // 'xhs' in DB should be considered as 'rednote'
-      weibo: "Weibo",
-      douyin: "Douyin"
+    // Define the mapping for platform codes to display names
+    const platformCodeMapping: Record<string, string> = {
+      'xhs': 'rednote',
+      'wb': 'weibo',
+      'dy': 'douyin'
+    };
+    
+    // Define the mapping for normalized platform names to display names
+    const platformDisplayMapping: Record<string, string> = {
+      'rednote': "Rednote",
+      'weibo': "Weibo", 
+      'douyin': "Douyin"
     };
 
     // Define fixed colors.
@@ -57,6 +64,7 @@ export async function GET(request: NextRequest) {
       Rednote: "#5A6ACF",
       Weibo: "#8593ED",
       Douyin: "#C7CEFF",
+      Other: "#AAAAAA" // Added fallback color
     };
 
     // Count posts per platform.
@@ -67,6 +75,7 @@ export async function GET(request: NextRequest) {
     
     // Count of excluded posts
     let excludedCount = 0;
+    let loggedUnknownPlatforms = new Set();
 
     rows.forEach(row => {
       // Track note_ids
@@ -84,17 +93,29 @@ export async function GET(request: NextRequest) {
       }
       
       // Get the raw platform value and normalize it to lowercase.
-      let platform = (row.getDataValue("platform") || "").toLowerCase();
-      // Map the DB value.
-      if (platformMapping[platform]) {
-        platform = platformMapping[platform];
-      } else {
-        // If platform is not recognized, you could default to 'rednote', or ignore.
-        platform = "Rednote"; // Changed to match case in counts
+      let platformCode = (row.getDataValue("platform") || "").toLowerCase();
+      
+      // First map platform codes (wb, dy, xhs) to normalized names
+      let normalizedPlatform = platformCodeMapping[platformCode] || platformCode;
+      
+      // Then map normalized names to display names
+      let displayPlatform = platformDisplayMapping[normalizedPlatform];
+      
+      if (!displayPlatform) {
+        if (!loggedUnknownPlatforms.has(platformCode)) {
+          console.log(`[PieChart] Unknown platform code: ${platformCode}`);
+          loggedUnknownPlatforms.add(platformCode);
+        }
+        displayPlatform = "Other";
       }
-      if (platform in counts) {
-        counts[platform]++;
+      
+      // Initialize count for this platform if not already present
+      if (!(displayPlatform in counts)) {
+        counts[displayPlatform] = 0;
       }
+      
+      // Increment the count
+      counts[displayPlatform]++;
     });
 
     console.log(`[PieChart] Platform counts:`, counts);
@@ -102,11 +123,13 @@ export async function GET(request: NextRequest) {
     console.log(`[PieChart] Excluded posts: ${excludedCount}`);
     
     // Build pie chart data array.
-    const pieData = Object.entries(counts).map(([platform, value]) => ({
-      name: platform,
-      value,
-      color: platformColors[platform] || '#5470c6'
-    }));
+    const pieData = Object.entries(counts)
+      .filter(([_, value]) => value > 0) // Only include platforms with posts
+      .map(([platform, value]) => ({
+        name: platform,
+        value,
+        color: platformColors[platform] || '#AAAAAA'
+      }));
 
     const totalPosts = Object.values(counts).reduce((sum, count) => sum + count, 0);
     console.log(`[PieChart] Total posts in pieData: ${totalPosts}`);
