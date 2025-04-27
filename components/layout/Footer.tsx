@@ -6,7 +6,7 @@ export default function Footer() {
         <div className="flex flex-col items-center justify-center text-center">
           {/* Copyright text */}
           <p className="text-gray-600 text-sm mb-4">
-            &copy; {new Date().getFullYear()} Hyprdata.ai Web Portal. All rights reserved.
+            &copy;{new Date().getFullYear()} Hyprdata.ai. All rights reserved.
           </p>
           
           {/* Disclaimer - now centered */}
