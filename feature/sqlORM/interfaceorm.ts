@@ -79,3 +79,13 @@ export interface ClientUsersInstance extends Model {
   client_id:string;
   registered_email:string;
 }
+
+export interface ActiveSessionsInstance extends Model {
+  id?: number;
+  user_id: number;
+  session_id: string;
+  created_at?: Date;
+  last_active?: Date;
+  user_agent?: string;
+  ip_address?: string;
+}

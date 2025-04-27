@@ -44,6 +44,9 @@ interface AuthContextType {
   clientDetails: ClientDetails | null;
   login: (email: string, password: string) => Promise<{ success: boolean; data?: any; error?: string }>;
   logout: () => Promise<void>;
+  sessionId: string | null;
+  checkActiveSession: () => Promise<boolean>;
+  keepSessionAlive: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [clientDetails, setClientDetails] = useState<ClientDetails | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const [sessionId, setSessionId] = useState<string | null>(null);
   // Stabilize the fetchClientDetails function with useCallback
   const fetchClientDetails = useCallback(async (email: string) => {
     try {

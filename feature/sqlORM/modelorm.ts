@@ -4,7 +4,8 @@ import {
   BusinessPostInstance,
   BusinessInstance,
   ClientInstance,
-  ClientUsersInstance
+  ClientUsersInstance,
+  ActiveSessionsInstance
  } from './interfaceorm'; 
 
 // BusinessPosts table
@@ -154,7 +155,7 @@ export const ClientUsersModel = sequelizeDbConnection.define<ClientUsersInstance
   'client_users',
   {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       primaryKey: true,
       allowNull: false,
     },
@@ -170,6 +171,51 @@ export const ClientUsersModel = sequelizeDbConnection.define<ClientUsersInstance
   },
   {
     tableName: 'client_users',
+    timestamps: false,
+  }
+);
+
+export const ActiveSessionsModel = sequelizeDbConnection.define<ActiveSessionsInstance>(
+  'active_sessions',
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+      allowNull: false,
+    },
+    client_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
+    registered_email: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    session_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      unique: true
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
+    },
+    last_active: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
+    },
+    user_agent: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    ip_address: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    }
+  },
+  {
+    tableName: 'active_sessions',
     timestamps: false,
   }
 );
