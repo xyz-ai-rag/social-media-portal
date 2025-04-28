@@ -84,7 +84,7 @@ export interface ActiveSessionsInstance extends Model {
   id: number;
   user_id: number;
   session_id: string;
-  browser_id: string;
+  browser_id?: string;
   created_at: Date;
   last_active: Date;
   user_agent?: string;

@@ -195,7 +195,7 @@ export const ActiveSessionsModel = sequelizeDbConnection.define<ActiveSessionsIn
     },
     browser_id: {
       type: DataTypes.TEXT,
-      allowNull: false
+      allowNull: true
     },
     created_at: {
       type: DataTypes.DATE,
