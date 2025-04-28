@@ -14,9 +14,10 @@ export default function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Only show business selector on dashboard pages
-  const showBusinessSelector = pathname.includes("/dashboard") || 
-                            pathname.includes("/posts") || 
-                            pathname.includes("/competitors");
+  const showBusinessSelector =
+    pathname.includes("/dashboard") ||
+    pathname.includes("/posts") ||
+    pathname.includes("/competitors");
 
   // Get the current business ID from params
   const currentBusinessId = params.businessId as string;
@@ -31,15 +32,17 @@ export default function Header() {
   const handleBusinessSelect = (businessId: string) => {
     if (businessId && clientDetails?.id) {
       // Get the current path segments
-      const pathSegments = pathname.split('/');
-      
+      const pathSegments = pathname.split("/");
+
       // The current page type is typically the 4th segment in the URL: /clientId/businessId/pageType
       // If there are more segments (like /clientId/businessId/pageType/subpage), we preserve them
-      const currentPagePath = pathSegments.slice(3).join('/');
-      
+      const currentPagePath = pathSegments.slice(3).join("/");
+
       // Build the new URL with the same page type but new business ID
-      const newPath = `/${clientDetails.id}/${businessId}/${currentPagePath || 'dashboard'}`;
-      
+      const newPath = `/${clientDetails.id}/${businessId}/${
+        currentPagePath || "dashboard"
+      }`;
+
       router.push(newPath);
       setIsDropdownOpen(false);
     }
@@ -84,6 +87,8 @@ export default function Header() {
       .join("")
       .toUpperCase();
 
+    console.log();
+
     return (
       <div className="w-10 h-10 flex items-center justify-center bg-[#5A67BA] text-white text-sm font-bold rounded-full">
         {initails}
@@ -91,8 +96,8 @@ export default function Header() {
     );
   };
   return (
-<header className="flex h-20 items-center bg-white border-b border-gray-200">
-{/* Right side */}
+    <header className="flex h-20 items-center bg-white border-b border-gray-200">
+      {/* Right side */}
       <div className="ml-auto flex flex-col items-end space-y-1 px-4">
         {/* (Logo and Business Info)  */}
         <div className="flex ml-auto space-x-4 items-center">
@@ -112,44 +117,47 @@ export default function Header() {
                   {currentBusinessName}
                 </span>
                 <FiChevronDown
-                  className={`text-gray-500 transform transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""
-                    }`}
+                  className={`text-gray-500 transform transition-transform duration-200 ${
+                    isDropdownOpen ? "rotate-180" : ""
+                  }`}
                 />
               </div>
 
               {/* Dropdown menu */}
               {isDropdownOpen && (
                 <div className="absolute top-full right-0 mt-2 bg-white shadow-lg rounded-md py-1 z-50 min-w-[200px] border border-gray-100 overflow-hidden">
-                  {clientDetails.businesses.map((biz) => (
-                    <div
-                      key={biz.business_id}
-                      className={`px-4 py-2.5 text-sm cursor-pointer transition-colors duration-150 ${biz.business_id === currentBusinessId
-                          ? "bg-blue-50 text-blue-600 font-medium"
-                          : "text-gray-700 hover:bg-gray-50"
+                  {clientDetails.businesses
+                    .sort((a, b) =>
+                      a.business_name.localeCompare(b.business_name)
+                    )
+                    .map((biz) => (
+                      <div
+                        key={biz.business_id}
+                        className={`px-4 py-2.5 text-sm cursor-pointer transition-colors duration-150 ${
+                          biz.business_id === currentBusinessId
+                            ? "bg-blue-50 text-blue-600 font-medium"
+                            : "text-gray-700 hover:bg-gray-50"
                         }`}
-                      onClick={() => handleBusinessSelect(biz.business_id)}
-                    >
-                      {biz.business_name}
-                    </div>
-                  ))}
+                        onClick={() => handleBusinessSelect(biz.business_id)}
+                      >
+                        {biz.business_name}
+                      </div>
+                    ))}
                 </div>
               )}
             </div>
           )}
-
         </div>
         {/* User Info */}
         <div>
-        {user?.email && (
-          <div className="text-sm text-gray-600 hidden md:block px-2">
-            <span className="font-medium">Logged in as: </span>
-            {user.email}
-          </div>
-        )}
+          {user?.email && (
+            <div className="text-sm text-gray-600 hidden md:block px-2">
+              <span className="font-medium">Logged in as: </span>
+              {user.email}
+            </div>
+          )}
+        </div>
       </div>
-      </div>
-
-      
 
       {/* Right side (Company Name and User Info) */}
       {/* <div className="items-center space-x-4 text-right py-2">
