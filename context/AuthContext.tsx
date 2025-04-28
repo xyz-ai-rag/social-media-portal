@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.error('[Auth] fetchClientDetails error', err);
           }
         } else {
-          console.log('[Auth] no session, clearing user & details');
+          // console.log('[Auth] no session, clearing user & details');
           setUser(null);
           setClientDetails(null);
         }
@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // bootstrap initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('[Auth] getSession:', session);
+      // console.log('[Auth] getSession:', session);
       if (session?.user?.email) {
         const u = session.user;
         setUser({ id: u.id, email: u.email!, user_metadata: u.user_metadata as any });
@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         )
           .then((r) => r.json())
           .then((d) => {
-            console.log('[Auth] initial clientDetails:', d);
+            // console.log('[Auth] initial clientDetails:', d);
             setClientDetails(d);
           })
           .catch((e) => console.error('[Auth] initial fetchClientDetails error', e));
@@ -109,10 +109,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 2) Poll /api/session every 5s and log what happens
   useEffect(() => {
     if (!user) return;
-    console.log('[SessionCheck] starting polling every 5s');
+    // console.log('[SessionCheck] starting polling every 5s');
 
     const iv = setInterval(async () => {
-      console.log('[SessionCheck] → calling /api/session?action=check');
+      // console.log('[SessionCheck] → calling /api/session?action=check');
       try {
         const resp = await fetch('/api/session', {
           method: 'POST',
@@ -120,11 +120,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'check' }),
         });
-        console.log('[SessionCheck] ← status', resp.status);
+        // console.log('[SessionCheck] ← status', resp.status);
         if (!resp.ok) throw new Error(`status ${resp.status}`);
 
         const { active } = await resp.json();
-        console.log('[SessionCheck] active =', active);
+        // console.log('[SessionCheck] active =', active);
 
         if (!active) {
           console.warn('[SessionCheck] session is INACTIVE → logging out');
@@ -140,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 5_000);
 
     return () => {
-      console.log('[SessionCheck] stopping polling');
+      // console.log('[SessionCheck] stopping polling');
       clearInterval(iv);
     };
   }, [user, router]);
@@ -148,14 +148,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 3) login() + register + redirect
   const login = useCallback(
     async (email: string, password: string) => {
-      console.log('[Auth] login called for', email);
+      // console.log('[Auth] login called for', email);
       const { error: signError } = await supabase.auth.signInWithPassword({ email, password });
       if (signError) {
         console.error('[Auth] signIn error', signError);
         return { success: false, error: signError.message };
       }
 
-      console.log('[Auth] calling /api/session?action=register');
+      // console.log('[Auth] calling /api/session?action=register');
       await fetch('/api/session', {
         method: 'POST',
         credentials: 'include',
@@ -163,14 +163,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ email, action: 'register' }),
       });
 
-      console.log('[Auth] fetching clientDetails post-login');
+      // console.log('[Auth] fetching clientDetails post-login');
       let details: ClientDetails | null = null;
       try {
         const resp = await fetch(
           constructVercelURL(`/api/client-details?email=${encodeURIComponent(email)}`)
         );
         details = await resp.json();
-        console.log('[Auth] clientDetails post-login:', details);
+        // console.log('[Auth] clientDetails post-login:', details);
         setClientDetails(details);
       } catch (e) {
         console.error('[Auth] post-login clientDetails error', e);
@@ -178,7 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (details?.id && details.businesses?.length) {
         // const biz = details.businesses[0].business_id;
-        console.log('[Auth] redirecting to first business:');
+        // console.log('[Auth] redirecting to first business:');
         router.replace('/businesses');
       } else {
         console.warn('[Auth] no businesses found, fallback to /auth/login');
@@ -192,9 +192,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // 4) logout()
   const logout = useCallback(async () => {
-    console.log('[Auth] logout called');
+    // console.log('[Auth] logout called');
     if (user?.email) {
-      console.log('[Auth] calling /api/session?action=delete');
+      // console.log('[Auth] calling /api/session?action=delete');
       await fetch('/api/session', {
         method: 'POST',
         credentials: 'include',
