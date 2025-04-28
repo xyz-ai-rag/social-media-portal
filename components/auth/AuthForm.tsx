@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,31 +15,43 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [openModal, setOpenModal] = useState(true);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, user } = useAuth();
 
   useEffect(() => {
+    // Check for session_expired parameter only on initial load
+    const expired = searchParams.get('session_expired');
+    if (expired === 'true') {
+      setSessionExpired(true);
+      setError("Your account has been logged in from another device. Only one active session is allowed per account.");
+    }
+    
     // Check if user is already logged in
     if (user) {
-      // Redirect to businesses selection page rather than dashboard
+      // User is already authenticated, redirect to businesses
       router.push("/businesses");
     } else {
       setAuthLoading(false);
     }
-  }, [user, router]);
+  }, [user, router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+    setSessionExpired(false);
 
     try {
       const { success, error } = await login(email, password);
       if (!success) {
         throw new Error(error || "Failed to login");
       }
-      // Redirect to businesses selection page on successful login
+      
+      // Successfully logged in - redirect to businesses page
+      // We don't include any query parameters to ensure a clean redirect
       router.push("/businesses");
     } catch (err: any) {
       setError(err.message || "Login failed");
@@ -103,6 +115,14 @@ export default function LoginPage() {
             <h3 className="text-2xl font-bold text-center text-gray-800">
               Client Portal
             </h3>
+            
+            {sessionExpired && (
+              <div className="p-4 mb-4 text-sm text-amber-800 bg-amber-100 rounded-lg">
+                <strong>Session expired:</strong> Your account has been logged in from another device.
+                Only one active session is allowed per account.
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label
@@ -122,7 +142,7 @@ export default function LoginPage() {
                 />
               </div>
 
-              {error && (
+              {error && !sessionExpired && (
                 <div className="text-red-500 text-sm font-medium">{error}</div>
               )}
 
@@ -139,7 +159,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={`bg-blue-50 border ${
-                    error ? "border-red-500" : "border-gray-300"
+                    error && !sessionExpired ? "border-red-500" : "border-gray-300"
                   } text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
                   placeholder="••••••••••"
                   required

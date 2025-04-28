@@ -81,11 +81,12 @@ export interface ClientUsersInstance extends Model {
 }
 
 export interface ActiveSessionsInstance extends Model {
-  id?: number;
+  id: number;
   user_id: number;
   session_id: string;
-  created_at?: Date;
-  last_active?: Date;
+  browser_id: string;
+  created_at: Date;
+  last_active: Date;
   user_agent?: string;
   ip_address?: string;
 }

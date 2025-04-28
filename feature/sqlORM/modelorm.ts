@@ -184,18 +184,18 @@ export const ActiveSessionsModel = sequelizeDbConnection.define<ActiveSessionsIn
       autoIncrement: true,
       allowNull: false,
     },
-    client_id: {
-      type: DataTypes.UUID,
-      allowNull: false,
-    },
-    registered_email: {
-      type: DataTypes.TEXT,
+    user_id: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     session_id: {
       type: DataTypes.UUID,
       allowNull: false,
       unique: true
+    },
+    browser_id: {
+      type: DataTypes.TEXT,
+      allowNull: false
     },
     created_at: {
       type: DataTypes.DATE,
