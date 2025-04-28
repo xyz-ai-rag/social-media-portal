@@ -76,8 +76,6 @@ export default function PieChartComponent({
         const res = await fetch(url);
         const data = await res.json();
 
-        console.log(res);
-
         // Only update state if this is the current request
         if (isCurrent) {
           let total = 0;
