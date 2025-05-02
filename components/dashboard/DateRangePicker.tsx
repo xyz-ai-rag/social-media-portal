@@ -109,6 +109,52 @@ export default function DateRangePicker({
           aggregation: "daily" as const,
         };
       }
+      case "last60Days": {
+        const yesterdayDate = subDays(new Date(), 1);
+        const start = subDays(yesterdayDate, 59); // 30 days ending with yesterday
+        const startStr = format(start, "yyyy-MM-dd");
+        const endStr = format(yesterdayDate, "yyyy-MM-dd");
+        return {
+          start: setStartOfDay(startStr),
+          end: setEndOfDay(endStr),
+          label: "Last 60 days",
+          aggregation: "daily" as const,
+        };
+      }
+      case "last90Days": {
+        const yesterdayDate = subDays(new Date(), 1);
+        const start = subDays(yesterdayDate, 89); // 30 days ending with yesterday
+        const startStr = format(start, "yyyy-MM-dd");
+        const endStr = format(yesterdayDate, "yyyy-MM-dd");
+        return {
+          start: setStartOfDay(startStr),
+          end: setEndOfDay(endStr),
+          label: "Last 90 days",
+          aggregation: "daily" as const,
+        };
+      }case "last120Days": {
+        const yesterdayDate = subDays(new Date(), 1);
+        const start = subDays(yesterdayDate, 119); // 30 days ending with yesterday
+        const startStr = format(start, "yyyy-MM-dd");
+        const endStr = format(yesterdayDate, "yyyy-MM-dd");
+        return {
+          start: setStartOfDay(startStr),
+          end: setEndOfDay(endStr),
+          label: "Last 120 days",
+          aggregation: "daily" as const,
+        };
+      }
+      case "everything": {
+        const yesterdayDate = subDays(new Date(), 1);
+        const startStr = "2023-01-01"; // TODOFixed start date
+        const endStr = format(yesterdayDate, "yyyy-MM-dd");
+        return {
+          start: setStartOfDay(startStr),
+          end: setEndOfDay(endStr), 
+          label: "Everything",
+          aggregation: "monthly" as const,
+        };
+      }
       case "thisMonth": {
         const today = new Date();
         const yesterdayDate = subDays(today, 1);
@@ -221,8 +267,12 @@ export default function DateRangePicker({
     { key: "yesterday", label: "Yesterday" },
     { key: "last7Days", label: "Last 7 days" },
     { key: "last30Days", label: "Last 30 days" },
+    { key: "last60Days", label: "Last 60 days" },
+    { key: "last90Days", label: "Last 90 days" },
+    { key: "last120Days", label: "Last 120 days" },
     { key: "thisMonth", label: "This month" },
     { key: "lastMonth", label: "Last month" },
+    { key: "everything", label: "Everything" },
     { key: "custom", label: "Custom range" },
   ];
 

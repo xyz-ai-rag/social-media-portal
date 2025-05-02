@@ -83,6 +83,65 @@ export const DATE_PRESETS = {
       };
     }
   },
+  last60Days: {
+    label: 'Last 60 days',
+    getRange: () => {
+      const yesterday = subDays(new Date(), 1);
+      const start = subDays(yesterday, 59); // 60 days ending with yesterday
+      const startStr = format(start, 'yyyy-MM-dd');
+      const endStr = format(yesterday, 'yyyy-MM-dd');
+      return {
+        startDate: setStartOfDay(startStr),
+        endDate: setEndOfDay(endStr),
+        label: 'Last 60 days',
+        aggregationType: 'daily' as AggregationType
+      };
+    }
+  },
+  last90Days: {
+    label: 'Last 90 days', 
+    getRange: () => {
+      const yesterday = subDays(new Date(), 1);
+      const start = subDays(yesterday, 89); // 90 days ending with yesterday
+      const startStr = format(start, 'yyyy-MM-dd');
+      const endStr = format(yesterday, 'yyyy-MM-dd');
+      return {
+        startDate: setStartOfDay(startStr),
+        endDate: setEndOfDay(endStr),
+        label: 'Last 90 days',
+        aggregationType: 'weekly' as AggregationType
+      };
+    }
+  },
+  last120Days: {
+    label: 'Last 120 days',
+    getRange: () => {
+      const yesterday = subDays(new Date(), 1);
+      const start = subDays(yesterday, 119); // 120 days ending with yesterday
+      const startStr = format(start, 'yyyy-MM-dd');
+      const endStr = format(yesterday, 'yyyy-MM-dd');
+      return {
+        startDate: setStartOfDay(startStr),
+        endDate: setEndOfDay(endStr),
+        label: 'Last 120 days',
+        aggregationType: 'weekly' as AggregationType
+      };
+    }
+  },
+  everything: {
+    label: 'Everything',
+    getRange: () => {
+      const yesterday = subDays(new Date(), 1);
+      const startStr = '2023-01-01'; // Fixed start date
+      const endStr = format(yesterday, 'yyyy-MM-dd');
+      return {
+        startDate: setStartOfDay(startStr),
+        endDate: setEndOfDay(endStr),
+        label: 'Everything',
+        aggregationType: 'monthly' as AggregationType
+      };
+    }
+  },
   thisMonth: {
     label: 'This month',
     getRange: () => {
