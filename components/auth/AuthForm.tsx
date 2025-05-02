@@ -54,9 +54,10 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-
+    await new Promise((r) => setTimeout(r, 200));
     // Redirect on fresh login
-    router.replace("/businesses");
+    // router.replace("/businesses");
+    window.location.href = "/businesses";
   };
 
   // While supabase context is booting, show spinner
