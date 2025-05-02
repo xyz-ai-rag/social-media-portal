@@ -14,7 +14,6 @@ import {
   FiAlertCircle,
 } from "react-icons/fi";
 import { useAuth } from "@/context/AuthContext";
-import { Alert, Modal } from "flowbite-react";
 
 type MenuItemProps = {
   href: string;
