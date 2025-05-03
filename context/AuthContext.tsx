@@ -106,10 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // 2) Poll /api/session every 5s and log what happens
+  // 2) Poll /api/session every 30s and log what happens
   useEffect(() => {
     if (!user) return;
-    // console.log('[SessionCheck] starting polling every 5s');
+    // console.log('[SessionCheck] starting polling every 30s');
 
     const iv = setInterval(async () => {
       // console.log('[SessionCheck] → calling /api/session?action=check');
@@ -137,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signOut();
         router.replace('/auth/login');
       }
-    }, 5_000);
+    }, 30_000);
 
     return () => {
       // console.log('[SessionCheck] stopping polling');
