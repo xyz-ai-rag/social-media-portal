@@ -7,6 +7,8 @@ import PieChartComponent from "./PieChart/PieChart";
 import HashtagChart from "./HotHashtags/HotHashtags";
 import LineGraph from "./SimilarBusinesses/LineGraph";
 import TopCitiesMap from "./TopCities/TopCities";
+import ContentType from "./ContentType/ContentType";
+import TopUsers from "./TopUsers/TopUsers";
 import { useAuth } from "@/context/AuthContext";
 
 interface DashboardProps {
@@ -61,6 +63,12 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           {/* Row 3 */}
           <div className="md:col-span-1">
             <TopCitiesMap clientId={clientId} businessId={businessId} />
+          </div>
+          <div className="md:col-span-1">
+            <ContentType clientId={clientId} businessId={businessId} />
+          </div>
+          <div className="md:col-span-1">
+            <TopUsers clientId={clientId} businessId={businessId} />
           </div>
         </div>
       </div>
