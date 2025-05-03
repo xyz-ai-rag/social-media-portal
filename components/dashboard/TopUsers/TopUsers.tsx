@@ -83,7 +83,7 @@ export default function TopUsers({ clientId, businessId }: TopUsersProps) {
           </div>
           {/* Subheading: show date range */}
           <div className="text-sm text-gray-600 mb-4">
-            Contents from {formattedStart} to {formattedEnd}
+            Top users from {formattedStart} to {formattedEnd}
           </div>
           <div className="flex flex-col gap-4">
             {topUsers.map((user, index) => (

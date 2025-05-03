@@ -88,11 +88,11 @@ export default function ContentType({ clientId, businessId }: ContentTypeProps) 
       ) : (
         <div>
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-base font-medium text-gray-800">Posts Per Day</h2>
+            <h2 className="text-base font-medium text-gray-800">Content Type</h2>
           </div>
           {/* Subheading: show date range */}
           <div className="text-sm text-gray-600 mb-4">
-            Posts from {formattedStart} to {formattedEnd}
+            Content type from {formattedStart} to {formattedEnd}
           </div>
           <div className="flex flex-col gap-4">
             {contentTypeData.contentTypeStats.map((stat, index) => (
