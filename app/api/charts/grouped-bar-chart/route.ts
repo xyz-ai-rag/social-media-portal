@@ -1,7 +1,7 @@
 import { BusinessPostModel } from "@/feature/sqlORM/modelorm";
 import { NextRequest, NextResponse } from "next/server";
 import { Op } from "sequelize";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,9 +17,10 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Convert date strings to Date objects.
-    const startDate = new Date(start_date);
-    const endDate = new Date(end_date);
+    // Parse dates without timezone conversion
+    const startDate = parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+    const endDate = parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+    
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest) {
     const counts: Record<string, number> = {};
     const dailyKeys: string[] = [];
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const key = d.toISOString().slice(0, 10);
+      const key = format(d, 'yyyy-MM-dd');
       counts[key] = 0;
       dailyKeys.push(key);
     }
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
     // Count posts per day.
     posts.forEach(post => {
       const dt = new Date(post.getDataValue("last_update_time"));
-      const key = dt.toISOString().slice(0, 10);
+      const key = format(dt, 'yyyy-MM-dd');
       if (counts[key] !== undefined) {
         counts[key]++;
       } else {

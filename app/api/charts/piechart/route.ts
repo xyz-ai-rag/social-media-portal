@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Op } from 'sequelize';
 import { BusinessPostModel } from '@/feature/sqlORM/modelorm';
+import { format, parse } from 'date-fns';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,8 +17,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const startDate = new Date(start_date);
-    const endDate = new Date(end_date);
+    // Parse dates without timezone conversion
+    const startDate = parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+    const endDate = parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+    
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
@@ -28,7 +31,7 @@ export async function GET(request: NextRequest) {
     // Create an array of valid date keys (same logic as bar chart)
     const dailyKeys: string[] = [];
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const key = d.toISOString().slice(0, 10);
+      const key = format(d, 'yyyy-MM-dd');
       dailyKeys.push(key);
     }
     console.log(`[PieChart] Valid date keys:`, dailyKeys);

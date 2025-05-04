@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Op } from 'sequelize';
 import { BusinessPostModel, BusinessModel } from '@/feature/sqlORM/modelorm';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,14 +13,22 @@ export async function GET(request: NextRequest) {
     const end_date = searchParams.get("end_date");
 
     if (!currentBusinessId || !start_date || !end_date) {
-      return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required parameters: business_id, start_date, end_date" },
+        { status: 400 }
+      );
     }
 
-    const startDate = new Date(start_date);
-    const endDate = new Date(end_date);
+    // Parse dates without timezone conversion
+    const startDate = parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+    const endDate = parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+    
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
+
+    console.log(`[LineGraph] Query params: business_id=${currentBusinessId}, start_date=${start_date}, end_date=${end_date}`);
+    console.log(`[LineGraph] Parsed dates: startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
 
     // Parse similar business IDs from comma-delimited string.
     const similarBusinessIds = similarIdsParam
