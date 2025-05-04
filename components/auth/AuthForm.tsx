@@ -48,7 +48,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const { success, error: loginError } = await login(email, password);
+    const { success, error: loginError } = await login(email, password, rememberMe);
     if (!success) {
       setError(loginError || "Login failed");
       setLoading(false);
