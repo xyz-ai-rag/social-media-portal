@@ -3,6 +3,9 @@ import { Op } from 'sequelize';
 import { BusinessPostModel } from '@/feature/sqlORM/modelorm';
 import { format, parse } from "date-fns";
 
+// Global constant to limit the number of top users returned
+const MAX_TOP_USERS = 6;
+
 interface UserPostCount {
   nickname: string;
   postCount: number;
@@ -58,14 +61,17 @@ export async function GET(request: NextRequest) {
         nickname,
         postCount: count
       }))
-      .sort((a, b) => b.postCount - a.postCount);
+      .sort((a, b) => b.postCount - a.postCount)
+      // Limit to MAX_TOP_USERS
+      .slice(0, MAX_TOP_USERS);
 
     console.log(`[TopUsers] Total posts found: ${posts.length}`);
-    console.log(`[TopUsers] Total unique users: ${topUsers.length}`);
+    console.log(`[TopUsers] Total unique users: ${Object.keys(userPostCounts).length}`);
+    console.log(`[TopUsers] Returning top ${Math.min(topUsers.length, MAX_TOP_USERS)} users`);
 
     return NextResponse.json(topUsers);
   } catch (error: any) {
     console.error(`[TopUsers] Error:`, error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-} 
+}
