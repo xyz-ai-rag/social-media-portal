@@ -366,6 +366,9 @@ export default function Sidebar() {
             <h3 className="mb-5 text-lg font-normal text-gray-700">
               Are you sure you want to logout?
             </h3>
+            <p className="text-xs text-gray-500 mb-4">
+              Logging out will lose all your current session settings
+            </p>
             <div className="flex justify-center gap-4">
               <button
                 onClick={confirmLogout}
