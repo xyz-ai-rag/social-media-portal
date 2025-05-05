@@ -249,7 +249,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">{title}</h1>
 
         {/* Refresh button */}
-        <Button
+        {/* <Button
           color="light"
           pill
           size="sm"
@@ -259,7 +259,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
         >
           <FaSync className={`${isLoading ? "animate-spin" : ""} mr-2`} />
           Refresh
-        </Button>
+        </Button> */}
       </div>
 
       {/* Date Range Display */}

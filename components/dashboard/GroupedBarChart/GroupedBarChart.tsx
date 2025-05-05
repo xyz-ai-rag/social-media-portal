@@ -128,7 +128,7 @@ export default function GroupedBarChart({
         show: false,
       },
       grid: {
-        top: "0%",
+        top: "8%",
         left: "3%",
         right: "4%",
         bottom: "3%",
@@ -166,10 +166,17 @@ export default function GroupedBarChart({
     };
 
     chart.setOption(option);
-    const handleResize = () => chart.resize();
-    window.addEventListener("resize", handleResize);
+
+    // Create a ResizeObserver to automatically resize the chart when container dimensions change
+    const resizeObserver = new window.ResizeObserver(() => {
+      chart.resize();
+    });
+    if (chartRef.current) {
+      resizeObserver.observe(chartRef.current);
+    }
+
     return () => {
-      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
       chart.dispose();
     };
   }, [isLoading, chartData]);

@@ -106,15 +106,17 @@ const TopCitiesChart = ({ clientId, businessId }: TopCitiesChartProps) => {
 
   if (isLoading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-md flex items-center justify-center h-64">
-        <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
+      <div className="bg-white p-6 rounded-lg shadow-md h-full overflow-hidden">
+        <div className="h-64 flex items-center justify-center">
+          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md h-full overflow-hidden">
-      <h2 className="text-base font-medium text-gray-800 mb-2">Top Cities</h2>
+      <h2 className="text-base font-medium text-gray-800 mb-2">Top User Locations</h2>
       <div className="text-sm text-gray-600 mb-4">
         Posts from {formatDate(dateRange.startDate)} to{" "}
         {formatDate(dateRange.endDate)}
