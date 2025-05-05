@@ -15,7 +15,7 @@ const DB_PORT = process.env.PG_PORT ? parseInt(process.env.PG_PORT, 10) : 5432;
 
 // Log connection details (mask password for security)
 console.log('=== DATABASE CONNECTION DETAILS ===');
-console.log(`Environment: ${process.env.NODE_ENV}`);
+console.log(`Environment: ${process.env.DEPLOY_ENV}`);
 console.log(`Database Name: ${DB_NAME}`);
 console.log(`Database User: ${DB_USER}`);
 console.log(`Database Host: ${DB_HOST}`);
@@ -23,7 +23,7 @@ console.log(`Database Port: ${DB_PORT}`);
 console.log(`Fixie SOCKS Host available: ${!!process.env.FIXIE_SOCKS_HOST}`);
 
 // Determine if we should use proxy (for both test and production environments)
-const useProxy = process.env.NODE_ENV === 'test'
+const useProxy = process.env.DEPLOY_ENV === 'test'
 console.log(`Using proxy: ${useProxy}`);
 
 // Base dialectOptions (always SSL)
