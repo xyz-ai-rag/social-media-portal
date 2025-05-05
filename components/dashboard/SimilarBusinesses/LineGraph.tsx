@@ -195,10 +195,16 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
     };
 
     chart.setOption(option);
-    const handleResize = () => chart.resize();
-    window.addEventListener("resize", handleResize);
+    // 用 ResizeObserver 监听容器尺寸变化
+    const resizeObserver = new window.ResizeObserver(() => {
+      chart.resize();
+    });
+    if (chartRef.current) {
+      resizeObserver.observe(chartRef.current);
+    }
+
     return () => {
-      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
       chart.dispose();
     };
   }, [isLoading, graphData]);
