@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   }
   const { action, email } = body;
 
-  // 1) “check” → doesn’t need email
+  // 1) "check" → doesn't need email
   if (action === 'check') {
     const cookieSession = request.cookies.get('session_id')?.value;
     if (!cookieSession) {
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       value:    newSessionId,
       httpOnly: true,
       path:     '/',
-      maxAge:   60 * 60 * 24 * 7, // 7 days
+      maxAge:   60 * 60 * 24 * 365 * 10, // 10 years
       sameSite: 'strict',
     });
     return res;
