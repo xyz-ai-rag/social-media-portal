@@ -39,7 +39,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   clientDetails: ClientDetails | null;
-  login: (email: string, password: string, remember?: boolean) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 }
 
@@ -106,10 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // 2) Poll /api/session every 30s and log what happens
+  // 2) Poll /api/session every 10s and log what happens
   useEffect(() => {
     if (!user) return;
-    // console.log('[SessionCheck] starting polling every 30s');
+    // console.log('[SessionCheck] starting polling every 10s');
 
     const iv = setInterval(async () => {
       // console.log('[SessionCheck] → calling /api/session?action=check');
@@ -137,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signOut();
         router.replace('/auth/login');
       }
-    }, 5_000);
+    }, 10_000);
 
     return () => {
       // console.log('[SessionCheck] stopping polling');
@@ -147,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // 3) login() + register + redirect
   const login = useCallback(
-    async (email: string, password: string, remember: boolean = false) => {
+    async (email: string, password: string) => {
       // console.log('[Auth] login called for', email);
       const { error: signError } = await supabase.auth.signInWithPassword({ 
         email, 
@@ -157,14 +157,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (signError) {
         console.error('[Auth] signIn error', signError);
         return { success: false, error: signError.message };
-      }
-
-      // Set session persistence after successful login
-      if (remember) {
-        await supabase.auth.setSession({
-          refresh_token: (await supabase.auth.getSession()).data.session?.refresh_token || '',
-          access_token: (await supabase.auth.getSession()).data.session?.access_token || ''
-        });
       }
 
       // console.log('[Auth] calling /api/session?action=register');

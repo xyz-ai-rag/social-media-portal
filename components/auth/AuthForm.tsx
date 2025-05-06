@@ -11,7 +11,6 @@ import { supabase } from "@/lib/supabase";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
@@ -48,7 +47,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const { success, error: loginError } = await login(email, password, rememberMe);
+    const { success, error: loginError } = await login(email, password);
     if (!success) {
       setError(loginError || "Login failed");
       setLoading(false);
@@ -133,21 +132,6 @@ export default function LoginPage() {
               />
             </div>
 
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label
-                htmlFor="remember-me"
-                className="ml-2 text-sm font-medium text-gray-900"
-              >
-                Remember me
-              </label>
-            </div>
 
             {error && !sessionExpired && (
               <div className="text-red-500 text-sm">{error}</div>
