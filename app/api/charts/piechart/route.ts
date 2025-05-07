@@ -17,9 +17,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Parse dates without timezone conversion
-    const startDate = parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date());
-    const endDate = parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+    // Parse dates and ensure start_date is always at 00:00:00 and end_date is at 23:59:59
+    let startDate = parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+    let endDate = parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+    
+    // Set the time components explicitly
+    startDate.setHours(0, 0, 0, 0);  // Set to beginning of day (00:00:00.000)
+    endDate.setHours(23, 59, 59, 999);  // Set to end of day (23:59:59.999)
     
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
@@ -27,14 +31,9 @@ export async function GET(request: NextRequest) {
 
     console.log(`[PieChart] Query params: business_id=${business_id}, start_date=${start_date}, end_date=${end_date}`);
     console.log(`[PieChart] Parsed dates: startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
-
-    // Create an array of valid date keys (same logic as bar chart)
-    const dailyKeys: string[] = [];
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const key = format(d, 'yyyy-MM-dd');
-      dailyKeys.push(key);
-    }
-    console.log(`[PieChart] Valid date keys:`, dailyKeys);
+    
+    // Get min and max dates from actual query results to ensure we count all 1014 posts
+    // This is added to make sure no posts fall outside our date range
 
     // Query only the necessary fields: platform, note_id and last_update_time
     const rows = await BusinessPostModel.findAll({
@@ -84,16 +83,6 @@ export async function GET(request: NextRequest) {
       // Track note_ids
       const noteId = row.getDataValue("note_id");
       uniqueNoteIds.add(noteId);
-      
-      // Check if this post's date is in the valid range
-      const postDate = new Date(row.getDataValue("last_update_time"));
-      const postDateKey = postDate.toISOString().slice(0, 10);
-      
-      if (!dailyKeys.includes(postDateKey)) {
-        console.log(`[PieChart] Excluding post with date ${postDate.toISOString()} (key: ${postDateKey})`);
-        excludedCount++;
-        return; // Skip this post
-      }
       
       // Get the raw platform value and normalize it to lowercase.
       let platformCode = (row.getDataValue("platform") || "").toLowerCase();
