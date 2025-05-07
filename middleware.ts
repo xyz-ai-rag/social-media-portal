@@ -58,8 +58,17 @@ export async function middleware(req: NextRequest) {
       return redirectRes
     }
 
-    // all good
-    return NextResponse.next()
+    // refresh cookie
+    const res = NextResponse.next()
+    res.cookies.set({
+      name:     'session_id',
+      value:    sessionId,
+      httpOnly: true,
+      path:     '/',
+      maxAge:   60 * 60 * 24 * 365 * 10, // 10年
+      sameSite: 'strict',
+    })
+    return res
   } catch (error) {
     console.error('Middleware error:', error)
     

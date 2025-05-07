@@ -106,10 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // 2) Poll /api/session every 5s and log what happens
+  // 2) Poll /api/session every 10s and log what happens
   useEffect(() => {
     if (!user) return;
-    // console.log('[SessionCheck] starting polling every 5s');
+    // console.log('[SessionCheck] starting polling every 10s');
 
     const iv = setInterval(async () => {
       // console.log('[SessionCheck] → calling /api/session?action=check');
@@ -137,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signOut();
         router.replace('/auth/login');
       }
-    }, 5_000);
+    }, 10_000);
 
     return () => {
       // console.log('[SessionCheck] stopping polling');
@@ -149,7 +149,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (email: string, password: string) => {
       // console.log('[Auth] login called for', email);
-      const { error: signError } = await supabase.auth.signInWithPassword({ email, password });
+      const { error: signError } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password
+      });
+      
       if (signError) {
         console.error('[Auth] signIn error', signError);
         return { success: false, error: signError.message };

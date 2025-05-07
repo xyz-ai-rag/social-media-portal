@@ -1,6 +1,7 @@
 import { BusinessPostModel } from "@/feature/sqlORM/modelorm";
 import { NextRequest, NextResponse } from "next/server";
 import { Op } from "sequelize";
+import { parse } from "date-fns";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,8 +18,9 @@ export async function GET(request: NextRequest) {
     }
     
     // Convert date strings to Date objects
-    const startDate = new Date(start_date);
-    const endDate = new Date(end_date);
+    const startDate = parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+    const endDate = parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
