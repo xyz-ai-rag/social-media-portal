@@ -54,10 +54,10 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
   };
 
   return (
-    <div>
+    <div className="mt-6 bg-white rounded shadow overflow-hidden">
       {/* Table */}
-      <div className="mt-6 bg-white rounded shadow overflow-x-auto">
-        <Table hoverable className="w-full table-auto min-w-[800px]">
+      <div className="overflow-x-auto">
+        <Table hoverable className="w-full table-auto">
           <Table.Head>
             <Table.HeadCell className="w-28 md:w-30 lg:w-38 xl:w-44">
               Date
@@ -163,7 +163,7 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                     </Table.Cell>
 
                     {/* Updated Post Cell with Multi-line Support */}
-                    <Table.Cell className="align-middle min-w-[60%] max-w-[500px]">
+                    <Table.Cell className="align-middle w-[40%] max-w-[400px]">
                       <div className="line-clamp-5 text-sm break-words">
                         {item.post}
                       </div>
