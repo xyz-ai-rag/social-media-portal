@@ -10,7 +10,7 @@ import React, {
   useMemo,
 } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { constructVercelURL } from '@/utils/generateURL';
 
 interface User {
@@ -47,9 +47,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname(); // Added to check current path
   const [user, setUser] = useState<User | null>(null);
   const [clientDetails, setClientDetails] = useState<ClientDetails | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Check if we're in a password reset flow
+  const isResetPasswordFlow = () => {
+    if (typeof window === 'undefined') return false;
+    return (
+      pathname === '/auth/reset-password' || 
+      localStorage.getItem('is_password_reset_flow') === 'true'
+    );
+  };
 
   // 1) Supabase auth listener + fetch clientDetails
   useEffect(() => {
@@ -57,25 +67,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (!mounted) return;
-        // console.log('[Auth] onAuthStateChange event:', _event, session);
+        console.log('[Auth] onAuthStateChange event:', _event, 'path:', pathname);
+        
+        // Special handling for password reset flow
+        const inResetFlow = isResetPasswordFlow();
+        if (inResetFlow) {
+          console.log('[Auth] In password reset flow, special handling');
+          
+          // During password reset, we need the session but don't want redirects
+          // or other normal auth flow behaviors
+          
+          if (_event === 'SIGNED_OUT' && pathname === '/auth/reset-password') {
+            console.log('[Auth] Ignoring SIGNED_OUT during reset flow');
+            // Don't clear user state during password reset when we get a SIGNED_OUT
+            setLoading(false);
+            return;
+          }
+        }
+        
         if (session?.user?.email) {
           const u = session.user;
           setUser({ id: u.id, email: u.email!, user_metadata: u.user_metadata as any });
           try {
-            // console.log('[Auth] fetching clientDetails for', u.email);
+            console.log('[Auth] fetching clientDetails for', u.email);
             const resp = await fetch(
               constructVercelURL(`/api/client-details?email=${encodeURIComponent(u.email!)}`)
             );
             const json = await resp.json();
-            // console.log('[Auth] clientDetails response:', resp.status, json);
+            console.log('[Auth] clientDetails response:', resp.status, json);
             if (resp.ok) setClientDetails(json);
+            
+            // Don't redirect during password reset flow
+            if (_event === 'SIGNED_IN' && !inResetFlow) {
+              if (json?.id && json.businesses?.length) {
+                console.log('[Auth] Auto-redirecting to businesses after sign in');
+                router.replace('/businesses');
+              }
+            } else if (inResetFlow) {
+              console.log('[Auth] On reset password page, skipping redirect');
+            }
           } catch (err) {
             console.error('[Auth] fetchClientDetails error', err);
           }
         } else {
-          // console.log('[Auth] no session, clearing user & details');
-          setUser(null);
-          setClientDetails(null);
+          console.log('[Auth] no session, clearing user & details');
+          
+          // Don't clear user during password reset if we're on the reset page
+          if (!inResetFlow) {
+            setUser(null);
+            setClientDetails(null);
+            
+            // Only redirect to login if not already on an auth page
+            if (_event === 'SIGNED_OUT' && !pathname.startsWith('/auth/')) {
+              router.replace('/auth/login');
+            }
+          } else {
+            console.log('[Auth] In reset flow, not clearing user state');
+          }
         }
         setLoading(false);
       }
@@ -83,17 +131,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // bootstrap initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      // console.log('[Auth] getSession:', session);
+      console.log('[Auth] getSession:', session, 'path:', pathname);
+      
+      const inResetFlow = isResetPasswordFlow();
+      
       if (session?.user?.email) {
         const u = session.user;
         setUser({ id: u.id, email: u.email!, user_metadata: u.user_metadata as any });
+        
+        // Skip auto-redirect if on reset password page
+        if (inResetFlow) {
+          console.log('[Auth] On reset password page, skipping redirect');
+          setLoading(false);
+          return;
+        }
+        
         fetch(
           constructVercelURL(`/api/client-details?email=${encodeURIComponent(u.email!)}`)
         )
           .then((r) => r.json())
           .then((d) => {
-            // console.log('[Auth] initial clientDetails:', d);
+            console.log('[Auth] initial clientDetails:', d);
             setClientDetails(d);
+            
+            // Only redirect if not on reset password page
+            if (d?.id && d.businesses?.length && !inResetFlow) {
+              router.replace('/businesses');
+            }
           })
           .catch((e) => console.error('[Auth] initial fetchClientDetails error', e));
       }
@@ -104,15 +168,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [pathname, router]);
 
   // 2) Poll /api/session every 10s and log what happens
   useEffect(() => {
     if (!user) return;
-    // console.log('[SessionCheck] starting polling every 10s');
+
+    // Skip session polling for reset password flow
+    if (isResetPasswordFlow()) {
+      console.log('[SessionCheck] skipping polling on reset password page');
+      return;
+    }
+    
+    console.log('[SessionCheck] starting polling every 10s');
 
     const iv = setInterval(async () => {
-      // console.log('[SessionCheck] → calling /api/session?action=check');
+      console.log('[SessionCheck] → calling /api/session?action=check');
       try {
         const resp = await fetch('/api/session', {
           method: 'POST',
@@ -120,11 +191,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'check' }),
         });
-        // console.log('[SessionCheck] ← status', resp.status);
+        console.log('[SessionCheck] ← status', resp.status);
         if (!resp.ok) throw new Error(`status ${resp.status}`);
 
         const { active } = await resp.json();
-        // console.log('[SessionCheck] active =', active);
+        console.log('[SessionCheck] active =', active);
 
         if (!active) {
           console.warn('[SessionCheck] session is INACTIVE → logging out');
@@ -140,15 +211,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 10_000);
 
     return () => {
-      // console.log('[SessionCheck] stopping polling');
+      console.log('[SessionCheck] stopping polling');
       clearInterval(iv);
     };
-  }, [user, router]);
+  }, [user, router, pathname]);
 
   // 3) login() + register + redirect
   const login = useCallback(
     async (email: string, password: string) => {
-      // console.log('[Auth] login called for', email);
+      console.log('[Auth] login called for', email);
       const { error: signError } = await supabase.auth.signInWithPassword({ 
         email, 
         password
@@ -159,7 +230,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: signError.message };
       }
 
-      // console.log('[Auth] calling /api/session?action=register');
+      console.log('[Auth] calling /api/session?action=register');
       await fetch('/api/session', {
         method: 'POST',
         credentials: 'include',
@@ -167,22 +238,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ email, action: 'register' }),
       });
 
-      // console.log('[Auth] fetching clientDetails post-login');
+      console.log('[Auth] fetching clientDetails post-login');
       let details: ClientDetails | null = null;
       try {
         const resp = await fetch(
           constructVercelURL(`/api/client-details?email=${encodeURIComponent(email)}`)
         );
         details = await resp.json();
-        // console.log('[Auth] clientDetails post-login:', details);
+        console.log('[Auth] clientDetails post-login:', details);
         setClientDetails(details);
       } catch (e) {
         console.error('[Auth] post-login clientDetails error', e);
       }
 
+      // Skip redirect if on password reset page
+      if (isResetPasswordFlow()) {
+        console.log('[Auth] In reset password flow, skipping redirect after login');
+        return { success: true };
+      }
+
       if (details?.id && details.businesses?.length) {
-        // const biz = details.businesses[0].business_id;
-        // console.log('[Auth] redirecting to first business:');
+        console.log('[Auth] redirecting to businesses');
         router.replace('/businesses');
       } else {
         console.warn('[Auth] no businesses found, fallback to /auth/login');
@@ -191,14 +267,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { success: true };
     },
-    [router]
+    [router, pathname]
   );
 
   // 4) logout()
   const logout = useCallback(async () => {
-    // console.log('[Auth] logout called');
+    console.log('[Auth] logout called');
+    
+    // Clear reset flow flags if they exist
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('is_password_reset_flow');
+      localStorage.removeItem('supabase_reset_token');
+      localStorage.removeItem('supabase_reset_refresh_token');
+    }
+    
     if (user?.email) {
-      // console.log('[Auth] calling /api/session?action=delete');
+      console.log('[Auth] calling /api/session?action=delete');
       await fetch('/api/session', {
         method: 'POST',
         credentials: 'include',
