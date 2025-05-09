@@ -71,7 +71,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
 
   const [filters, setFilters] = useState(() => {
     if (typeof window !== "undefined") {
-      const savedFilters = sessionStorage.getItem("business_page_filters");
+      const savedFilters = localStorage.getItem("business_page_filters");
       return savedFilters
         ? JSON.parse(savedFilters)
         : {
@@ -96,13 +96,13 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   });
   
   useEffect(() => {
-    sessionStorage.setItem("business_page_filters", JSON.stringify(filters));
+    localStorage.setItem("business_page_filters", JSON.stringify(filters));
   }, [filters]);
   
   // setting default date
   const [dateRange, setDateRange] = useState(() => {
     if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("business_page_date");
+      const saved = localStorage.getItem("business_page_date");
       return saved
         ? JSON.parse(saved)
         : { startDate: thirtyDaysAgo, endDate: yesterday };
@@ -111,7 +111,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   });
 
   useEffect(() => {
-    sessionStorage.setItem("business_page_date", JSON.stringify(dateRange));
+    localStorage.setItem("business_page_date", JSON.stringify(dateRange));
   }, [dateRange]);
   
   // Track filters returned from API to keep UI in sync
