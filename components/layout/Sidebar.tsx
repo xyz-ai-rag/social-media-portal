@@ -13,6 +13,8 @@ import {
   FiUsers,
   FiAlertCircle,
 } from "react-icons/fi";
+import { IoAnalyticsOutline } from "react-icons/io5";
+
 import { useAuth } from "@/context/AuthContext";
 
 type MenuItemProps = {
@@ -199,6 +201,12 @@ export default function Sidebar() {
     }
     return "/businesses";
   };
+  const getAnalyticsUrl = () => {
+    if (hasBusiness) {
+      return `/${effectiveClientId}/${effectiveBusinessId}/topic-analysis`;
+    }
+    return "/businesses";
+  };
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -254,6 +262,15 @@ export default function Sidebar() {
                 icon={<FiGrid />}
                 label="Dashboard"
                 isActive={isActive("/[clientId]/[businessId]/dashboard")}
+                disabled={!hasBusiness && !isSettingsPage}
+                collapsed={collapsed}
+                onClick={!hasBusiness ? handleDisabledClick : undefined}
+              />
+              <MenuItem
+                href={getAnalyticsUrl()}
+                icon={<IoAnalyticsOutline />}
+                label="Analysis"
+                isActive={isActive("/[clientId]/[businessId]/topic-analysis")}
                 disabled={!hasBusiness && !isSettingsPage}
                 collapsed={collapsed}
                 onClick={!hasBusiness ? handleDisabledClick : undefined}

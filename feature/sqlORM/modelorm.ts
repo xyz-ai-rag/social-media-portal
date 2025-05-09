@@ -5,7 +5,8 @@ import {
   BusinessInstance,
   ClientInstance,
   ClientUsersInstance,
-  ActiveSessionsInstance
+  ActiveSessionsInstance,
+  BusinessTopicsInstance
  } from './interfaceorm'; 
 
 // BusinessPosts table
@@ -216,6 +217,22 @@ export const ActiveSessionsModel = sequelizeDbConnection.define<ActiveSessionsIn
   },
   {
     tableName: 'active_sessions',
+    timestamps: false,
+  }
+);
+
+export const BusinessTopicsModel = sequelizeDbConnection.define<BusinessTopicsInstance>(
+  'business_topics',
+  {
+    id: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
+    business_id: { type: DataTypes.UUID, allowNull: false },
+    topic_type: { type: DataTypes.STRING, allowNull: false },
+    topic: { type: DataTypes.STRING, allowNull: false },
+    note_id: { type: DataTypes.STRING, allowNull: false },
+    created_at: { type: DataTypes.DATE, allowNull: false },
+  },
+  {
+    tableName: 'business_topics',
     timestamps: false,
   }
 );
