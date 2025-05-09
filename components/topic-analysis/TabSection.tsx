@@ -1,3 +1,4 @@
+"use client"
 import { FC } from 'react';
 interface TabSectionProps {
   activeTab: number;
@@ -19,7 +20,6 @@ const TabSection: FC<TabSectionProps> = ({
     { id: 1, label: 'Popular Topics' },
     { id: 2, label: 'Critical Feedback' },
     { id: 3, label: 'Competitors & Similar Business' },
-    { id: 4, label: 'Sentiment Analysis' },
   ];
 
   return (
@@ -47,39 +47,7 @@ const TabSection: FC<TabSectionProps> = ({
       </div>
 
       {/* Tab Content */}
-      <div className="tab-content">
-        {activeTab === 0 && (
-          <>
-            1
-              <div className="mb-6">
-                {/* <CompetitorStatsCard
-                  businessId={businessId}
-                  startDate={dateRange.startDate}
-                  endDate={dateRange.endDate}
-                /> */}
-              </div>
-            
-          </>
-        )}
-
-        {activeTab === 1 && (
-          <div>
-            2
-              {/* <SharedPostTable
-                listData={posts}
-                isLoading={isLoading}
-                postCardComponent={CompetitorPostCard}
-                pagination={pagination}
-                sortOrder={filters.sortOrder}
-                onSortOrderChange={onSortOrderChange}
-                openModal={openModal}
-                openPreviewModal={openPreviewModal}
-              /> */}
-          </div>
-        )}
-
         {/* Add other tab contents here */}
-      </div>
     </div>
   );
 };
