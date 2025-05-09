@@ -36,7 +36,7 @@ const sequelizeDbConnection = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
   port: DB_PORT,
   dialect: 'postgres',
   dialectModule: pg,
-  logging: msg => console.log('[Sequelize]', msg),
+  logging: false,
   dialectOptions: {
     ssl: {
       require: true,
