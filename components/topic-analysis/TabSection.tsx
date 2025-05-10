@@ -3,17 +3,11 @@ import { FC } from 'react';
 interface TabSectionProps {
   activeTab: number;
   setActiveTab: (tab: number) => void;
-  competitorId?: string;
-  competitorName?: string;
-  businessId: string;
-  isLoading: boolean;
 }
 
 const TabSection: FC<TabSectionProps> = ({
   activeTab,
   setActiveTab,
-  businessId,
-  isLoading,
 }) => {
   const tabs = [
     { id: 0, label: 'Overview' },
@@ -45,9 +39,6 @@ const TabSection: FC<TabSectionProps> = ({
           ))}
         </ul>
       </div>
-
-      {/* Tab Content */}
-        {/* Add other tab contents here */}
     </div>
   );
 };

@@ -106,8 +106,6 @@ const TopicAnalysis: FC<AnalysisProps> = ({
       <TabSection
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        businessId={businessId}
-        isLoading={isLoading}
       />
       <div className="flex justify-center">
         <p className="text-gray-500">Total Count: {total}</p>
