@@ -95,7 +95,7 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, limit
   }, [filteredTopics, businessId, clientId, limit, router]);
 
   if (filteredTopics.length === 0) {
-    return <div>No data count more than {limit}</div>;
+    return;
   }
 
   return (

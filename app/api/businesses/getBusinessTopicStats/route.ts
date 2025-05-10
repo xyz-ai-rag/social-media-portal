@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
     }) as any[];
     // total
     const total = topicCounts.reduce((sum, t) => sum + Number(t.count), 0);
-    console.log("topicCounts", topicCounts);
 
     // percentage
     const topics = topicCounts.map((t: any) => ({

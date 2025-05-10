@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-// import BusinessPosts from "@/components/business-posts/business-posts/BusinessPosts";
+import TopicPosts from "@/components/topic-analysis/topic-posts/TopicPosts";
 
 export default function PostsPage() {
   const params = useParams();
@@ -13,10 +13,10 @@ export default function PostsPage() {
 
   return (
     <div className="space-y-6">
-      {/* <BusinessPosts clientId={clientId} businessId={businessId} /> */}
       <div>
-        <h1>Topic: {topic}</h1>
       </div>
+      <TopicPosts clientId={clientId} businessId={businessId} topic={topic}/>
+      
     </div>
   );
 }
