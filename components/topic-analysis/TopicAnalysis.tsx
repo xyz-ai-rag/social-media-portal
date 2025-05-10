@@ -4,8 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { constructVercelURL } from "@/utils/generateURL";
 import CirclePacking from './CirclePacking';
 import TabSection from './TabSection';
-import { convertTopicsToTree } from "@/utils/topicTree";
-
+import BarChart from './BarChart';
 interface AnalysisProps {
   clientId: string;
   businessId: string;
@@ -28,6 +27,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
 
   // topics state
   const [topics, setTopics] = useState<any[]>([]);
+  const [total, setTotal] = useState<number>(0);
 
   // Map tab index to topic type
   const getTopicType = (tabIndex: number) => {
@@ -82,6 +82,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
 
         const data = await response.json();
         setTopics(data.topics);
+        setTotal(data.total);
 
       } catch (error) {
         console.error("Error fetching competitors:", error);
@@ -108,8 +109,11 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         businessId={businessId}
         isLoading={isLoading}
       />
+      <div className="flex justify-center">
+        <p className="text-gray-500">Total Count: {total}</p>
+      </div>
 
-      {/* Bubble Chart 状态切换 */}
+      {/* Charts */}
       <div className="flex justify-center items-center min-h-[400px]">
         {isLoading ? (
           <div className="flex flex-col items-center">
@@ -125,13 +129,18 @@ const TopicAnalysis: FC<AnalysisProps> = ({
             <p className="text-gray-500">No data available</p>
           </div>
         ) : (
-          <CirclePacking
-            data={convertTopicsToTree(topics)}
-            businessId={businessId}
-            clientId={clientId}
-          />
+          <div className="flex flex-col items-center p-2 w-full">
+            <CirclePacking
+              topics={topics}
+              businessId={businessId}
+              clientId={clientId}
+              limit={2}
+            />
+            <BarChart topics={topics} businessId={businessId} clientId={clientId} limit={2} />
+          </div>
         )}
       </div>
+      、
     </>
   );
 };

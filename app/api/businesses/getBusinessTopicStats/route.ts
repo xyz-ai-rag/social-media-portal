@@ -1,4 +1,3 @@
-import { BusinessTopicsInstance } from "@/feature/sqlORM/interfaceorm";
 import { BusinessTopicsModel } from "@/feature/sqlORM/modelorm";
 import { NextRequest, NextResponse } from "next/server";
 import { Op, fn, col, literal } from "sequelize";
@@ -9,7 +8,7 @@ import { Op, fn, col, literal } from "sequelize";
  */
 export async function POST(request: NextRequest) {
   try {
-    const { businessId, topicType, startDate, endDate } = await request.json();
+    const { businessId, topicType } = await request.json();
 
     if (!businessId || !topicType) {
       return NextResponse.json(
@@ -23,7 +22,7 @@ export async function POST(request: NextRequest) {
       topic_type: topicType,
     }
 
-    // 统计每个 topic 的数量
+    // count each topic
     const topicCounts = await BusinessTopicsModel.findAll({
       where,
       attributes: [
@@ -34,10 +33,11 @@ export async function POST(request: NextRequest) {
       order: [[literal("count"), "DESC"]],
       raw: true,
     }) as any[];
-    // 总数
+    // total
     const total = topicCounts.reduce((sum, t) => sum + Number(t.count), 0);
+    console.log("topicCounts", topicCounts);
 
-    // 计算百分比
+    // percentage
     const topics = topicCounts.map((t: any) => ({
       topic: t.topic,
       count: Number(t.count),

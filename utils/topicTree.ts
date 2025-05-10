@@ -1,6 +1,7 @@
 export type TreeNode = {
   type: 'node';
-  value: number;
+  count: number;
+  percentage: number;
   name: string;
   children: Tree[];
 };
@@ -8,7 +9,8 @@ export type TreeNode = {
 export type TreeLeaf = {
   type: 'leaf';
   name: string;
-  value: number;
+  count: number;
+  percentage: number;
 };
 
 export type Tree = TreeNode | TreeLeaf;
@@ -16,6 +18,7 @@ export type Tree = TreeNode | TreeLeaf;
 export interface Topic {
   topic: string;
   count: number;
+  percentage: number;
 }
 
 export const convertTopicsToTree = (topics: Topic[]): Tree => {
@@ -26,14 +29,16 @@ export const convertTopicsToTree = (topics: Topic[]): Tree => {
   const children: Tree[] = topics.map(topic => ({
     type: 'leaf',
     name: topic.topic,
-    value: topic.count
+    count: topic.count,
+    percentage: topic.percentage
   }));
 
   // Return the root node with all topics as children
   return {
     type: 'node',
     name: 'Topics',
-    value: totalCount,
+    count: totalCount,
+    percentage: 1,
     children
   };
 }; 
