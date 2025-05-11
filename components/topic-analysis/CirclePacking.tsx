@@ -1,5 +1,5 @@
 "use client"
-import { FC, useMemo, useState } from "react";
+import { FC, useMemo, useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { convertTopicsToTree, Topic, Tree } from "../../utils/topicTree";
 import { useRouter } from 'next/navigation';
@@ -29,9 +29,9 @@ const CirclePacking: FC<CirclePackingProps> = ({
   const [hoveredCircle, setHoveredCircle] = useState<string | null>(null);
   const filteredData = topics.filter(topic => topic.count > limit);
   if (filteredData.length === 0) {
-    return <div>No topics with more than {limit} mentions</div>;
+    return <div>No posts with these topics found</div>;
   }
-  
+
   // Calculate dimensions based on the number of topics
   const baseSize = 600; // Base size
   const minSize = 200;  // Minimum size
@@ -72,9 +72,6 @@ const CirclePacking: FC<CirclePackingProps> = ({
     setHoveredCircle(null);
   };
 
-  function truncateText(text: string, maxChars: number) {
-    return text.length > maxChars ? text.slice(0, maxChars - 1) + '…' : text;
-  }
 
   return (
     <div className="relative">
@@ -104,23 +101,50 @@ const CirclePacking: FC<CirclePackingProps> = ({
           .map((node: any) => {
             const fontSize = Math.min(13, node.r / 3);
             // Estimate maximum characters that can fit
-            const maxChars = Math.floor((node.r * 2) / (fontSize * 0.6));
-            const name = truncateText(node.data.name, Math.max(2, Math.floor(maxChars * 0.7)));
-            const percentage = truncateText(`${((node.data.percentage * 100).toFixed(2))}%`, Math.max(1, Math.floor(maxChars * 0.3)));
+            const maxChars = Math.floor((node.r * 2) / (fontSize * 0.5));
+            const name = node.data.name;
+            const count = node.data.count;
+
+            // Split name into two lines if it's too long
+            let displayName;
+            if (name.length > maxChars) {
+              const halfLength = Math.floor(maxChars / 2);
+              const firstLine = name.slice(0, halfLength);
+              const secondLine = name.slice(halfLength, maxChars);
+              // Add ellipsis to second line if it's too long
+              const truncatedSecondLine = secondLine.length > halfLength
+                ? secondLine.slice(0, halfLength - 1) + '…'
+                : secondLine;
+              displayName = [firstLine, truncatedSecondLine];
+            } else {
+              displayName = [name];
+            }
+
+            const totalLines = displayName.length; // +1 for the count
+
+
             return (
               <text
                 key={node.data.name}
                 x={node.x}
-                y={node.y}
+                y={node.y - ((totalLines - 1) / 2) * fontSize * 1.2}
                 fontSize={fontSize}
-                fontWeight={0.4}
+                fontWeight="bold"
                 textAnchor="middle"
                 alignmentBaseline="middle"
                 fill="#222"
                 className="pointer-events-none"
               >
-                <tspan x={node.x} dy="-0.3em">{name}</tspan>
-                <tspan x={node.x} dy="1.2em">{percentage}</tspan>
+                {displayName.map((line, index) => (
+                  <tspan
+                    key={index}
+                    x={node.x}
+                    dy={index === 0 ? "0em" : "1.2em"}
+                  >
+                    {line}
+                  </tspan>
+                ))}
+                <tspan x={node.x} dy="1.2em">{count}</tspan>
               </text>
             );
           })}
@@ -134,7 +158,7 @@ const CirclePacking: FC<CirclePackingProps> = ({
           }}
         >
           <div className="font-bold mb-1">{tooltipData.name}</div>
-          <div>Percentage: {tooltipData.percentage.toFixed(2)}%</div>
+          <div>Posts: {tooltipData.count}</div>
         </div>
       )}
     </div>

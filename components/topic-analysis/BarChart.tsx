@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useRef } from "react";
 import * as echarts from "echarts/core";
 import { BarChart as EBarChart } from "echarts/charts";
@@ -26,6 +27,7 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, limit
   const router = useRouter();
 
   const filteredTopics = topics.filter(topic => topic.count > limit);
+  const sortedTopics = [...filteredTopics].sort((a, b) => a.count - b.count);
 
   useEffect(() => {
     if (!chartRef.current) return;
@@ -34,7 +36,7 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, limit
     const option = {
       grid: {
         left: 200,
-        right: 40,
+        right: 100,
         top: 40,
         bottom: 20,
       },
@@ -53,18 +55,17 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, limit
       },
       yAxis: {
         type: 'category',
-        data: filteredTopics.map((t) => t.topic),
+        data: sortedTopics.map((t) => t.topic),
         axisLabel: { fontSize: 12,
             formatter: (value: string) => {
                 return value.length > 30 ? value.slice(0, 30) + '…' : value;
               },
          },
-       
       },
       series: [
         {
           type: 'bar',
-          data: filteredTopics.map((t) => t.count),
+          data: sortedTopics.map((t) => t.count),
           itemStyle: {
             color: '#b0b7c3',
             borderRadius: [0, 4, 4, 0],
@@ -81,7 +82,26 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, limit
     };
 
     chart.setOption(option);
-    chart.resize();
+
+    // --- ResizeObserver + window.resize 双监听 ---
+    const resizeHandler = () => {
+      chart.resize();
+    };
+
+    // ResizeObserver
+    const resizeObserver = new window.ResizeObserver(() => {
+        chart.resize();
+      });
+      if (chartRef.current) {
+        resizeObserver.observe(chartRef.current);
+      }
+  
+
+    // window resize
+    window.addEventListener('resize', resizeHandler);
+
+    // 立即触发一次 resize，防止初始宽度不对
+    setTimeout(() => chart.resize(), 0);
 
     chart.on('click', (params: any) => {
       const topicName = params.name;
@@ -90,12 +110,14 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, limit
 
     return () => {
       chart.off('click');
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', resizeHandler);
       chart.dispose();
     };
   }, [filteredTopics, businessId, clientId, limit, router]);
 
   if (filteredTopics.length === 0) {
-    return;
+    return null;
   }
 
   return (

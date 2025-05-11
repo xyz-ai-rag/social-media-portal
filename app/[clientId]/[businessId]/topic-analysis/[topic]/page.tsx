@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import TopicPosts from "@/components/topic-analysis/topic-posts/TopicPosts";
+import TopicPosts from "@/components/topic-analysis/TopicPosts";
 
 export default function PostsPage() {
   const params = useParams();
@@ -13,10 +13,7 @@ export default function PostsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-      </div>
       <TopicPosts clientId={clientId} businessId={businessId} topic={topic}/>
-      
     </div>
   );
 }

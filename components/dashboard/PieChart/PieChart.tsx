@@ -211,7 +211,7 @@ export default function PieChartComponent({
 
     chart.setOption(option);
 
-    // 用 ResizeObserver 监听容器尺寸变化
+    // Use ResizeObserver to listen for container size changes
     const resizeObserver = new window.ResizeObserver(() => {
       chart.resize();
     });

@@ -95,9 +95,9 @@ const TopicAnalysis: FC<AnalysisProps> = ({
     fetchData();
   }, [clientDetails, businessId, activeTab]);
 
-
   return (
-    <>
+    <div className="container mx-auto px-4">
+
       <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-4">
         {`Analysis for ${businessName || "Business"}`}
       </h1>
@@ -107,12 +107,8 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />
-      <div className="flex justify-center">
-        <p className="text-gray-500">Total Count: {total}</p>
-      </div>
-
       {/* Charts */}
-      <div className="flex justify-center items-center min-h-[400px]">
+      <div className="flex justify-center items-center min-h-[400px] w-full min-w-0">
         {isLoading ? (
           <div className="flex flex-col items-center">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-2"></div>
@@ -120,11 +116,11 @@ const TopicAnalysis: FC<AnalysisProps> = ({
           </div>
         ) : topics.length === 0 ? (
           <div className="flex flex-col items-center">
-            <svg width="40" height="40" fill="none" viewBox="0 0 24 24" className="mb-2 text-gray-300">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-              <path d="M8 12h8M12 8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            <p className="text-gray-500">No data available</p>
+            <div className="flex justify-center mb-6">
+              <p className="text-gray-500">Total Count: {total}</p>
+            </div>
+
+            <p className="text-gray-500">No posts with these topics found</p>
           </div>
         ) : (
           <div className="flex flex-col items-center p-2 w-full">
@@ -132,14 +128,13 @@ const TopicAnalysis: FC<AnalysisProps> = ({
               topics={topics}
               businessId={businessId}
               clientId={clientId}
-              limit={2}
+              limit={activeTab == 2 || activeTab == 3 ? 0 : 2}
             />
-            <BarChart topics={topics} businessId={businessId} clientId={clientId} limit={2} />
+            <BarChart topics={topics} businessId={businessId} clientId={clientId} limit={activeTab == 2 || activeTab == 3 ? 0 : 2} />
           </div>
         )}
       </div>
-      、
-    </>
+    </div>
   );
 };
 

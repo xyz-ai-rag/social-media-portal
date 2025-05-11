@@ -8,6 +8,7 @@ import PostCard from "@/components/business-posts/business-posts/PostCard";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "@/components/business-posts/SharedFilter";
 import PostPreviewCard from "@/components/business-posts/PostPreviewCard";
+import TopicPostTrendChart from "./topic-posts/TopicPostsChart";
 
 interface TopicPostsProps {
   clientId: string;
@@ -185,6 +186,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
         }
 
         const data = await response.json();
+        setPosts(data.posts || []);
         return {
           posts: data.posts || [],
           pagination: data.pagination,
@@ -402,16 +404,18 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
   };
 
   return (
-    <>
+    <div className="flex flex-col gap-4">
       {/* Title */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">
-          {`Posts for ${businessName || "Business"} `}
-        </h1>
-        <h1 className="text-[20px] font-bold text-[#5D5FEF]">
-          {`Topic: ${decodeURIComponent(topic)}`}
-        </h1>
+        {`${decodeURIComponent(topic)} Posts`}        </h1>
       </div>
+
+      {/* Trend Chart */}
+      <TopicPostTrendChart
+        businessId={businessId}
+        topic={topic}        
+      />
       
       {/* Filters */}
       <SharedFilter
@@ -425,7 +429,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
         onRefresh={fetchPosts}
         onSortOrderChange={handleSortOrderChange}
       />
-    
+      
       
       {/* Posts Table */}
       <SharedPostTable
@@ -465,7 +469,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
         isLoadingAdjacentPages={adjacentPagesLoading}
         pagination={pagination}
       />
-    </>
+    </div>
   );
 };
 
