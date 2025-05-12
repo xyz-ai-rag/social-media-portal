@@ -37,7 +37,9 @@ const CirclePacking: FC<CirclePackingProps> = ({
   const minSize = 200;  // Minimum size
   const maxSize = 1000; // Maximum size
   const size = Math.min(maxSize, Math.max(minSize, baseSize * Math.sqrt(filteredData.length / 10)));
-  
+  // const sizeScale = scaleSqrt()
+  // .domain([min, max])
+  // .range([BUBBLE_MIN_SIZE, BUBBLE_MAX_SIZE]);
   const width = size;
   const height = size;
 

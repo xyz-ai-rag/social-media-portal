@@ -8,7 +8,7 @@ import PostCard from "@/components/business-posts/business-posts/PostCard";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "@/components/business-posts/SharedFilter";
 import PostPreviewCard from "@/components/business-posts/PostPreviewCard";
-import TopicPostTrendChart from "./topic-posts/TopicPostsChart";
+import TopicPostTrendChart from "./topic-posts/TopicPostsTrendChart";
 
 interface TopicPostsProps {
   clientId: string;
