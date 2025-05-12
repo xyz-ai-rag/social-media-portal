@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import TopicPosts from "@/components/topic-analysis/TopicPosts";
+import TopicPosts from "@/components/topic-analysis/topic-posts/TopicPosts";
 
 export default function PostsPage() {
   const params = useParams();

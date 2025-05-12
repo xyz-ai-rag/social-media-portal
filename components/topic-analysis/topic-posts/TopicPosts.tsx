@@ -8,7 +8,8 @@ import PostCard from "@/components/business-posts/business-posts/PostCard";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "@/components/business-posts/SharedFilter";
 import PostPreviewCard from "@/components/business-posts/PostPreviewCard";
-import TopicPostTrendChart from "./topic-posts/TopicPostsTrendChart";
+import TopicPostTrendChart from "./TopicPostsTrendChart";
+import { IoArrowBack } from "react-icons/io5";
 
 interface TopicPostsProps {
   clientId: string;
@@ -409,6 +410,16 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">
         {`${decodeURIComponent(topic)} Posts`}        </h1>
+      </div>
+      {/* Back button */}
+      <div className="flex items-center">
+        <a
+          href={`/${clientId}/${businessId}/topic-analysis`}
+          className="flex items-center text-gray-600 hover:text-gray-800"
+        >
+          <IoArrowBack className="h-5 w-5 mr-1" />
+          {`Back to Topic Analysis`}
+        </a>
       </div>
 
       {/* Trend Chart */}

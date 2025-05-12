@@ -56,11 +56,23 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, limit
       yAxis: {
         type: 'category',
         data: sortedTopics.map((t) => t.topic),
-        axisLabel: { fontSize: 12,
-            formatter: (value: string) => {
-                return value.length > 30 ? value.slice(0, 30) + '…' : value;
-              },
-         },
+        axisLabel: {
+          fontSize: 12,
+          formatter: (value: string) => {
+            if (value.length <= 30) return value;
+            const mid = Math.floor(value.length / 2);
+            let split = value.lastIndexOf(' ', mid);
+            if (split === -1 || split < 10) {
+              split = value.indexOf(' ', mid);
+            }
+            if (split === -1 || split > 50) {
+              split = 30;
+            }
+            const first = value.slice(0, split);
+            const second = value.slice(split + 1, 60);
+            return first + '\n' + second + (value.length > 60 ? '…' : '');
+          },
+        },
       },
       series: [
         {
@@ -90,17 +102,16 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, limit
 
     // ResizeObserver
     const resizeObserver = new window.ResizeObserver(() => {
-        chart.resize();
-      });
-      if (chartRef.current) {
-        resizeObserver.observe(chartRef.current);
-      }
-  
+      chart.resize();
+    });
+    if (chartRef.current) {
+      resizeObserver.observe(chartRef.current);
+    }
+
 
     // window resize
     window.addEventListener('resize', resizeHandler);
 
-    // 立即触发一次 resize，防止初始宽度不对
     setTimeout(() => chart.resize(), 0);
 
     chart.on('click', (params: any) => {

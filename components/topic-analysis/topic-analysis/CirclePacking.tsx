@@ -1,7 +1,7 @@
 "use client"
 import { FC, useMemo, useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
-import { convertTopicsToTree, Topic, Tree } from "../../utils/topicTree";
+import { convertTopicsToTree, Topic, Tree } from "@/utils/topicTree";
 import { useRouter } from 'next/navigation';
 
 interface CirclePackingProps {

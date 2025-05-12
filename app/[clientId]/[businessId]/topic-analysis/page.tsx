@@ -1,5 +1,5 @@
 "use client";
-import TopicAnalysis from "@/components/topic-analysis/TopicAnalysis";
+import TopicAnalysis from "@/components/topic-analysis/topic-analysis/TopicAnalysis";
 import { useParams } from "next/navigation";
 export default function TopicAnalysisPage() {
   const params = useParams();
