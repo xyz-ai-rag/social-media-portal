@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         !pathname.startsWith('/auth/') && 
         pathname !== '/' &&
         pathname !== '/login') {
-      console.log('[Auth] Saving path:', pathname);
+      // console.log('[Auth] Saving path:', pathname);
       localStorage.setItem('lastVisitedPath', pathname);
     }
   }, [pathname, user]);
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Clean up session interval
   const cleanupSessionInterval = useCallback(() => {
     if (sessionIntervalRef.current) {
-      console.log('[SessionCheck] stopping polling');
+      // console.log('[SessionCheck] stopping polling');
       clearInterval(sessionIntervalRef.current);
       sessionIntervalRef.current = null;
       pollingActive.current = false;
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Clean up token refresh interval
   const cleanupTokenRefreshInterval = useCallback(() => {
     if (tokenRefreshIntervalRef.current) {
-      console.log('[TokenRefresh] stopping refresh interval');
+      // console.log('[TokenRefresh] stopping refresh interval');
       clearInterval(tokenRefreshIntervalRef.current);
       tokenRefreshIntervalRef.current = null;
     }
@@ -124,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clean up existing interval first
     cleanupTokenRefreshInterval();
     
-    console.log('[TokenRefresh] starting token refresh every 30 minutes');
+    // console.log('[TokenRefresh] starting token refresh every 30 minutes');
     
     // Set interval to refresh token every 30 minutes (safely before the typical 1 hour expiry)
     tokenRefreshIntervalRef.current = setInterval(async () => {
@@ -134,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         
-        console.log('[TokenRefresh] refreshing Supabase token');
+        // console.log('[TokenRefresh] refreshing Supabase token');
         
         // Refresh the session
         const { data, error } = await supabase.auth.refreshSession();
@@ -153,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             router.replace('/auth/login');
           }
         } else if (data.session) {
-          console.log('[TokenRefresh] token refreshed successfully');
+          // console.log('[TokenRefresh] token refreshed successfully');
         }
       } catch (err) {
         console.error('[TokenRefresh] unexpected error:', err);
@@ -166,7 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Skip if already polling or in reset flow
     if (pollingActive.current || isResetPasswordFlow()) {
       if (isResetPasswordFlow()) {
-        console.log('[SessionCheck] skipping polling on reset password page');
+        // console.log('[SessionCheck] skipping polling on reset password page');
       }
       return;
     }
@@ -174,7 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clean up any existing interval first
     cleanupSessionInterval();
     
-    console.log('[SessionCheck] starting polling every 10s');
+    // console.log('[SessionCheck] starting polling every 10s');
     pollingActive.current = true;
     
     // Create new interval
@@ -185,7 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       try {
-        console.log('[SessionCheck] → calling /api/session?action=check');
+        // console.log('[SessionCheck] → calling /api/session?action=check');
         const resp = await fetch('/api/session', {
           method: 'POST',
           credentials: 'include',
@@ -201,7 +201,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const { active } = await resp.json();
-        console.log('[SessionCheck] active =', active);
+        // console.log('[SessionCheck] active =', active);
 
         if (!active && componentMounted.current) {
           console.warn('[SessionCheck] session is INACTIVE → logging out');
@@ -226,7 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined') {
       const lastPath = localStorage.getItem('lastVisitedPath');
       if (lastPath) {
-        console.log('[Auth] Found saved path:', lastPath);
+        // console.log('[Auth] Found saved path:', lastPath);
         return false; // Will handle redirect separately
       }
     }
@@ -245,7 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clientDetailsData.businesses?.length && 
         !hasRedirected.current) {
       
-      console.log('[Auth] Redirecting to businesses page on initial load');
+      // console.log('[Auth] Redirecting to businesses page on initial load');
       hasRedirected.current = true;
       isInitialLoad.current = false;
       return true;
@@ -263,7 +263,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined' && window.performance) {
       const navEntries = performance.getEntriesByType('navigation');
       if (navEntries.length > 0 && (navEntries[0] as any).type === 'reload') {
-        console.log('[Auth] Page was refreshed, not initial load');
+        // console.log('[Auth] Page was refreshed, not initial load');
         isInitialLoad.current = false;
       }
     }
@@ -271,15 +271,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (!componentMounted.current) return;
-        console.log('[Auth] onAuthStateChange event:', _event, 'path:', pathname);
+        // console.log('[Auth] onAuthStateChange event:', _event, 'path:', pathname);
         
         // Special handling for password reset flow
         const inResetFlow = isResetPasswordFlow();
         if (inResetFlow) {
-          console.log('[Auth] In password reset flow, special handling');
+          // console.log('[Auth] In password reset flow, special handling');
           
           if (_event === 'SIGNED_OUT' && pathname === '/auth/reset-password') {
-            console.log('[Auth] Ignoring SIGNED_OUT during reset flow');
+            // console.log('[Auth] Ignoring SIGNED_OUT during reset flow');
             setLoading(false);
             return;
           }
@@ -296,29 +296,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           
           try {
-            console.log('[Auth] fetching clientDetails for', u.email);
+            // console.log('[Auth] fetching clientDetails for', u.email);
             const resp = await fetch(
               constructVercelURL(`/api/client-details?email=${encodeURIComponent(u.email!)}`)
             );
             const json = await resp.json();
-            console.log('[Auth] clientDetails response:', resp.status);
+            // console.log('[Auth] clientDetails response:', resp.status);
             if (resp.ok) setClientDetails(json);
             
             // Handle redirections - only for explicit SIGNED_IN event
             if (_event === 'SIGNED_IN') {
               if (!inResetFlow && !isBusinessPage() && !hasRedirected.current) {
                 if (json?.id && json.businesses?.length) {
-                  console.log('[Auth] Auto-redirecting to businesses after sign in');
+                  // console.log('[Auth] Auto-redirecting to businesses after sign in');
                   hasRedirected.current = true;
                   router.replace('/businesses');
                 }
               } else if (inResetFlow) {
-                console.log('[Auth] On reset password page, skipping redirect');
+                // console.log('[Auth] On reset password page, skipping redirect');
               } else if (isBusinessPage()) {
-                console.log('[Auth] Already on a business page, skipping redirect');
+                // console.log('[Auth] Already on a business page, skipping redirect');
               }
             } else {
-              console.log('[Auth] Not a SIGNED_IN event, skipping redirect check');
+              // console.log('[Auth] Not a SIGNED_IN event, skipping redirect check');
             }
           } catch (err) {
             console.error('[Auth] fetchClientDetails error', err);
@@ -327,7 +327,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Clean up all intervals when no user
           cleanupAllIntervals();
           
-          console.log('[Auth] no session, clearing user & details');
+          // console.log('[Auth] no session, clearing user & details');
           
           // Don't clear user during password reset if we're on the reset page
           if (!inResetFlow) {
@@ -339,7 +339,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               router.replace('/auth/login');
             }
           } else {
-            console.log('[Auth] In reset flow, not clearing user state');
+            // console.log('[Auth] In reset flow, not clearing user state');
           }
         }
         setLoading(false);
@@ -348,7 +348,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Bootstrap initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('[Auth] getSession:', session ? 'Session found' : 'No session', 'path:', pathname);
+      // console.log('[Auth] getSession:', session ? 'Session found' : 'No session', 'path:', pathname);
       
       const inResetFlow = isResetPasswordFlow();
       
@@ -364,7 +364,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // Skip auto-redirect if on reset password page
         if (inResetFlow) {
-          console.log('[Auth] On reset password page, skipping redirect');
+          // console.log('[Auth] On reset password page, skipping redirect');
           setLoading(false);
           return;
         }
@@ -372,7 +372,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fetch(constructVercelURL(`/api/client-details?email=${encodeURIComponent(u.email!)}`))
           .then((r) => r.json())
           .then((d) => {
-            console.log('[Auth] initial clientDetails received');
+            // console.log('[Auth] initial clientDetails received');
             setClientDetails(d);
             
             // MODIFIED: Check for saved path before default redirect
@@ -380,7 +380,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const isInitialPageLoad = pathname === '/' || pathname === '/auth/login' || pathname === '/login';
             
             if (lastPath && isInitialPageLoad) {
-              console.log('[Auth] Restoring path from localStorage:', lastPath);
+              // console.log('[Auth] Restoring path from localStorage:', lastPath);
               hasRedirected.current = true;
               isInitialLoad.current = false;
               router.replace(lastPath);
@@ -389,7 +389,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             else if (shouldRedirectToBusiness(d)) {
               router.replace('/businesses');
             } else {
-              console.log('[Auth] Staying on current page - either refresh or already on business page');
+              // console.log('[Auth] Staying on current page - either refresh or already on business page');
               // On page refresh, we want to stay on the current page
               isInitialLoad.current = false;
             }
@@ -410,7 +410,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Login function
   const login = useCallback(
     async (email: string, password: string) => {
-      console.log('[Auth] login called for', email);
+      // console.log('[Auth] login called for', email);
       const { error: signError } = await supabase.auth.signInWithPassword({ 
         email, 
         password
@@ -421,7 +421,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: signError.message };
       }
 
-      console.log('[Auth] calling /api/session?action=register');
+      // console.log('[Auth] calling /api/session?action=register');
       try {
         await fetch('/api/session', {
           method: 'POST',
@@ -433,14 +433,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('[Auth] Failed to register session:', err);
       }
 
-      console.log('[Auth] fetching clientDetails post-login');
+      // console.log('[Auth] fetching clientDetails post-login');
       let details: ClientDetails | null = null;
       try {
         const resp = await fetch(
           constructVercelURL(`/api/client-details?email=${encodeURIComponent(email)}`)
         );
         details = await resp.json();
-        console.log('[Auth] clientDetails post-login received');
+        // console.log('[Auth] clientDetails post-login received');
         setClientDetails(details);
       } catch (e) {
         console.error('[Auth] post-login clientDetails error', e);
@@ -448,7 +448,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Skip redirect if on password reset page
       if (isResetPasswordFlow()) {
-        console.log('[Auth] In reset password flow, skipping redirect after login');
+        // console.log('[Auth] In reset password flow, skipping redirect after login');
         return { success: true };
       }
 
@@ -458,10 +458,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // MODIFIED: Check for saved path on login
       const lastPath = localStorage.getItem('lastVisitedPath');
       if (lastPath) {
-        console.log('[Auth] Restoring path after login:', lastPath);
+        // console.log('[Auth] Restoring path after login:', lastPath);
         router.replace(lastPath);
       } else if (details?.id && details.businesses?.length) {
-        console.log('[Auth] redirecting to businesses');
+        // console.log('[Auth] redirecting to businesses');
         router.replace('/businesses');
       } else {
         console.warn('[Auth] no businesses found, fallback to /auth/login');
@@ -475,7 +475,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Logout function
   const logout = useCallback(async () => {
-    console.log('[Auth] logout called');
+    // console.log('[Auth] logout called');
     
     // Reset tracking flags
     hasRedirected.current = false;
@@ -493,7 +493,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     if (user?.email) {
-      console.log('[Auth] calling /api/session?action=delete');
+      // console.log('[Auth] calling /api/session?action=delete');
       try {
         await fetch('/api/session', {
           method: 'POST',

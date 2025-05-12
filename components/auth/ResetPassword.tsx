@@ -32,7 +32,7 @@ export default function ResetPasswordPage() {
   // Process the token when the component mounts
   useEffect(() => {
     const processToken = async () => {
-      console.log("Starting token processing...");
+    //   console.log("Starting token processing...");
       setIsProcessingToken(true);
       
       try {
@@ -42,12 +42,12 @@ export default function ResetPasswordPage() {
         
         if (typeof window !== 'undefined') {
           const fullUrl = window.location.href;
-          console.log("Processing URL:", fullUrl);
+        //   console.log("Processing URL:", fullUrl);
           
           // First check if we already have a valid session
           const { data: sessionData } = await supabase.auth.getSession();
           if (sessionData.session) {
-            console.log("Valid session already exists");
+            // console.log("Valid session already exists");
             setHasValidSession(true);
             setIsProcessingToken(false);
             return;
@@ -57,7 +57,7 @@ export default function ResetPasswordPage() {
           const hash = window.location.hash;
           const search = window.location.search;
           
-          console.log("Hash:", hash, "Search:", search);
+        //   console.log("Hash:", hash, "Search:", search);
           
           // Try to extract token from hash
           if (hash && hash.includes('access_token')) {
@@ -95,7 +95,7 @@ export default function ResetPasswordPage() {
           
           // If we found a token, try to use it
           if (token) {
-            console.log("Found token, attempting to use it");
+            // console.log("Found token, attempting to use it");
             
             try {
               // IMPORTANT: Disable auth listeners before setting session
@@ -111,7 +111,7 @@ export default function ResetPasswordPage() {
                 if (error) {
                   console.error("OTP verification failed:", error);
                 } else if (data.session) {
-                  console.log("Successfully verified OTP");
+                //   console.log("Successfully verified OTP");
                   setHasValidSession(true);
                   setIsProcessingToken(false);
                   
@@ -136,7 +136,7 @@ export default function ResetPasswordPage() {
                 if (error) {
                   console.error("Session setting failed:", error);
                 } else if (data.session) {
-                  console.log("Successfully set session directly");
+                //   console.log("Successfully set session directly");
                   setHasValidSession(true);
                   setIsProcessingToken(false);
                   
@@ -246,7 +246,7 @@ export default function ResetPasswordPage() {
       if (client && client.auth && client.auth.onAuthStateChange) {
         // @ts-ignore - Accessing internal property
         const listeners = client.auth.listenersCount;
-        console.log("Temporarily disabling auth listeners");
+        // console.log("Temporarily disabling auth listeners");
         // @ts-ignore - Accessing internal property
         client.auth.listenersCount = 0;
         return listeners;
@@ -264,7 +264,7 @@ export default function ResetPasswordPage() {
         // @ts-ignore - Accessing internal property
         const client = supabase._supabaseClient;
         if (client && client.auth) {
-          console.log("Restoring auth listeners");
+        //   console.log("Restoring auth listeners");
           // @ts-ignore - Accessing internal property
           client.auth.listenersCount = prevListeners;
         }
