@@ -57,8 +57,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-// Helper function to format date for query
-function formatDateForQuery(date: Date): string {
-  return date.toISOString().split("T")[0];
-}

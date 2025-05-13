@@ -9,6 +9,7 @@ interface CirclePackingProps {
   businessId: string;
   clientId: string;
   limit: number;
+  topicType: string;
 }
 
 interface TooltipData {
@@ -24,6 +25,7 @@ const CirclePacking: FC<CirclePackingProps> = ({
   businessId,
   clientId,
   limit,
+  topicType,
 }) => {
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [hoveredCircle, setHoveredCircle] = useState<string | null>(null);
@@ -55,7 +57,7 @@ const CirclePacking: FC<CirclePackingProps> = ({
 
   const router = useRouter();
   function handleCircleClick(data: any): void {
-    router.push(`/${clientId}/${businessId}/topic-analysis/${data.name}`);
+    router.push(`/${clientId}/${businessId}/topic-analysis/${data.name}?topic_type=${topicType}`);
   }
 
   const handleMouseEnter = (node: any) => {

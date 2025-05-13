@@ -15,6 +15,7 @@ interface TopicPostsProps {
   clientId: string;
   businessId: string;
   topic: string;
+  topicType: string;
 }
 
 interface PaginationInfo {
@@ -35,9 +36,7 @@ interface AppliedFilters {
   sortOrder: string;
 }
 
-const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
-  const { clientDetails } = useAuth();
-  const [businessName, setBusinessName] = useState("");
+const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicType }) => {
   const [posts, setPosts] = useState<PostData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +46,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
     currentPage: 1,
     pageSize: 10,
   });
+  console.log(topicType, "topicType");
 
   // State for the modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -113,6 +113,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
     return { startDate: thirtyDaysAgo, endDate: yesterday };
   });
 
+  // TODo
   useEffect(() => {
     sessionStorage.setItem("business_page_date", JSON.stringify(dateRange));
   }, [dateRange]);
@@ -121,18 +122,6 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
     null
   );
-
-  // Update business name when business ID changes
-  useEffect(() => {
-    if (clientDetails && businessId) {
-      const business = clientDetails.businesses.find(
-        (b) => b.business_id === businessId
-      );
-      if (business) {
-        setBusinessName(business.business_name);
-      }
-    }
-  }, [clientDetails, businessId]);
 
   // Helper function to fetch posts for any page
   const fetchPostsForPage = useCallback(
@@ -414,11 +403,11 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
       {/* Back button */}
       <div className="flex items-center">
         <a
-          href={`/${clientId}/${businessId}/topic-analysis`}
+          href={`/${clientId}/${businessId}/topic-analysis?topic_type=${topicType}`}
           className="flex items-center text-gray-600 hover:text-gray-800"
         >
           <IoArrowBack className="h-5 w-5 mr-1" />
-          {`Back to Topic Analysis`}
+          {`Back to Topic Analysis ${topicType == undefined ? "" : `: ${topicType}`}`}
         </a>
       </div>
 

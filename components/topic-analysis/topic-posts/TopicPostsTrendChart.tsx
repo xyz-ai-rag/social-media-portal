@@ -38,7 +38,7 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
   }, [topic, businessId]);
 
   useEffect(() => {
-    if (!data || data.length === 0) {
+    if (!data || data.length < 2) {
       setGrouped([]);
       return;
     }
@@ -54,18 +54,25 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
     const times = data.map(d => new Date(d.last_update_time).getTime());
     const minTime = Math.min(...times);
     const maxTime = Math.max(...times);
+    
+    // If minTime equals maxTime, add one hour to maxTime to avoid division by zero
+    const adjustedMaxTime = minTime === maxTime ? maxTime + 3600000 : maxTime;
+    
     // Check if dates are in the same year
     const minYear = new Date(minTime).getFullYear();
-    const maxYear = new Date(maxTime).getFullYear();
+    const maxYear = new Date(adjustedMaxTime).getFullYear();
     setSameYear(minYear === maxYear);
 
     // Calculate appropriate time interval based on time range
-    const timeSpan = maxTime - minTime;
+    const timeSpan = adjustedMaxTime - minTime;
     const timeSpanInHours = timeSpan / (1000 * 60 * 60);
     const timeSpanInDays = timeSpanInHours / 24;
 
     // Determine time interval based on time span
-    setIntervalInMinutes(Math.round((timeSpanInDays * 24 / maxPoints * 60) / 60) * 60);
+    const calculatedInterval = Math.round((timeSpanInDays * 24 / maxPoints * 60) / 60) * 60;
+    // Ensure minimum interval is 1 minute
+    const intervalInMinutes = Math.max(1, calculatedInterval);
+    setIntervalInMinutes(intervalInMinutes);
 
     // Round minTime to previous interval
     const roundedMinTime = new Date(minTime);
@@ -79,7 +86,7 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
     // Create evenly distributed time points
     const timePoints: Date[] = [];
     // Add one more interval to ensure the last point is after maxTime
-    const timeStep = (maxTime - roundedMinTime.getTime() + intervalInMinutes * 60000) / (numPoints - 1);
+    const timeStep = (adjustedMaxTime - roundedMinTime.getTime() + intervalInMinutes * 60000) / (numPoints - 1);
 
     for (let i = 0; i < numPoints; i++) {
       const time = roundedMinTime.getTime() + timeStep * i;
@@ -95,6 +102,32 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
     const groupedArr = timePoints.map(date => {
       const count = data.filter(post => {
         const postTime = new Date(post.last_update_time).getTime();
+        const postDate = new Date(post.last_update_time);
+        console.log(postDate, "postDate");
+
+        // If interval is greater than a day, round to start of day
+        if (intervalInMinutes > 24 * 60) {
+          const compareDate = new Date(date);
+          return (
+            postDate.getFullYear() < compareDate.getFullYear() ||
+            (postDate.getFullYear() === compareDate.getFullYear() &&
+              (postDate.getMonth() < compareDate.getMonth() ||
+                (postDate.getMonth() === compareDate.getMonth() &&
+                  postDate.getDate() <= compareDate.getDate())))
+          );
+        }
+        if (intervalInMinutes > 180) {
+          const compareDate = new Date(date);
+          return (
+            postDate.getFullYear() < compareDate.getFullYear() ||
+            (postDate.getFullYear() === compareDate.getFullYear() &&
+              (postDate.getMonth() < compareDate.getMonth() ||
+                (postDate.getMonth() === compareDate.getMonth() &&
+                  (postDate.getDate() < compareDate.getDate() ||
+                    (postDate.getDate() === compareDate.getDate() &&
+                      postDate.getHours() <= compareDate.getHours())))))
+          );
+        }
         return postTime <= date.getTime();
       }).length;
       const year = date.getFullYear();
@@ -126,7 +159,7 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
         text: `Topic Trend`,
         left: 'center',
         top: 10,
-        bottom: 30,
+        bottom: 35,
         textStyle: { fontSize: 16 }
       },
       grid: { left: 60, right: 40, top: 40, bottom: 60 },
