@@ -18,7 +18,10 @@ export async function GET(request: NextRequest) {
     // Required parameters
     const businessId = searchParams.get("businessId");
     const topic = decodeURIComponent(searchParams.get("topic") || "");
+    console.log("Request for business_id:", businessId);
     
+    // Print which table is being used for topics
+    console.log("Using topics table:", DEPLOY_ENV === "test" ? "TestBusinessTopicsModel" : "BusinessTopicsModel");
     if (!businessId || !topic) {
       return NextResponse.json(
         { error: "Business ID and topic are required" },
@@ -62,6 +65,17 @@ export async function GET(request: NextRequest) {
     const pageSize = parseInt(searchParams.get("pageSize") || "10");
     const sortOrder = (searchParams.get("sortOrder") || "desc").toLowerCase();
 
+    const availableTopics = await TopicModelToUse.findAll({
+      where: {
+        business_id: businessId
+      },
+      attributes: ['topic'],
+      group: ['topic'],
+      raw: true
+    });
+    
+    console.log("Available topics for this business:", availableTopics.map(t => t.topic));
+    
     // First, get all note_ids from business_topics table for the given topic
     const topicNotes = await TopicModelToUse.findAll({
       where: {

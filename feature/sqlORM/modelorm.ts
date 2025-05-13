@@ -238,7 +238,7 @@ export const BusinessTopicsModel = sequelizeDbConnection.define<BusinessTopicsIn
 );
 
 export const TestBusinessTopicsModel = sequelizeDbConnection.define<BusinessTopicsInstance>(
-  'business_topics',
+  'test_business_topics',
   {
     id: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
     business_id: { type: DataTypes.UUID, allowNull: false },
