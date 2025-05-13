@@ -236,3 +236,19 @@ export const BusinessTopicsModel = sequelizeDbConnection.define<BusinessTopicsIn
     timestamps: false,
   }
 );
+
+export const TestBusinessTopicsModel = sequelizeDbConnection.define<BusinessTopicsInstance>(
+  'business_topics',
+  {
+    id: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
+    business_id: { type: DataTypes.UUID, allowNull: false },
+    topic_type: { type: DataTypes.STRING, allowNull: false },
+    topic: { type: DataTypes.STRING, allowNull: false },
+    note_id: { type: DataTypes.STRING, allowNull: false },
+    created_at: { type: DataTypes.DATE, allowNull: false },
+  },
+  {
+    tableName: 'test_business_topics',
+    timestamps: false,
+  }
+);

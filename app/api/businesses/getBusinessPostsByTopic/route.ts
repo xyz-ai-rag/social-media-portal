@@ -1,4 +1,4 @@
-import { BusinessPostModel, BusinessTopicsModel } from "@/feature/sqlORM/modelorm";
+import { BusinessPostModel, BusinessTopicsModel,TestBusinessTopicsModel } from "@/feature/sqlORM/modelorm";
 import { NextRequest, NextResponse } from "next/server";
 import { Op } from "sequelize";
 
@@ -6,6 +6,11 @@ import { Op } from "sequelize";
  * API endpoint to get business posts filtered by topic
  * GET /api/businesses/getBusinessPostsByTopic?businessId=xxx&topic=xxx&startDate=xxx&endDate=xxx&platform=xxx&sentiment=xxx&relevance=xxx&hasCriticism=xxx&search=xxx
  */
+
+const DEPLOY_ENV = process.env.DEPLOY_ENV;
+
+const TopicModelToUse =
+  DEPLOY_ENV === "test" ? TestBusinessTopicsModel : BusinessTopicsModel;
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -58,7 +63,7 @@ export async function GET(request: NextRequest) {
     const sortOrder = (searchParams.get("sortOrder") || "desc").toLowerCase();
 
     // First, get all note_ids from business_topics table for the given topic
-    const topicNotes = await BusinessTopicsModel.findAll({
+    const topicNotes = await TopicModelToUse.findAll({
       where: {
         business_id: businessId,
         topic: topic
