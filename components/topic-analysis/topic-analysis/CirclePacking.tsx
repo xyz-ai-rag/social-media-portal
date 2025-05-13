@@ -103,7 +103,7 @@ const CirclePacking: FC<CirclePackingProps> = ({
           .map((node: any) => {
             const fontSize = Math.min(13, node.r / 3);
             // Estimate maximum characters that can fit
-            const maxChars = Math.floor((node.r * 2) / (fontSize * 0.5));
+            const maxChars = Math.floor((node.r * 1.8) / (fontSize * 0.5));
             const name = node.data.name;
             const count = node.data.count;
 
