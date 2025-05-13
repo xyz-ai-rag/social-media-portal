@@ -49,20 +49,20 @@ export default function DateRangePicker({
     setThirtyDaysAgo(thirtyDaysAgoStr);
     
     // Load preferences from sessionStorage
-    const savedSelected = sessionStorage.getItem("dashboard_select");
+    const savedSelected = localStorage.getItem("dashboard_select");
     if (savedSelected) {
       setSelectedPreset(JSON.parse(savedSelected));
       setShowCustomDates(JSON.parse(savedSelected) === "custom");
     }
     
-    const savedStartDate = sessionStorage.getItem("dashboard_start_date");
+    const savedStartDate = localStorage.getItem("dashboard_start_date");
     if (savedStartDate) {
       setCustomStartDate(JSON.parse(savedStartDate));
     } else {
       setCustomStartDate(thirtyDaysAgoStr);
     }
     
-    const savedEndDate = sessionStorage.getItem("dashboard_end_date");
+    const savedEndDate = localStorage.getItem("dashboard_end_date");
     if (savedEndDate) {
       setCustomEndDate(JSON.parse(savedEndDate));
     } else {
@@ -178,10 +178,10 @@ export default function DateRangePicker({
     if (!isClient) return;
     
     if (customStartDate) {
-      sessionStorage.setItem("dashboard_start_date", JSON.stringify(customStartDate));
+      localStorage.setItem("dashboard_start_date", JSON.stringify(customStartDate));
     }
     if (customEndDate) {
-      sessionStorage.setItem("dashboard_end_date", JSON.stringify(customEndDate));
+      localStorage.setItem("dashboard_end_date", JSON.stringify(customEndDate));
     }
   }, [customStartDate, customEndDate, isClient]);
 
@@ -189,7 +189,7 @@ export default function DateRangePicker({
   useEffect(() => {
     if (!isClient) return;
     
-    sessionStorage.setItem("dashboard_select", JSON.stringify(selectedPreset));
+    localStorage.setItem("dashboard_select", JSON.stringify(selectedPreset));
     
     if (selectedPreset === "custom") {
       setShowCustomDates(true);

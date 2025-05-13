@@ -13,6 +13,8 @@ import {
   FiUsers,
   FiAlertCircle,
 } from "react-icons/fi";
+import { IoAnalyticsOutline } from "react-icons/io5";
+
 import { useAuth } from "@/context/AuthContext";
 
 type MenuItemProps = {
@@ -102,29 +104,29 @@ export default function Sidebar() {
   // Check if we're on the business selection page
   const isBusinessSelectionPage = pathname === "/businesses";
   const isSettingsPage = pathname === "/settings";
-  
+
   // Check if a business is selected or retrieve from localStorage
   const [hasSelectedBusiness, setHasSelectedBusiness] = useState<boolean>(false);
   const [lastClientId, setLastClientId] = useState<string | null>(null);
   const [lastBusinessId, setLastBusinessId] = useState<string | null>(null);
-  
+
   // Initialize states from localStorage on component mount
   useEffect(() => {
     const savedState = localStorage.getItem("sidebarCollapsed");
     if (savedState !== null) {
       setCollapsed(JSON.parse(savedState));
     }
-    
+
     // Retrieve last selected business from localStorage
     const savedClientId = localStorage.getItem("lastClientId");
     const savedBusinessId = localStorage.getItem("lastBusinessId");
-    
+
     if (savedClientId && savedBusinessId) {
       setLastClientId(savedClientId);
       setLastBusinessId(savedBusinessId);
     }
   }, []);
-  
+
   // Save current business selection to localStorage when navigating
   useEffect(() => {
     // Only update if we're on a business-specific page
@@ -136,7 +138,7 @@ export default function Sidebar() {
       setHasSelectedBusiness(true);
     }
   }, [currentClientId, currentBusinessId, isBusinessSelectionPage, isSettingsPage]);
-  
+
   // Determine if we have a business selected (either current or from history)
   const effectiveClientId = currentClientId || lastClientId;
   const effectiveBusinessId = currentBusinessId || lastBusinessId;
@@ -177,7 +179,7 @@ export default function Sidebar() {
       (biz) => biz.business_id === effectiveBusinessId
     )
     : null;
-    
+
   // Build destination URLs based on effective IDs
   const getDashboardUrl = () => {
     if (hasBusiness) {
@@ -185,17 +187,23 @@ export default function Sidebar() {
     }
     return "/businesses";
   };
-  
+
   const getPostsUrl = () => {
     if (hasBusiness) {
       return `/${effectiveClientId}/${effectiveBusinessId}/posts`;
     }
     return "/businesses";
   };
-  
+
   const getCompetitorsUrl = () => {
     if (hasBusiness) {
       return `/${effectiveClientId}/${effectiveBusinessId}/competitors`;
+    }
+    return "/businesses";
+  };
+  const getAnalyticsUrl = () => {
+    if (hasBusiness) {
+      return `/${effectiveClientId}/${effectiveBusinessId}/topic-analysis`;
     }
     return "/businesses";
   };
@@ -264,6 +272,15 @@ export default function Sidebar() {
                 icon={<FiList />}
                 label="All Posts"
                 isActive={isActive("/[clientId]/[businessId]/posts")}
+                disabled={!hasBusiness && !isSettingsPage}
+                collapsed={collapsed}
+                onClick={!hasBusiness ? handleDisabledClick : undefined}
+              />
+              <MenuItem
+                href={getAnalyticsUrl()}
+                icon={<IoAnalyticsOutline />}
+                label="Analysis"
+                isActive={isActive("/[clientId]/[businessId]/topic-analysis")}
                 disabled={!hasBusiness && !isSettingsPage}
                 collapsed={collapsed}
                 onClick={!hasBusiness ? handleDisabledClick : undefined}

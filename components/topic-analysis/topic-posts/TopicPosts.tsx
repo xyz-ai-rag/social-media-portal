@@ -2,16 +2,19 @@
 
 import { FC, useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
-import SharedFilter from "../SharedFilter";
-import SharedPostTable from "../SharedPostTable";
-import PostCard from "./PostCard";
+import SharedFilter from "@/components/business-posts/SharedFilter";
+import SharedPostTable from "@/components/business-posts/SharedPostTable";
+import PostCard from "@/components/business-posts/business-posts/PostCard";
 import { constructVercelURL } from "@/utils/generateURL";
-import { PostData } from "../SharedFilter";
-import PostPreviewCard from "../PostPreviewCard";
+import { PostData } from "@/components/business-posts/SharedFilter";
+import PostPreviewCard from "@/components/business-posts/PostPreviewCard";
+import TopicPostTrendChart from "./TopicPostsTrendChart";
+import { IoArrowBack } from "react-icons/io5";
 
-interface BusinessPostsProps {
+interface TopicPostsProps {
   clientId: string;
   businessId: string;
+  topic: string;
 }
 
 interface PaginationInfo {
@@ -32,7 +35,7 @@ interface AppliedFilters {
   sortOrder: string;
 }
 
-const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
+const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
   const { clientDetails } = useAuth();
   const [businessName, setBusinessName] = useState("");
   const [posts, setPosts] = useState<PostData[]>([]);
@@ -71,7 +74,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
 
   const [filters, setFilters] = useState(() => {
     if (typeof window !== "undefined") {
-      const savedFilters = localStorage.getItem("business_page_filters");
+      const savedFilters = sessionStorage.getItem("business_page_filters");
       return savedFilters
         ? JSON.parse(savedFilters)
         : {
@@ -96,13 +99,13 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   });
   
   useEffect(() => {
-    localStorage.setItem("business_page_filters", JSON.stringify(filters));
+    sessionStorage.setItem("business_page_filters", JSON.stringify(filters));
   }, [filters]);
   
   // setting default date
   const [dateRange, setDateRange] = useState(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("business_page_date");
+      const saved = sessionStorage.getItem("business_page_date");
       return saved
         ? JSON.parse(saved)
         : { startDate: thirtyDaysAgo, endDate: yesterday };
@@ -111,7 +114,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem("business_page_date", JSON.stringify(dateRange));
+    sessionStorage.setItem("business_page_date", JSON.stringify(dateRange));
   }, [dateRange]);
   
   // Track filters returned from API to keep UI in sync
@@ -148,6 +151,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         // Build query parameters
         const queryParams = new URLSearchParams();
         queryParams.append("businessId", businessId);
+        queryParams.append("topic", topic);
 
         if (dateRange.startDate)
           queryParams.append("startDate", dateRange.startDate);
@@ -167,7 +171,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         // Make the API call
         const response = await fetch(
           constructVercelURL(
-            `/api/businesses/getBusinessPosts?${queryParams.toString()}`
+            `/api/businesses/getBusinessPostsByTopic?${queryParams.toString()}`
           ),
           {
             method: "GET",
@@ -183,6 +187,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         }
 
         const data = await response.json();
+        setPosts(data.posts || []);
         return {
           posts: data.posts || [],
           pagination: data.pagination,
@@ -193,7 +198,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         return { posts: [], pagination: null, appliedFilters: null };
       }
     },
-    [businessId, filters, dateRange, yesterday]
+    [businessId, topic, filters, dateRange, yesterday]
   );
 
   // Main fetch function for current page
@@ -400,11 +405,28 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   };
 
   return (
-    <>
+    <div className="flex flex-col gap-4">
       {/* Title */}
-      <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-4">
-        {`Posts for ${businessName || "Business"}`}
-      </h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-[34px] font-bold text-[#5D5FEF]">
+        {`${decodeURIComponent(topic)} Posts`}        </h1>
+      </div>
+      {/* Back button */}
+      <div className="flex items-center">
+        <a
+          href={`/${clientId}/${businessId}/topic-analysis`}
+          className="flex items-center text-gray-600 hover:text-gray-800"
+        >
+          <IoArrowBack className="h-5 w-5 mr-1" />
+          {`Back to Topic Analysis`}
+        </a>
+      </div>
+
+      {/* Trend Chart */}
+      <TopicPostTrendChart
+        businessId={businessId}
+        topic={topic}        
+      />
       
       {/* Filters */}
       <SharedFilter
@@ -418,7 +440,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         onRefresh={fetchPosts}
         onSortOrderChange={handleSortOrderChange}
       />
-    
+      
       
       {/* Posts Table */}
       <SharedPostTable
@@ -458,8 +480,8 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         isLoadingAdjacentPages={adjacentPagesLoading}
         pagination={pagination}
       />
-    </>
+    </div>
   );
 };
 
-export default BusinessPosts;
+export default TopicPosts;
