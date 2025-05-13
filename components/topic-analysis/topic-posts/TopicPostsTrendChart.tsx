@@ -4,7 +4,6 @@ import * as echarts from "echarts/core";
 import { LineChart } from "echarts/charts";
 import { TitleComponent, TooltipComponent, GridComponent } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
-import { set } from "date-fns";
 
 echarts.use([TitleComponent, TooltipComponent, GridComponent, LineChart, CanvasRenderer]);
 
@@ -21,7 +20,7 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<any[]>([]);
-  const [grouped, setGrouped] = useState<{date: string, count: number, formattedDate: string}[]>([]);
+  const [grouped, setGrouped] = useState<{ date: string, count: number, formattedDate: string }[]>([]);
   const [sameYear, setSameYear] = useState(true);
   const [intervalInMinutes, setIntervalInMinutes] = useState(0);
   // Fetch raw data from backend
@@ -38,7 +37,6 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
     fetchData();
   }, [topic, businessId]);
 
-  // Dynamically group data by interval (hour/day/week/month) based on chart width and data span
   useEffect(() => {
     if (!data || data.length === 0) {
       setGrouped([]);
@@ -50,8 +48,8 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
       chartWidth = chartRef.current.offsetWidth || 1200;
     }
     const maxWinPoints = Math.floor(chartWidth / MIN_POINT_DISTANCE);
-    const maxPoints = Math.min(maxWinPoints,30);
-    
+    const maxPoints = Math.min(maxWinPoints, 30);
+
     // Calculate time range
     const times = data.map(d => new Date(d.last_update_time).getTime());
     const minTime = Math.min(...times);
@@ -59,33 +57,30 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
     // Check if dates are in the same year
     const minYear = new Date(minTime).getFullYear();
     const maxYear = new Date(maxTime).getFullYear();
-    const sameYear = minYear === maxYear;
-    setSameYear(sameYear);
-    
+    setSameYear(minYear === maxYear);
+
     // Calculate appropriate time interval based on time range
     const timeSpan = maxTime - minTime;
     const timeSpanInHours = timeSpan / (1000 * 60 * 60);
     const timeSpanInDays = timeSpanInHours / 24;
-    
+
     // Determine time interval based on time span
-    let intervalInMinutes: number;
-    intervalInMinutes = Math.round((timeSpanInDays * 24 /maxPoints * 60) / 60) * 60; 
-    setIntervalInMinutes(intervalInMinutes);
-    
+    setIntervalInMinutes(Math.round((timeSpanInDays * 24 / maxPoints * 60) / 60) * 60);
+
     // Round minTime to previous interval
     const roundedMinTime = new Date(minTime);
     roundedMinTime.setMinutes(Math.floor(roundedMinTime.getMinutes() / intervalInMinutes) * intervalInMinutes);
     roundedMinTime.setSeconds(0);
     roundedMinTime.setMilliseconds(0);
-    
+
     // Calculate number of points based on chart width
     const numPoints = Math.min(maxPoints, Math.max(5, Math.floor(timeSpanInHours * 60 / intervalInMinutes)));
-    
+
     // Create evenly distributed time points
     const timePoints: Date[] = [];
     // Add one more interval to ensure the last point is after maxTime
     const timeStep = (maxTime - roundedMinTime.getTime() + intervalInMinutes * 60000) / (numPoints - 1);
-    
+
     for (let i = 0; i < numPoints; i++) {
       const time = roundedMinTime.getTime() + timeStep * i;
       const date = new Date(time);
@@ -107,8 +102,8 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
       const day = date.getDate();
       const hours = String(date.getHours()).padStart(2, '0');
       const minutes = String(date.getMinutes()).padStart(2, '0');
-      const formattedDate = intervalInMinutes > 180 ? 
-        `${month} ${day}${!sameYear ? `, ${year}` : ''} ${intervalInMinutes < 60*24 ? hours : ''}` : 
+      const formattedDate = intervalInMinutes > 180 ?
+        `${month} ${day}${!sameYear ? `, ${year}` : ''} ${intervalInMinutes < 60 * 24 ? hours : ''}` :
         `${month} ${day}${!sameYear ? `, ${year}` : ''} ${hours}:${minutes}`;
       return {
         date: date.toISOString(),
@@ -118,7 +113,7 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
     });
 
     setGrouped(groupedArr);
-  }, [data, sameYear, intervalInMinutes]);
+  }, [data]);
 
   const cumulativeData = grouped.map(item => item.count);
 
@@ -153,11 +148,11 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
       yAxis: {
         type: 'value',
         min: 'dataMin',
-        axisLabel: { 
+        axisLabel: {
           fontSize: 12,
           formatter: (value: number) => Math.round(value)
         },
-        minInterval: 1, 
+        minInterval: 1,
       },
       series: [
         {
@@ -173,11 +168,11 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
     };
     chart.setOption(option);
     const resizeObserver = new window.ResizeObserver(() => {
-        chart.resize();
-      });
-      if (chartRef.current) {
-        resizeObserver.observe(chartRef.current);
-      }
+      chart.resize();
+    });
+    if (chartRef.current) {
+      resizeObserver.observe(chartRef.current);
+    }
 
     return () => {
       resizeObserver.disconnect();
@@ -185,14 +180,20 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
     };
   }, [grouped]);
 
-  if (grouped.length === 0) return null;
-
   return (
-    <div
-      ref={chartRef}
-      style={{ width: '100%' }}
-      className="h-[300px] flex items-center justify-center w-full"
-    />
+    <>
+      {data.length > 1 ? (
+        <div
+          ref={chartRef}
+          style={{ width: '100%' }}
+          className="h-[300px] flex items-center justify-center w-full"
+        />
+      ) : (
+        <div className="h-[100px] flex items-center justify-center w-full">
+          <p>Not enough data to show line chart</p>
+        </div>
+      )}
+    </>
   );
 };
 
