@@ -57,7 +57,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
   const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
   const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
   const [adjacentPagesLoading, setAdjacentPagesLoading] = useState(false);
-  
+
   // Calculate yesterday's date for date limits
   const yesterday = useMemo(() => {
     const date = new Date();
@@ -78,14 +78,14 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
       return savedFilters
         ? JSON.parse(savedFilters)
         : {
-            platform: "",
-            sentiment: "",
-            relevance: "",
-            hasCriticism: "",
-            search: "",
-            sortOrder: "desc",
-            page: 1,
-          };
+          platform: "",
+          sentiment: "",
+          relevance: "",
+          hasCriticism: "",
+          search: "",
+          sortOrder: "desc",
+          page: 1,
+        };
     }
     return {
       platform: "",
@@ -97,11 +97,11 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
       page: 1,
     };
   });
-  
+
   useEffect(() => {
     sessionStorage.setItem("business_page_filters", JSON.stringify(filters));
   }, [filters]);
-  
+
   // setting default date
   const [dateRange, setDateRange] = useState(() => {
     if (typeof window !== "undefined") {
@@ -117,7 +117,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
   useEffect(() => {
     sessionStorage.setItem("business_page_date", JSON.stringify(dateRange));
   }, [dateRange]);
-  
+
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
     null
@@ -322,8 +322,8 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
             ? pagination.currentPage - 1
             : pagination.totalPages
           : pagination.currentPage < pagination.totalPages
-          ? pagination.currentPage + 1
-          : 1;
+            ? pagination.currentPage + 1
+            : 1;
 
       // Get posts from the appropriate page
       const newPagePosts = direction === "prev" ? prevPagePosts : nextPagePosts;
@@ -398,7 +398,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
       {/* Title */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">
-        {`${decodeURIComponent(topic)} Posts`}        </h1>
+          {`${decodeURIComponent(topic)} Posts`}        </h1>
       </div>
       {/* Back button */}
       <div className="flex items-center">
@@ -412,11 +412,13 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
       </div>
 
       {/* Trend Chart */}
-      <TopicPostTrendChart
-        businessId={businessId}
-        topic={topic}        
-      />
-      
+      {topicType !== "General" && (
+        <TopicPostTrendChart
+          businessId={businessId}
+          topic={topic}
+        />
+      )}
+
       {/* Filters */}
       <SharedFilter
         title=""
@@ -429,8 +431,8 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
         onRefresh={fetchPosts}
         onSortOrderChange={handleSortOrderChange}
       />
-      
-      
+
+
       {/* Posts Table */}
       <SharedPostTable
         listData={posts}
@@ -446,7 +448,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
         openModal={openModal}
         openPreviewModal={openPreviewModal}
       />
-      
+
       {/* Modals */}
       <PostCard
         isOpen={isModalOpen}
@@ -458,7 +460,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
         isLoadingAdjacentPages={adjacentPagesLoading}
         pagination={pagination}
       />
-      
+
       <PostPreviewCard
         isOpen={isPreviewModalOpen}
         onClose={closePreviewModal}
