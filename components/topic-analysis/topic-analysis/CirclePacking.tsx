@@ -18,6 +18,7 @@ interface TooltipData {
   percentage: number;
   x: number;
   y: number;
+  r: number;
 }
 
 const CirclePacking: FC<CirclePackingProps> = ({
@@ -66,7 +67,8 @@ const CirclePacking: FC<CirclePackingProps> = ({
       count: node.data.count,
       percentage: node.data.percentage * 100,
       x: node.x,
-      y: node.y
+      y: node.y,
+      r: node.r
     });
     setHoveredCircle(node.data.name);
   };
@@ -159,9 +161,11 @@ const CirclePacking: FC<CirclePackingProps> = ({
           style={{
             left: tooltipData.x + 10,
             top: tooltipData.y - 10,
+            fontSize: `${Math.min(13, tooltipData.r / 3)}px`,
+            fontWeight: "bold"
           }}
         >
-          <div className="font-bold mb-1">{tooltipData.name}</div>
+          <div className="mb-1">{tooltipData.name}</div>
           <div>Posts: {tooltipData.count}</div>
         </div>
       )}
