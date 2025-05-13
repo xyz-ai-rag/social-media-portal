@@ -1,4 +1,4 @@
-import { BusinessTopicsModel } from "@/feature/sqlORM/modelorm";
+import { BusinessTopicsModel,TestBusinessTopicsModel } from "@/feature/sqlORM/modelorm";
 import { NextRequest, NextResponse } from "next/server";
 import { Op, fn, col, literal } from "sequelize";
 
@@ -6,6 +6,9 @@ import { Op, fn, col, literal } from "sequelize";
  * POST /api/businesses/getTopicStats
  * body: { businessId, topicType, startDate?, endDate? }
  */
+
+const DEPLOY_ENV = process.env.DEPLOY_ENV;
+const TopicModelToUse = DEPLOY_ENV === "test" ? TestBusinessTopicsModel : BusinessTopicsModel;
 export async function POST(request: NextRequest) {
   try {
     const { businessId, topicType } = await request.json();
@@ -23,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     // count each topic
-    const topicCounts = await BusinessTopicsModel.findAll({
+    const topicCounts = await TopicModelToUse.findAll({
       where,
       attributes: [
         "topic",
