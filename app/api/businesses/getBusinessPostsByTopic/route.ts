@@ -63,18 +63,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || "";
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "10");
-    const sortOrder = (searchParams.get("sortOrder") || "desc").toLowerCase();
-
-    const availableTopics = await TopicModelToUse.findAll({
-      where: {
-        business_id: businessId
-      },
-      attributes: ['topic'],
-      group: ['topic'],
-      raw: true
-    });
-    
-    console.log("Available topics for this business:", availableTopics.map(t => t.topic));
+    const sortOrder = (searchParams.get("sortOrder") || "desc").toLowerCase()
     
     // First, get all note_ids from business_topics table for the given topic
     const topicNotes = await TopicModelToUse.findAll({
