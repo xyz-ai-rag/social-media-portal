@@ -117,7 +117,7 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, limit
 
     chart.on('click', (params: any) => {
       const topicName = params.name;
-      router.push(`/${clientId}/${businessId}/topic-analysis/${topicName}?topic_type=${topicType}`);
+      router.push(`/${clientId}/${businessId}/topic-analysis/${encodeURIComponent(topicName)}?topic_type=${encodeURIComponent(topicType)}`);
     });
 
     return () => {

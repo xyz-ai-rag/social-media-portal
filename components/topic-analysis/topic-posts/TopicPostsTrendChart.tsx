@@ -9,34 +9,24 @@ echarts.use([TitleComponent, TooltipComponent, GridComponent, LineChart, CanvasR
 
 interface TopicPostsChartProps {
   businessId: string;
-  topic: string;
+  noteIds: any[];
 }
 
 const MIN_POINT_DISTANCE = 30; // px
 
 const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
   businessId,
-  topic,
+  noteIds,
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<any[]>(noteIds);
   const [grouped, setGrouped] = useState<{ date: string, count: number, formattedDate: string }[]>([]);
   const [sameYear, setSameYear] = useState(true);
-  const [intervalInMinutes, setIntervalInMinutes] = useState(0);
-  // Fetch raw data from backend
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(`/api/businesses/getTopicPostsTrend?businessId=${businessId}&topic=${topic}`);
-        const res = await response.json();
-        setData(res.postRows || []);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-    fetchData();
-  }, [topic, businessId]);
 
+  useEffect(() => {
+    setData(noteIds);
+  }, [noteIds]);
+  
   useEffect(() => {
     if (!data || data.length < 2) {
       setGrouped([]);
@@ -61,7 +51,7 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
     // Check if dates are in the same year
     const minYear = new Date(minTime).getFullYear();
     const maxYear = new Date(adjustedMaxTime).getFullYear();
-    setSameYear(minYear === maxYear);
+    const isSameYear = minYear === maxYear;
 
     // Calculate appropriate time interval based on time range
     const timeSpan = adjustedMaxTime - minTime;
@@ -72,7 +62,6 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
     const calculatedInterval = Math.round((timeSpanInDays * 24 / maxPoints * 60) / 60) * 60;
     // Ensure minimum interval is 1 minute
     const intervalInMinutes = Math.max(1, calculatedInterval);
-    setIntervalInMinutes(intervalInMinutes);
 
     // Round minTime to previous interval
     const roundedMinTime = new Date(minTime);
@@ -136,8 +125,9 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
       const hours = String(date.getHours()).padStart(2, '0');
       const minutes = String(date.getMinutes()).padStart(2, '0');
       const formattedDate = intervalInMinutes > 180 ?
-        `${month} ${day}${!sameYear ? `, ${year}` : ''} ${intervalInMinutes < 60 * 24 ? hours : ''}` :
-        `${month} ${day}${!sameYear ? `, ${year}` : ''} ${hours}:${minutes}`;
+        `${month} ${day}${!isSameYear ? `, ${year}` : ''} ${intervalInMinutes < 60 * 24 ? hours : ''}` :
+        `${month} ${day}${!isSameYear ? `, ${year}` : ''} ${hours}:${minutes}`;
+      console.log(isSameYear, "formattedDate");
       return {
         date: date.toISOString(),
         count,
@@ -159,10 +149,10 @@ const TopicPostTrendChart: React.FC<TopicPostsChartProps> = ({
         text: `Topic Trend`,
         left: 'center',
         top: 10,
-        bottom: 35,
+        bottom: 30,
         textStyle: { fontSize: 16 }
       },
-      grid: { left: 60, right: 40, top: 40, bottom: 60 },
+      grid: { left: 60, right: 40, top: 40, bottom: 65 },
       tooltip: {
         trigger: 'axis',
         formatter: (params: any) => {

@@ -57,7 +57,7 @@ const CirclePacking: FC<CirclePackingProps> = ({
 
   const router = useRouter();
   function handleCircleClick(data: any): void {
-    router.push(`/${clientId}/${businessId}/topic-analysis/${data.name}?topic_type=${topicType}`);
+    router.push(`/${clientId}/${businessId}/topic-analysis/${encodeURIComponent(data.name)}?topic_type=${encodeURIComponent(topicType)}`);
   }
 
   const handleMouseEnter = (node: any) => {

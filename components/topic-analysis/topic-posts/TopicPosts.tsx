@@ -40,13 +40,13 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
   const [posts, setPosts] = useState<PostData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [noteIds, setNoteIds] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({
     totalCount: 0,
     totalPages: 1,
     currentPage: 1,
     pageSize: 10,
   });
-  console.log(topicType, "topicType");
 
   // State for the modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,13 +62,6 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
   const yesterday = useMemo(() => {
     const date = new Date();
     date.setDate(date.getDate() - 1);
-    return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-  }, []);
-
-  // Calculate default 30 days ago date
-  const thirtyDaysAgo = useMemo(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
     return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
   }, []);
 
@@ -101,22 +94,35 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
   useEffect(() => {
     sessionStorage.setItem("business_page_filters", JSON.stringify(filters));
   }, [filters]);
-
-  // setting default date
-  const [dateRange, setDateRange] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("business_page_date");
-      return saved
-        ? JSON.parse(saved)
-        : { startDate: thirtyDaysAgo, endDate: yesterday };
-    }
-    return { startDate: thirtyDaysAgo, endDate: yesterday };
+  // Setting default date range
+  const [dateRange, setDateRange] = useState<{startDate: string, endDate: string}>({
+    startDate: "",
+    endDate: ""
   });
 
-  // TODo
   useEffect(() => {
-    sessionStorage.setItem("business_page_date", JSON.stringify(dateRange));
-  }, [dateRange]);
+    if (noteIds.length > 0) {
+      const minDate = Math.min(...noteIds.map((note) => {
+        const date = new Date(note.last_update_time);
+        return new Date(date.getTime() - date.getTimezoneOffset() * 60000).getTime();
+      }));
+      let maxDate = Math.max(...noteIds.map((note) => {
+        const date = new Date(note.last_update_time);
+        return new Date(date.getTime() - date.getTimezoneOffset() * 60000).getTime();
+      }));
+      // Add one day to maxDate
+      const nextDay = new Date(maxDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      maxDate = nextDay.getTime();
+
+      setDateRange({ 
+        startDate: new Date(minDate).toISOString().split("T")[0], 
+        endDate: new Date(maxDate).toISOString().split("T")[0] 
+      });
+    }
+  }, [noteIds]);
+
+
 
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
@@ -393,6 +399,21 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
     handleFilterChange({ sortOrder: order });
   };
 
+  // Fetch raw data from backend
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`/api/businesses/getTopicPostsTrend?businessId=${businessId}&topic=${topic}`);
+        const res = await response.json();
+        setNoteIds(res.postRows || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+    fetchData();
+  }, [topic]);
+
+
   return (
     <div className="flex flex-col gap-4">
       {/* Title */}
@@ -415,7 +436,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
       {topicType !== "General" && (
         <TopicPostTrendChart
           businessId={businessId}
-          topic={topic}
+          noteIds={noteIds}
         />
       )}
 
