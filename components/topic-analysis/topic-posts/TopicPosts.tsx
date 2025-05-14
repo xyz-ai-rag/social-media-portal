@@ -102,23 +102,31 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
 
   useEffect(() => {
     if (noteIds.length > 0) {
-      const minDate = Math.min(...noteIds.map((note) => {
-        const date = new Date(note.last_update_time);
-        return new Date(date.getTime() - date.getTimezoneOffset() * 60000).getTime();
-      }));
-      let maxDate = Math.max(...noteIds.map((note) => {
-        const date = new Date(note.last_update_time);
-        return new Date(date.getTime() - date.getTimezoneOffset() * 60000).getTime();
-      }));
-      // Add one day to maxDate
-      const nextDay = new Date(maxDate);
-      nextDay.setDate(nextDay.getDate() + 1);
-      maxDate = nextDay.getTime();
-  
-      setDateRange({ 
-        startDate: new Date(minDate).toISOString().split("T")[0], 
-        endDate: new Date(maxDate).toISOString().split("T")[0] 
+      // Find the earliest date in the noteIds
+      let earliestDate = new Date(noteIds[0].last_update_time);
+      
+      noteIds.forEach(note => {
+        const noteDate = new Date(note.last_update_time);
+        if (noteDate < earliestDate) {
+          earliestDate = noteDate;
+        }
       });
+      
+      // Format date as YYYY-MM-DD
+      const formattedEarliestDate = earliestDate.toISOString().split('T')[0];
+      
+      // Get yesterday's date for the end date
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const formattedYesterday = yesterday.toISOString().split('T')[0];
+      
+      setDateRange({
+        startDate: formattedEarliestDate,
+        endDate: formattedYesterday
+      });
+      
+      console.log(`Set date range: ${formattedEarliestDate} to ${formattedYesterday}`);
     }
   }, [noteIds]);
 
