@@ -27,7 +27,7 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, limit
   const chartRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  const filteredTopics = topics.filter(topic => topic.count > limit);
+  const filteredTopics = topics.filter(topic => topic.count >= limit);
   const sortedTopics = [...filteredTopics].sort((a, b) => a.count - b.count);
 
   useEffect(() => {

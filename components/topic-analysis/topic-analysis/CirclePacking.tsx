@@ -30,7 +30,7 @@ const CirclePacking: FC<CirclePackingProps> = ({
 }) => {
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [hoveredCircle, setHoveredCircle] = useState<string | null>(null);
-  const filteredData = topics.filter(topic => topic.count > limit);
+  const filteredData = topics.filter(topic => topic.count >= limit);
   if (filteredData.length === 0) {
     return <div>No posts with these topics found</div>;
   }
