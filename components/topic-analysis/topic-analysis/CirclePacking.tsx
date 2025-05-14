@@ -9,6 +9,7 @@ interface CirclePackingProps {
   businessId: string;
   clientId: string;
   limit: number;
+  topicType: string;
 }
 
 interface TooltipData {
@@ -17,6 +18,7 @@ interface TooltipData {
   percentage: number;
   x: number;
   y: number;
+  r: number;
 }
 
 const CirclePacking: FC<CirclePackingProps> = ({
@@ -24,6 +26,7 @@ const CirclePacking: FC<CirclePackingProps> = ({
   businessId,
   clientId,
   limit,
+  topicType,
 }) => {
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [hoveredCircle, setHoveredCircle] = useState<string | null>(null);
@@ -55,7 +58,7 @@ const CirclePacking: FC<CirclePackingProps> = ({
 
   const router = useRouter();
   function handleCircleClick(data: any): void {
-    router.push(`/${clientId}/${businessId}/topic-analysis/${data.name}`);
+    router.push(`/${clientId}/${businessId}/topic-analysis/${encodeURIComponent(data.name)}?topic_type=${encodeURIComponent(topicType)}`);
   }
 
   const handleMouseEnter = (node: any) => {
@@ -64,7 +67,8 @@ const CirclePacking: FC<CirclePackingProps> = ({
       count: node.data.count,
       percentage: node.data.percentage * 100,
       x: node.x,
-      y: node.y
+      y: node.y,
+      r: node.r
     });
     setHoveredCircle(node.data.name);
   };
@@ -103,7 +107,7 @@ const CirclePacking: FC<CirclePackingProps> = ({
           .map((node: any) => {
             const fontSize = Math.min(13, node.r / 3);
             // Estimate maximum characters that can fit
-            const maxChars = Math.floor((node.r * 2) / (fontSize * 0.5));
+            const maxChars = Math.floor((node.r * 1.8) / (fontSize * 0.5));
             const name = node.data.name;
             const count = node.data.count;
 
@@ -157,9 +161,11 @@ const CirclePacking: FC<CirclePackingProps> = ({
           style={{
             left: tooltipData.x + 10,
             top: tooltipData.y - 10,
+            fontSize: `${Math.min(13, tooltipData.r / 3)}px`,
+            fontWeight: "bold"
           }}
         >
-          <div className="font-bold mb-1">{tooltipData.name}</div>
+          <div className="mb-1">{tooltipData.name}</div>
           <div>Posts: {tooltipData.count}</div>
         </div>
       )}

@@ -56,7 +56,6 @@ const SharedPostModal = ({
       }
     };
 
-    console.log(rowData);
 
     // Add event listener when modal is open
     if (isOpen) {

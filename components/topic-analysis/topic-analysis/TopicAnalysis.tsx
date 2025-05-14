@@ -5,6 +5,7 @@ import { constructVercelURL } from "@/utils/generateURL";
 import CirclePacking from './CirclePacking';
 import TabSection from './TabSection';
 import BarChart from './BarChart';
+import { useSearchParams } from "next/navigation";
 interface AnalysisProps {
   clientId: string;
   businessId: string;
@@ -16,9 +17,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
 }) => {
   // Get auth context to access similar businesses
   const { clientDetails } = useAuth();
-
-  // Add state for active tab
-  const [activeTab, setActiveTab] = useState(0);
+  const searchParams = useSearchParams();
 
   // business name state
   const [businessName, setBusinessName] = useState<string>("");
@@ -30,6 +29,19 @@ const TopicAnalysis: FC<AnalysisProps> = ({
   const [total, setTotal] = useState<number>(0);
 
   // Map tab index to topic type
+  const getActiveTab = (topicType: string | null) => {
+    switch (topicType) {
+      case "General":
+        return 0;
+      case "Specific":
+        return 1;
+      case "Criticism":
+        return 2;
+      case "Competitor":
+        return 3;
+    }
+  };
+
   const getTopicType = (tabIndex: number) => {
     switch (tabIndex) {
       case 0:
@@ -38,10 +50,18 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         return "Specific";
       case 2:
         return "Criticism";
-      default:
+      case 3:
         return "Competitor";
+      default:
+        return "General";
     }
   };
+
+  // Add state for active tab
+  const [activeTab, setActiveTab] = useState(getActiveTab(searchParams.get("topic_type")) || 0);
+  useEffect(() => {
+    setActiveTab(getActiveTab(searchParams.get("topic_type")) || 0);
+  }, [searchParams]);
 
   // Update business name when business ID changes
   useEffect(() => {
@@ -83,6 +103,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         const data = await response.json();
         setTopics(data.topics);
         setTotal(data.total);
+        
 
       } catch (error) {
         console.error("Error fetching competitors:", error);
@@ -129,8 +150,11 @@ const TopicAnalysis: FC<AnalysisProps> = ({
               businessId={businessId}
               clientId={clientId}
               limit={activeTab == 2 || activeTab == 3 ? 0 : 2}
+              topicType={getTopicType(activeTab)}
             />
-            <BarChart topics={topics} businessId={businessId} clientId={clientId} limit={activeTab == 2 || activeTab == 3 ? 0 : 2} />
+            <BarChart topics={topics} businessId={businessId} clientId={clientId} limit={activeTab == 2 || activeTab == 3 ? 0 : 2}
+              topicType={getTopicType(activeTab)}
+            />
           </div>
         )}
       </div>

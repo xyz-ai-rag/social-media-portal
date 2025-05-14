@@ -15,6 +15,7 @@ interface TopicPostsProps {
   clientId: string;
   businessId: string;
   topic: string;
+  topicType: string;
 }
 
 interface PaginationInfo {
@@ -35,12 +36,11 @@ interface AppliedFilters {
   sortOrder: string;
 }
 
-const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
-  const { clientDetails } = useAuth();
-  const [businessName, setBusinessName] = useState("");
+const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicType }) => {
   const [posts, setPosts] = useState<PostData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [noteIds, setNoteIds] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({
     totalCount: 0,
     totalPages: 1,
@@ -57,18 +57,11 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
   const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
   const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
   const [adjacentPagesLoading, setAdjacentPagesLoading] = useState(false);
-  
+
   // Calculate yesterday's date for date limits
   const yesterday = useMemo(() => {
     const date = new Date();
     date.setDate(date.getDate() - 1);
-    return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-  }, []);
-
-  // Calculate default 30 days ago date
-  const thirtyDaysAgo = useMemo(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
     return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
   }, []);
 
@@ -78,14 +71,14 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
       return savedFilters
         ? JSON.parse(savedFilters)
         : {
-            platform: "",
-            sentiment: "",
-            relevance: "",
-            hasCriticism: "",
-            search: "",
-            sortOrder: "desc",
-            page: 1,
-          };
+          platform: "",
+          sentiment: "",
+          relevance: "",
+          hasCriticism: "",
+          search: "",
+          sortOrder: "desc",
+          page: 1,
+        };
     }
     return {
       platform: "",
@@ -97,42 +90,44 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
       page: 1,
     };
   });
-  
+
   useEffect(() => {
     sessionStorage.setItem("business_page_filters", JSON.stringify(filters));
   }, [filters]);
-  
-  // setting default date
-  const [dateRange, setDateRange] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("business_page_date");
-      return saved
-        ? JSON.parse(saved)
-        : { startDate: thirtyDaysAgo, endDate: yesterday };
-    }
-    return { startDate: thirtyDaysAgo, endDate: yesterday };
+  // Setting default date range
+  const [dateRange, setDateRange] = useState<{startDate: string, endDate: string}>({
+    startDate: "",
+    endDate: ""
   });
 
   useEffect(() => {
-    sessionStorage.setItem("business_page_date", JSON.stringify(dateRange));
-  }, [dateRange]);
-  
+    if (noteIds.length > 0) {
+      const minDate = Math.min(...noteIds.map((note) => {
+        const date = new Date(note.last_update_time);
+        return new Date(date.getTime() - date.getTimezoneOffset() * 60000).getTime();
+      }));
+      let maxDate = Math.max(...noteIds.map((note) => {
+        const date = new Date(note.last_update_time);
+        return new Date(date.getTime() - date.getTimezoneOffset() * 60000).getTime();
+      }));
+      // Add one day to maxDate
+      const nextDay = new Date(maxDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      maxDate = nextDay.getTime();
+
+      setDateRange({ 
+        startDate: new Date(minDate).toISOString().split("T")[0], 
+        endDate: new Date(maxDate).toISOString().split("T")[0] 
+      });
+    }
+  }, [noteIds]);
+
+
+
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
     null
   );
-
-  // Update business name when business ID changes
-  useEffect(() => {
-    if (clientDetails && businessId) {
-      const business = clientDetails.businesses.find(
-        (b) => b.business_id === businessId
-      );
-      if (business) {
-        setBusinessName(business.business_name);
-      }
-    }
-  }, [clientDetails, businessId]);
 
   // Helper function to fetch posts for any page
   const fetchPostsForPage = useCallback(
@@ -333,8 +328,8 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
             ? pagination.currentPage - 1
             : pagination.totalPages
           : pagination.currentPage < pagination.totalPages
-          ? pagination.currentPage + 1
-          : 1;
+            ? pagination.currentPage + 1
+            : 1;
 
       // Get posts from the appropriate page
       const newPagePosts = direction === "prev" ? prevPagePosts : nextPagePosts;
@@ -404,30 +399,47 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
     handleFilterChange({ sortOrder: order });
   };
 
+  // Fetch raw data from backend
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`/api/businesses/getTopicPostsTrend?businessId=${businessId}&topic=${topic}`);
+        const res = await response.json();
+        setNoteIds(res.postRows || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+    fetchData();
+  }, [topic]);
+
+
   return (
     <div className="flex flex-col gap-4">
       {/* Title */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">
-        {`${decodeURIComponent(topic)} Posts`}        </h1>
+          {`${decodeURIComponent(topic)} Posts`}        </h1>
       </div>
       {/* Back button */}
       <div className="flex items-center">
         <a
-          href={`/${clientId}/${businessId}/topic-analysis`}
+          href={`/${clientId}/${businessId}/topic-analysis?topic_type=${topicType}`}
           className="flex items-center text-gray-600 hover:text-gray-800"
         >
           <IoArrowBack className="h-5 w-5 mr-1" />
-          {`Back to Topic Analysis`}
+          {`Back to Topic Analysis ${topicType == undefined ? "" : `: ${topicType}`}`}
         </a>
       </div>
 
       {/* Trend Chart */}
-      <TopicPostTrendChart
-        businessId={businessId}
-        topic={topic}        
-      />
-      
+      {topicType !== "General" && (
+        <TopicPostTrendChart
+          businessId={businessId}
+          noteIds={noteIds}
+        />
+      )}
+
       {/* Filters */}
       <SharedFilter
         title=""
@@ -440,8 +452,8 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
         onRefresh={fetchPosts}
         onSortOrderChange={handleSortOrderChange}
       />
-      
-      
+
+
       {/* Posts Table */}
       <SharedPostTable
         listData={posts}
@@ -457,7 +469,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
         openModal={openModal}
         openPreviewModal={openPreviewModal}
       />
-      
+
       {/* Modals */}
       <PostCard
         isOpen={isModalOpen}
@@ -469,7 +481,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic }) => {
         isLoadingAdjacentPages={adjacentPagesLoading}
         pagination={pagination}
       />
-      
+
       <PostPreviewCard
         isOpen={isPreviewModalOpen}
         onClose={closePreviewModal}

@@ -1,6 +1,10 @@
-import { BusinessTopicsModel, BusinessPostModel } from "@/feature/sqlORM/modelorm";
+import { BusinessTopicsModel, BusinessPostModel, TestBusinessTopicsModel } from "@/feature/sqlORM/modelorm";
 import { NextRequest, NextResponse } from "next/server";
-import { Op, fn, col, literal } from "sequelize";
+import { Op } from "sequelize";
+const DEPLOY_ENV = process.env.DEPLOY_ENV;
+
+const TopicModelToUse =
+  DEPLOY_ENV === "test" ? TestBusinessTopicsModel : BusinessTopicsModel;
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,7 +13,7 @@ export async function GET(request: NextRequest) {
     // Required parameters
     const businessId = searchParams.get("businessId");
     const topic = decodeURIComponent(searchParams.get("topic") || "");
-    
+
     if (!businessId || !topic) {
       return NextResponse.json(
         { error: "Business ID and topic are required" },
@@ -17,7 +21,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const topicRows = await BusinessTopicsModel.findAll({
+    const topicRows = await TopicModelToUse.findAll({
       where: {
         business_id: businessId,
         topic: topic,
@@ -33,12 +37,16 @@ export async function GET(request: NextRequest) {
     const postRows = await BusinessPostModel.findAll({
       where: {
         note_id: { [Op.in]: noteIds },
+        is_relevant: true,
+        description: {
+          [Op.ne]: "nan",
+        },
       },
       attributes: ['note_id', 'last_update_time'],
       order: [['last_update_time', 'ASC']],
       raw: true
     });
-    
+
 
     return NextResponse.json({ postRows });
   } catch (error: any) {
@@ -48,9 +56,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// Helper function to format date for query
-function formatDateForQuery(date: Date): string {
-  return date.toISOString().split("T")[0];
 }
