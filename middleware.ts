@@ -7,6 +7,8 @@ export const config = {
     '/:clientId/:businessId/dashboard',
     '/:clientId/:businessId/competitors',
     '/:clientId/:businessId/posts',
+    '/:clientId/:businessId/topic-analysis',
+    '/:clientId/:businessId/topic-analysis/:topic',
     '/businesses',
   ],
 }

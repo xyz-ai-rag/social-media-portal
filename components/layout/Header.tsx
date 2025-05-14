@@ -88,7 +88,6 @@ export default function Header() {
       .join("")
       .toUpperCase();
 
-    console.log();
 
     return (
       <div className="w-10 h-10 flex items-center justify-center bg-[#5A67BA] text-white text-sm font-bold rounded-full">

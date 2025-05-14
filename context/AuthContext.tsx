@@ -44,7 +44,55 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
+// Define log area types to add type safety
+type LogArea = 'redirect' | 'session' | 'auth' | 'path' | 'general';
+
+// Define the debug mode configuration interface
+interface DebugModeConfig {
+  enabled: boolean;
+  redirect: boolean;
+  session: boolean;
+  auth: boolean;
+  path: boolean;
+  general: boolean;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Debug config - set to true to enable debug logs, false to disable
+const DEBUG_MODE: DebugModeConfig = {
+  enabled: true,     // Master switch for all debug logs
+  redirect: true,    // Logs related to redirects
+  session: true,     // Logs related to session management
+  auth: true,        // Logs related to authentication
+  path: true,        // Logs related to path/URL changes
+  general: true,     // General logs that don't fit in other categories
+}
+
+// Add a timestamp logger function that respects the debug config
+const debugLog = (area: LogArea, message: string): void => {
+  if (!DEBUG_MODE.enabled) return;
+  
+  // Check if this specific area is enabled
+  if (!DEBUG_MODE[area]) return;
+  
+  // Add a prefix based on the area
+  const prefix = area === 'redirect' ? '🔄 [REDIRECT]' : 
+                area === 'session' ? '🔑 [SESSION]' : 
+                area === 'auth' ? '👤 [AUTH]' : 
+                area === 'path' ? '🔍 [PATH]' : 
+                '📝 [DEBUG]';
+  
+  console.log(`${prefix} [${new Date().toISOString()}] ${message}`);
+};
+
+// Type definition for window extensions
+declare global {
+  interface Window {
+    toggleAuthDebug: (enable?: boolean) => DebugModeConfig;
+    configAuthDebug: (config: Partial<DebugModeConfig>) => DebugModeConfig;
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -60,6 +108,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const tokenRefreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const pollingActive = useRef(false);
   const componentMounted = useRef(true);
+  const previousPathname = useRef(''); // Track previous path for debugging
+  
+  // Log current path for debugging
+  useEffect(() => {
+    if (pathname !== previousPathname.current) {
+      debugLog('path', `Path changed from "${previousPathname.current}" to "${pathname}"`);
+      previousPathname.current = pathname || '';
+    }
+  }, [pathname]);
   
   // ADDED: Save current path when it's a meaningful page
   useEffect(() => {
@@ -68,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         !pathname.startsWith('/auth/') && 
         pathname !== '/' &&
         pathname !== '/login') {
-      // console.log('[Auth] Saving path:', pathname);
+      debugLog('path', `Saving path to localStorage: "${pathname}"`);
       localStorage.setItem('lastVisitedPath', pathname);
     }
   }, [pathname, user]);
@@ -76,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Clean up session interval
   const cleanupSessionInterval = useCallback(() => {
     if (sessionIntervalRef.current) {
-      // console.log('[SessionCheck] stopping polling');
+      debugLog('session', 'Stopping session polling');
       clearInterval(sessionIntervalRef.current);
       sessionIntervalRef.current = null;
       pollingActive.current = false;
@@ -86,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Clean up token refresh interval
   const cleanupTokenRefreshInterval = useCallback(() => {
     if (tokenRefreshIntervalRef.current) {
-      // console.log('[TokenRefresh] stopping refresh interval');
+      debugLog('session', 'Stopping token refresh interval');
       clearInterval(tokenRefreshIntervalRef.current);
       tokenRefreshIntervalRef.current = null;
     }
@@ -94,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Clean up all intervals
   const cleanupAllIntervals = useCallback(() => {
+    debugLog('session', 'Cleaning up all intervals');
     cleanupSessionInterval();
     cleanupTokenRefreshInterval();
   }, [cleanupSessionInterval, cleanupTokenRefreshInterval]);
@@ -101,22 +159,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Check if we're in a password reset flow
   const isResetPasswordFlow = useCallback(() => {
     if (typeof window === 'undefined') return false;
-    return (
-      pathname === '/auth/reset-password' || 
-      localStorage.getItem('is_password_reset_flow') === 'true'
-    );
+    const isReset = pathname === '/auth/reset-password' || 
+                   localStorage.getItem('is_password_reset_flow') === 'true';
+    
+    if (isReset) {
+      debugLog('auth', 'In password reset flow');
+    }
+    return isReset;
   }, [pathname]);
 
-  // Check if we're already on a business-related page
+  // Check if we're already on a business-related page - IMPROVED VERSION
   const isBusinessPage = useCallback(() => {
     if (!pathname) return false;
-    return /^\/business(es)?($|\/|\/[^\/]+)/.test(pathname);
+    
+    // 1. Regular business page check (pages starting with /business or /businesses)
+    if (/^\/business(es)?($|\/|\/[^\/]+)/.test(pathname)) {
+      debugLog('path', `isBusinessPage: "${pathname}" matches business pattern`);
+      return true;
+    }
+    
+    // 2. Check for /:clientId/:businessId/* pattern with known business sections
+    const pathParts = pathname.split('/').filter(Boolean);
+    if (pathParts.length >= 3) {
+      // List of all known business section pages
+      const businessSections = [
+        'dashboard',
+        'competitors',
+        'posts',
+        'topic-analysis'
+      ];
+      
+      // Check if the third part of the path is a known business section
+      if (businessSections.includes(pathParts[2])) {
+        debugLog('path', `isBusinessPage: "${pathname}" matches clientId/businessId/section pattern for section "${pathParts[2]}"`);
+        return true;
+      }
+      
+      // Check for sub-pages of business sections (e.g., /:clientId/:businessId/topic-analysis/:topic)
+      if (pathParts.length >= 4) {
+        if (pathParts[2] === 'topic-analysis') {
+          debugLog('path', `isBusinessPage: "${pathname}" matches topic-analysis sub-page pattern`);
+          return true;
+        }
+        // Add other section sub-pages if needed in the future
+      }
+    }
+    
+    debugLog('path', `isBusinessPage: "${pathname}" is NOT a business page`);
+    return false;
   }, [pathname]);
 
   // Check if we're on a specific business dashboard page (not the listing)
   const isSpecificBusinessPage = useCallback(() => {
     if (!pathname) return false;
-    return /^\/business(es)?\/[^\/]+/.test(pathname);
+    const result = /^\/business(es)?\/[^\/]+/.test(pathname);
+    debugLog('path', `isSpecificBusinessPage check for "${pathname}": ${result}`);
+    return result;
   }, [pathname]);
 
   // Function to refresh Supabase token to prevent expiration
@@ -124,7 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clean up existing interval first
     cleanupTokenRefreshInterval();
     
-    // console.log('[TokenRefresh] starting token refresh every 30 minutes');
+    debugLog('session', 'Setting up token refresh interval (30 minutes)');
     
     // Set interval to refresh token every 30 minutes (safely before the typical 1 hour expiry)
     tokenRefreshIntervalRef.current = setInterval(async () => {
@@ -134,7 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         
-        // console.log('[TokenRefresh] refreshing Supabase token');
+        debugLog('session', 'TokenRefresh event triggered');
         
         // Refresh the session
         const { data, error } = await supabase.auth.refreshSession();
@@ -146,14 +244,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           // If no valid session, log out
           if (!sessionData.session) {
-            console.warn('[TokenRefresh] no valid session, logging out');
+            debugLog('session', 'No valid session found during token refresh, logging out');
             cleanupAllIntervals();
             setUser(null);
             setClientDetails(null);
             router.replace('/auth/login');
           }
         } else if (data.session) {
-          // console.log('[TokenRefresh] token refreshed successfully');
+          debugLog('session', 'Token refresh successful');
         }
       } catch (err) {
         console.error('[TokenRefresh] unexpected error:', err);
@@ -166,7 +264,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Skip if already polling or in reset flow
     if (pollingActive.current || isResetPasswordFlow()) {
       if (isResetPasswordFlow()) {
-        // console.log('[SessionCheck] skipping polling on reset password page');
+        debugLog('session', 'Skipping session polling due to reset password flow');
+      } else if (pollingActive.current) {
+        debugLog('session', 'Session polling already active, skipping setup');
       }
       return;
     }
@@ -174,7 +274,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clean up any existing interval first
     cleanupSessionInterval();
     
-    // console.log('[SessionCheck] starting polling every 10s');
+    debugLog('session', 'Starting session polling (10s intervals)');
     pollingActive.current = true;
     
     // Create new interval
@@ -185,7 +285,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       try {
-        // console.log('[SessionCheck] → calling /api/session?action=check');
+        debugLog('session', `Session check initiated (path: ${pathname})`);
         const resp = await fetch('/api/session', {
           method: 'POST',
           credentials: 'include',
@@ -201,10 +301,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const { active } = await resp.json();
-        // console.log('[SessionCheck] active =', active);
+        debugLog('session', `Session check result: active=${active}`);
 
         if (!active && componentMounted.current) {
-          console.warn('[SessionCheck] session is INACTIVE → logging out');
+          debugLog('redirect', 'Session is INACTIVE → logging out');
           cleanupAllIntervals();
           await supabase.auth.signOut();
           setUser(null);
@@ -218,18 +318,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Instead, we'll let the token refresh mechanism handle potential Supabase issues
       }
     }, 10_000);
-  }, [router, isResetPasswordFlow, cleanupSessionInterval, cleanupAllIntervals]);
+  }, [router, isResetPasswordFlow, cleanupSessionInterval, cleanupAllIntervals, pathname]);
 
   // Decide when to redirect
   const shouldRedirectToBusiness = useCallback((clientDetailsData: ClientDetails) => {
+    debugLog('redirect', `shouldRedirectToBusiness check: path="${pathname}", initialLoad=${isInitialLoad.current}, hasRedirected=${hasRedirected.current}`);
+    
     // ADDED: First check for a saved path
     if (typeof window !== 'undefined') {
       const lastPath = localStorage.getItem('lastVisitedPath');
       if (lastPath) {
-        // console.log('[Auth] Found saved path:', lastPath);
+        debugLog('redirect', `Found saved path in localStorage: "${lastPath}"`);
         return false; // Will handle redirect separately
       }
     }
+    
+    // Log the business page check result
+    const businessPageCheck = isBusinessPage();
+    debugLog('redirect', `Business page check: ${businessPageCheck}`);
     
     // Only redirect to businesses page if:
     // 1. Initial app load (not a page refresh)
@@ -239,13 +345,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 5. Not already redirected in this session
     
     if (isInitialLoad.current && 
-        !isBusinessPage() && 
+        !businessPageCheck && 
         !isResetPasswordFlow() && 
         clientDetailsData?.id && 
         clientDetailsData.businesses?.length && 
         !hasRedirected.current) {
       
-      // console.log('[Auth] Redirecting to businesses page on initial load');
+      debugLog('redirect', 'REDIRECT TRIGGERED: Redirecting to businesses page on initial load');
       hasRedirected.current = true;
       isInitialLoad.current = false;
       return true;
@@ -253,7 +359,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Otherwise, stay on current page
     return false;
-  }, [isBusinessPage, isResetPasswordFlow]);
+  }, [isBusinessPage, isResetPasswordFlow, pathname]);
 
   // Supabase auth listener + fetch clientDetails
   useEffect(() => {
@@ -263,23 +369,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined' && window.performance) {
       const navEntries = performance.getEntriesByType('navigation');
       if (navEntries.length > 0 && (navEntries[0] as any).type === 'reload') {
-        // console.log('[Auth] Page was refreshed, not initial load');
+        debugLog('path', 'Page was refreshed, not initial load');
         isInitialLoad.current = false;
+      } else {
+        debugLog('path', 'Initial page load detected');
       }
     }
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (!componentMounted.current) return;
-        // console.log('[Auth] onAuthStateChange event:', _event, 'path:', pathname);
+        debugLog('auth', `onAuthStateChange event: ${_event}, path: ${pathname}`);
         
         // Special handling for password reset flow
         const inResetFlow = isResetPasswordFlow();
         if (inResetFlow) {
-          // console.log('[Auth] In password reset flow, special handling');
+          debugLog('auth', 'In password reset flow, special handling');
           
           if (_event === 'SIGNED_OUT' && pathname === '/auth/reset-password') {
-            // console.log('[Auth] Ignoring SIGNED_OUT during reset flow');
+            debugLog('auth', 'Ignoring SIGNED_OUT during reset flow');
             setLoading(false);
             return;
           }
@@ -296,29 +404,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           
           try {
-            // console.log('[Auth] fetching clientDetails for', u.email);
+            debugLog('auth', `Fetching clientDetails for ${u.email}`);
             const resp = await fetch(
               constructVercelURL(`/api/client-details?email=${encodeURIComponent(u.email!)}`)
             );
             const json = await resp.json();
-            // console.log('[Auth] clientDetails response:', resp.status);
+            debugLog('auth', `clientDetails response: ${resp.status}`);
             if (resp.ok) setClientDetails(json);
             
             // Handle redirections - only for explicit SIGNED_IN event
             if (_event === 'SIGNED_IN') {
+              debugLog('redirect', `SIGNED_IN event processing - inResetFlow=${inResetFlow}, isBusinessPage=${isBusinessPage()}, hasRedirected=${hasRedirected.current}`);
+              
               if (!inResetFlow && !isBusinessPage() && !hasRedirected.current) {
                 if (json?.id && json.businesses?.length) {
-                  // console.log('[Auth] Auto-redirecting to businesses after sign in');
+                  debugLog('redirect', 'REDIRECT TRIGGERED: Auto-redirecting to businesses after sign in');
                   hasRedirected.current = true;
                   router.replace('/businesses');
                 }
               } else if (inResetFlow) {
-                // console.log('[Auth] On reset password page, skipping redirect');
+                debugLog('redirect', 'On reset password page, skipping redirect');
               } else if (isBusinessPage()) {
-                // console.log('[Auth] Already on a business page, skipping redirect');
+                debugLog('redirect', 'Already on a business page, skipping redirect');
               }
             } else {
-              // console.log('[Auth] Not a SIGNED_IN event, skipping redirect check');
+              debugLog('auth', `Not a SIGNED_IN event (${_event}), skipping redirect check`);
             }
           } catch (err) {
             console.error('[Auth] fetchClientDetails error', err);
@@ -327,7 +437,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Clean up all intervals when no user
           cleanupAllIntervals();
           
-          // console.log('[Auth] no session, clearing user & details');
+          debugLog('auth', 'No session, clearing user & details');
           
           // Don't clear user during password reset if we're on the reset page
           if (!inResetFlow) {
@@ -336,10 +446,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             // Only redirect to login if not already on an auth page
             if (_event === 'SIGNED_OUT' && !pathname.startsWith('/auth/')) {
+              debugLog('redirect', 'REDIRECT TRIGGERED: SIGNED_OUT, redirecting to login');
               router.replace('/auth/login');
             }
           } else {
-            // console.log('[Auth] In reset flow, not clearing user state');
+            debugLog('auth', 'In reset flow, not clearing user state');
           }
         }
         setLoading(false);
@@ -348,7 +459,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Bootstrap initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      // console.log('[Auth] getSession:', session ? 'Session found' : 'No session', 'path:', pathname);
+      debugLog('auth', `getSession: ${session ? 'Session found' : 'No session'}, path: ${pathname}`);
       
       const inResetFlow = isResetPasswordFlow();
       
@@ -364,7 +475,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // Skip auto-redirect if on reset password page
         if (inResetFlow) {
-          // console.log('[Auth] On reset password page, skipping redirect');
+          debugLog('redirect', 'On reset password page, skipping redirect');
           setLoading(false);
           return;
         }
@@ -372,24 +483,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fetch(constructVercelURL(`/api/client-details?email=${encodeURIComponent(u.email!)}`))
           .then((r) => r.json())
           .then((d) => {
-            // console.log('[Auth] initial clientDetails received');
+            debugLog('auth', 'Initial clientDetails received');
             setClientDetails(d);
             
             // MODIFIED: Check for saved path before default redirect
             const lastPath = localStorage.getItem('lastVisitedPath');
             const isInitialPageLoad = pathname === '/' || pathname === '/auth/login' || pathname === '/login';
             
+            debugLog('redirect', `Redirect check: lastPath=${lastPath}, isInitialPageLoad=${isInitialPageLoad}, isBusinessPage=${isBusinessPage()}`);
+            
             if (lastPath && isInitialPageLoad) {
-              // console.log('[Auth] Restoring path from localStorage:', lastPath);
+              debugLog('redirect', `REDIRECT TRIGGERED: Restoring path from localStorage: "${lastPath}"`);
               hasRedirected.current = true;
               isInitialLoad.current = false;
               router.replace(lastPath);
             }
             // Only redirect if it's the initial app load, not a page refresh
             else if (shouldRedirectToBusiness(d)) {
+              debugLog('redirect', 'REDIRECT TRIGGERED: shouldRedirectToBusiness returned true');
               router.replace('/businesses');
             } else {
-              // console.log('[Auth] Staying on current page - either refresh or already on business page');
+              debugLog('redirect', 'Staying on current page - either refresh or already on business page');
               // On page refresh, we want to stay on the current page
               isInitialLoad.current = false;
             }
@@ -401,6 +515,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Cleanup function
     return () => {
+      debugLog('auth', 'AuthProvider cleanup triggered');
       componentMounted.current = false;
       subscription.unsubscribe();
       cleanupAllIntervals();
@@ -410,7 +525,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Login function
   const login = useCallback(
     async (email: string, password: string) => {
-      // console.log('[Auth] login called for', email);
+      debugLog('auth', `Login called for ${email}`);
       const { error: signError } = await supabase.auth.signInWithPassword({ 
         email, 
         password
@@ -421,7 +536,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: signError.message };
       }
 
-      // console.log('[Auth] calling /api/session?action=register');
+      debugLog('auth', 'Calling /api/session?action=register');
       try {
         await fetch('/api/session', {
           method: 'POST',
@@ -433,14 +548,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('[Auth] Failed to register session:', err);
       }
 
-      // console.log('[Auth] fetching clientDetails post-login');
+      debugLog('auth', 'Fetching clientDetails post-login');
       let details: ClientDetails | null = null;
       try {
         const resp = await fetch(
           constructVercelURL(`/api/client-details?email=${encodeURIComponent(email)}`)
         );
         details = await resp.json();
-        // console.log('[Auth] clientDetails post-login received');
+        debugLog('auth', 'clientDetails post-login received');
         setClientDetails(details);
       } catch (e) {
         console.error('[Auth] post-login clientDetails error', e);
@@ -448,7 +563,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Skip redirect if on password reset page
       if (isResetPasswordFlow()) {
-        // console.log('[Auth] In reset password flow, skipping redirect after login');
+        debugLog('redirect', 'In reset password flow, skipping redirect after login');
         return { success: true };
       }
 
@@ -458,13 +573,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // MODIFIED: Check for saved path on login
       const lastPath = localStorage.getItem('lastVisitedPath');
       if (lastPath) {
-        // console.log('[Auth] Restoring path after login:', lastPath);
+        debugLog('redirect', `REDIRECT TRIGGERED: Restoring path after login: "${lastPath}"`);
         router.replace(lastPath);
       } else if (details?.id && details.businesses?.length) {
-        // console.log('[Auth] redirecting to businesses');
+        debugLog('redirect', 'REDIRECT TRIGGERED: redirecting to businesses');
         router.replace('/businesses');
       } else {
-        console.warn('[Auth] no businesses found, fallback to /auth/login');
+        debugLog('redirect', 'REDIRECT TRIGGERED: no businesses found, fallback to /auth/login');
         router.replace('/auth/login');
       }
 
@@ -475,7 +590,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Logout function
   const logout = useCallback(async () => {
-    // console.log('[Auth] logout called');
+    debugLog('auth', 'Logout called');
     
     // Reset tracking flags
     hasRedirected.current = false;
@@ -493,7 +608,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     if (user?.email) {
-      // console.log('[Auth] calling /api/session?action=delete');
+      debugLog('auth', 'Calling /api/session?action=delete');
       try {
         await fetch('/api/session', {
           method: 'POST',
@@ -526,4 +641,20 @@ export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
+}
+
+// Expose debug mode toggle for easy control
+if (typeof window !== 'undefined') {
+  window.toggleAuthDebug = (enable: boolean = true): DebugModeConfig => {
+    DEBUG_MODE.enabled = enable;
+    console.log(`Auth debug logs ${enable ? 'enabled' : 'disabled'}`);
+    return {...DEBUG_MODE};
+  };
+  
+  // Enable/disable specific areas
+  window.configAuthDebug = (config: Partial<DebugModeConfig>): DebugModeConfig => {
+    Object.assign(DEBUG_MODE, config);
+    console.log('Auth debug config updated:', {...DEBUG_MODE});
+    return {...DEBUG_MODE};
+  };
 }
