@@ -1,11 +1,12 @@
 "use client"
-import { FC, useState, useEffect, useCallback, useMemo } from "react";
+import { FC, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { constructVercelURL } from "@/utils/generateURL";
 import CirclePacking from './CirclePacking';
 import TabSection from './TabSection';
 import BarChart from './BarChart';
 import { useSearchParams } from "next/navigation";
+
 interface AnalysisProps {
   clientId: string;
   businessId: string;
@@ -18,6 +19,9 @@ const TopicAnalysis: FC<AnalysisProps> = ({
   // Get auth context to access similar businesses
   const { clientDetails } = useAuth();
   const searchParams = useSearchParams();
+  
+  // Add a ref to track API requests
+  const requestTracker = useRef(new Set());
 
   // business name state
   const [businessName, setBusinessName] = useState<string>("");
@@ -75,12 +79,24 @@ const TopicAnalysis: FC<AnalysisProps> = ({
     }
   }, [clientDetails, businessId]);
 
-  // Fetch topic data
+  // Fetch topic data - just add request tracking
   useEffect(() => {
     const fetchData = async () => {
       try {
         if (!clientDetails || !businessId) return;
-
+        
+        // Create a cache key based on the current request parameters
+        const requestKey = `${businessId}_${getTopicType(activeTab)}`;
+        
+        // Skip duplicate requests in the same render cycle
+        if (requestTracker.current.has(requestKey)) {
+          console.log('Skipping duplicate request:', requestKey);
+          return;
+        }
+        
+        // Add to request tracker
+        requestTracker.current.add(requestKey);
+        
         setIsLoading(true);
 
         // Fetch competitor details using the batch API
@@ -106,7 +122,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         
 
       } catch (error) {
-        console.error("Error fetching competitors:", error);
+        console.error("Error fetching topics:", error);
         // Don't set an error message for users to see
       } finally {
         setIsLoading(false);
@@ -114,6 +130,11 @@ const TopicAnalysis: FC<AnalysisProps> = ({
     };
 
     fetchData();
+    
+    // Clear request tracker when component unmounts
+    return () => {
+      requestTracker.current.clear();
+    };
   }, [clientDetails, businessId, activeTab]);
 
   return (

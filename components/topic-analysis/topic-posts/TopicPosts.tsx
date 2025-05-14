@@ -114,7 +114,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
       const nextDay = new Date(maxDate);
       nextDay.setDate(nextDay.getDate() + 1);
       maxDate = nextDay.getTime();
-
+  
       setDateRange({ 
         startDate: new Date(minDate).toISOString().split("T")[0], 
         endDate: new Date(maxDate).toISOString().split("T")[0] 
