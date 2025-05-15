@@ -211,11 +211,16 @@ export default function PieChartComponent({
 
     chart.setOption(option);
 
-    const handleResize = () => chart.resize();
-    window.addEventListener("resize", handleResize);
+    // Use ResizeObserver to listen for container size changes
+    const resizeObserver = new window.ResizeObserver(() => {
+      chart.resize();
+    });
+    if (chartRef.current) {
+      resizeObserver.observe(chartRef.current);
+    }
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
       chart.dispose();
     };
   }, [isLoading, chartData]);

@@ -90,3 +90,12 @@ export interface ActiveSessionsInstance extends Model {
   user_agent?: string;
   ip_address?: string;
 }
+
+export interface BusinessTopicsInstance extends Model {
+  id: string;
+  business_id: string;
+  topic_type: string;
+  topic: string;
+  note_id: string;
+  created_at: Date;
+}

@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Op } from 'sequelize';
 import { BusinessPostModel } from '@/feature/sqlORM/modelorm';
+import { parse } from 'date-fns';
 
 const TopKHashtag = 6
 export async function GET(request: NextRequest) {
@@ -18,11 +19,16 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    const startDate = new Date(start_date);
-    const endDate = new Date(end_date);
+    // Parse dates without timezone conversion
+    const startDate = parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+    const endDate = parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+    
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
+
+    console.log(`[Hashtags] Query params: business_id=${business_id}, start_date=${start_date}, end_date=${end_date}`);
+    console.log(`[Hashtags] Parsed dates: startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
     
     // Query posts with english_tag_list for the given period
     const rows = await BusinessPostModel.findAll({

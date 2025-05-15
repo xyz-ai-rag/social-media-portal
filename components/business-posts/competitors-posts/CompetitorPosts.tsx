@@ -91,7 +91,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
 
   const [filters, setFilters] = useState(() => {
     if (typeof window !== "undefined") {
-      const savedFilters = sessionStorage.getItem("competitors_page_filters");
+      const savedFilters = localStorage.getItem("competitors_page_filters");
       return savedFilters
         ? JSON.parse(savedFilters)
         : {
@@ -117,13 +117,13 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   
   // Add this effect to save filters to session storage when they change
   useEffect(() => {
-    sessionStorage.setItem("competitors_page_filters", JSON.stringify(filters));
+    localStorage.setItem("competitors_page_filters", JSON.stringify(filters));
   }, [filters]);
 
   // setting default date
   const [dateRange, setDateRange] = useState(() => {
     if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("competitors_page_date");
+      const saved = localStorage.getItem("competitors_page_date");
       return saved
         ? JSON.parse(saved)
         : { startDate: thirtyDaysAgo, endDate: yesterday };
@@ -132,7 +132,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   });
 
   useEffect(() => {
-    sessionStorage.setItem("competitors_page_date", JSON.stringify(dateRange));
+    localStorage.setItem("competitors_page_date", JSON.stringify(dateRange));
   }, [dateRange]);
 
   // Track filters returned from API to keep UI in sync

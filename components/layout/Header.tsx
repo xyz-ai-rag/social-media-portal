@@ -17,7 +17,8 @@ export default function Header() {
   const showBusinessSelector =
     pathname.includes("/dashboard") ||
     pathname.includes("/posts") ||
-    pathname.includes("/competitors");
+    pathname.includes("/competitors") ||
+    pathname.includes("/topic-analysis");
 
   // Get the current business ID from params
   const currentBusinessId = params.businessId as string;
@@ -87,7 +88,6 @@ export default function Header() {
       .join("")
       .toUpperCase();
 
-    console.log();
 
     return (
       <div className="w-10 h-10 flex items-center justify-center bg-[#5A67BA] text-white text-sm font-bold rounded-full">
