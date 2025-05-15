@@ -381,15 +381,15 @@ export default function Sidebar() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md text-center">
             <h3 className="mb-5 text-lg font-normal text-gray-700">
-              Are you sure you want to logout?
+              Logout?
             </h3>
-            <p className="text-xs text-gray-500 mb-4">
-              Logging out will lose all your current session settings
+            <p className="text-sm text-gray-500 mb-4">
+            Are you sure you want to logout?
             </p>
             <div className="flex justify-center gap-4">
               <button
                 onClick={confirmLogout}
-                className="text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5"
+                className="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5"
               >
                 Yes, logout
               </button>
