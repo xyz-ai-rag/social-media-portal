@@ -40,7 +40,7 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           <h1 className="text-[34px] font-bold text-[#5D5FEF]">
             {businessName} Dashboard
           </h1>
-          <DateRangePicker />
+          <DateRangePicker businessId={businessId} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full items-stretch">

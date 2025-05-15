@@ -22,7 +22,7 @@ export interface DateRange {
 interface DateRangeContextType {
   dateRange: DateRange;
   setDateRange: (range: DateRange) => void;
-  updateDateRange: (preset: string, customStartDate?: string, customEndDate?: string) => void;
+  updateDateRange: (preset: string, customStartDate?: string, customEndDate?: string, earliestDate?: string) => void;
 }
 
 // Helper functions to format dates with proper time
@@ -130,15 +130,34 @@ export const DATE_PRESETS = {
   },
   everything: {
     label: 'Everything',
-    getRange: () => {
+    getRange: (earliestDate?: string) => {
       const yesterday = subDays(new Date(), 1);
-      const startStr = '2023-01-01'; // Fixed start date
+      const startStr = earliestDate || '2023-01-01';
       const endStr = format(yesterday, 'yyyy-MM-dd');
+      let aggregationType: AggregationType = 'daily';
+      if (startStr && endStr) {
+        const start = new Date(startStr);
+        const end = new Date(endStr);
+        const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffDays <= 2) {
+          aggregationType = 'daily';
+        } else if (diffDays <= 60) {
+          aggregationType = 'daily';
+        } else if (diffDays <= 180) {
+          aggregationType = 'weekly';
+        } else {
+          aggregationType = 'monthly';
+        }
+      }
+      
+      console.log("Final aggregation type:", aggregationType);
+      
       return {
         startDate: setStartOfDay(startStr),
         endDate: setEndOfDay(endStr),
         label: 'Everything',
-        aggregationType: 'monthly' as AggregationType
+        aggregationType
       };
     }
   },
@@ -216,16 +235,19 @@ export function DateRangeProvider({ children }: DateRangeProviderProps) {
   const [dateRange, setDateRange] = useState<DateRange>(initialRange);
 
   // Wrap updateDateRange with useCallback and only update if values change.
-  const updateDateRange = useCallback((preset: string, customStartDate?: string, customEndDate?: string) => {
+  const updateDateRange = useCallback((preset: string, customStartDate?: string, customEndDate?: string, earliestDate?: string) => {
+    
     let newRange: DateRange;
     if (preset === 'custom' && customStartDate && customEndDate) {
       newRange = DATE_PRESETS.custom.getRange(customStartDate, customEndDate);
+    } else if (preset === 'everything' && earliestDate) {
+      newRange = DATE_PRESETS.everything.getRange(earliestDate);
     } else if (preset in DATE_PRESETS) {
       const presetKey = preset as keyof typeof DATE_PRESETS;
       newRange = DATE_PRESETS[presetKey].getRange();
     } else {
       return;
-    }
+    }    
     // Update only if the range values are actually different from current state
     setDateRange(prev => {
       if (

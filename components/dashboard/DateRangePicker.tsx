@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { setStartOfDay, setEndOfDay } from "../../utils/timeUtils";
 import { useDateRange } from "@/context/DateRangeContext";
 import DatePicker from "../business-posts/DatePicker";
 
 interface DateRangePickerProps {
+  businessId?: string;
   onDateRangeChange?: (
     startDate: string,
     endDate: string,
@@ -16,6 +17,7 @@ interface DateRangePickerProps {
 }
 
 export default function DateRangePicker({
+  businessId,
   onDateRangeChange,
 }: DateRangePickerProps) {
   // Add client-side only marker
@@ -34,10 +36,20 @@ export default function DateRangePicker({
   // Initialize with empty states for custom dates
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
+  const [earliestDate, setEarliestDate] = useState<string>("");
 
   // Initialize client-side values and load stored preferences
   useEffect(() => {
     setIsClient(true);
+    
+    // Add passive wheel event listeners
+    const wheelOpts = { passive: true };
+    const wheelEvent = 'onwheel' in document.createElement('div') ? 'wheel' : 
+                      (document as any).onmousewheel !== undefined ? 'mousewheel' : 
+                      'DOMMouseScroll';
+    
+    // Remove the preventDefault call since we're using passive listeners
+    document.addEventListener(wheelEvent, () => {}, wheelOpts);
     
     // Calculate dates on client-side only
     const yesterdayDate = subDays(new Date(), 1);
@@ -68,10 +80,42 @@ export default function DateRangePicker({
     } else {
       setCustomEndDate(yesterdayStr);
     }
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener(wheelEvent, () => {});
+    };
   }, []);
 
-  // Define preset date ranges - but only calculate actual dates on client-side
-  const getDatePreset = (preset: string) => {
+  // Fetch earliest date when component mounts
+  useEffect(() => {
+    const fetchEarliestDate = async () => {
+      if (!businessId) return;
+      
+      try {
+        const response = await fetch(
+          `/api/charts/earliest-date?business_id=${businessId}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch earliest date");
+        }
+        const data = await response.json();
+        if (data.earliest_date) {
+          setEarliestDate(data.earliest_date);
+        } else {
+          setEarliestDate("2023-01-01");
+        }
+      } catch (error) {
+        // Set a default value if fetch fails
+        setEarliestDate("2023-01-01");
+      }
+    };
+
+    fetchEarliestDate();
+  }, [businessId]);
+
+  // Define preset date ranges with useCallback
+  const getDatePreset = useCallback((preset: string) => {
     if (!isClient) return { start: "", end: "", label: "", aggregation: "daily" as const };
     
     switch (preset) {
@@ -146,13 +190,31 @@ export default function DateRangePicker({
       }
       case "everything": {
         const yesterdayDate = subDays(new Date(), 1);
-        const startStr = "2023-01-01"; // TODOFixed start date
+        const startStr = earliestDate || "2023-01-01";
         const endStr = format(yesterdayDate, "yyyy-MM-dd");
+        let aggregation: "hourly" | "daily" | "weekly" | "monthly" = "daily";
+
+        if (startStr && endStr) {
+          const start = new Date(startStr);
+          const end = new Date(endStr);
+          const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+          if (diffDays <= 2) {
+            aggregation = "hourly";
+          } else if (diffDays <= 60) {
+            aggregation = "daily";
+          } else if (diffDays <= 180) {
+            aggregation = "weekly";
+          } else {
+            aggregation = "monthly";
+          }
+        }
+
         return {
           start: setStartOfDay(startStr),
-          end: setEndOfDay(endStr), 
+          end: setEndOfDay(endStr),
           label: "Everything",
-          aggregation: "monthly" as const,
+          aggregation,
         };
       }
       case "thisMonth": {
@@ -217,7 +279,7 @@ export default function DateRangePicker({
           aggregation: "daily" as const,
         };
     }
-  };
+  },  [earliestDate]);
 
   // Save custom dates to sessionStorage
   useEffect(() => {
@@ -231,6 +293,17 @@ export default function DateRangePicker({
     }
   }, [customStartDate, customEndDate, isClient]);
 
+  // Update date range when earliestDate changes
+  useEffect(() => {
+    if (!isClient || !earliestDate) return;
+    
+    if (selectedPreset === "everything") {
+      if (dateRangeContext) {
+        dateRangeContext.updateDateRange("everything", undefined, undefined, earliestDate);
+      }
+    }
+  }, [earliestDate, selectedPreset, dateRangeContext, isClient]);
+
   // Update date range when preset changes
   useEffect(() => {
     if (!isClient) return;
@@ -242,7 +315,6 @@ export default function DateRangePicker({
       if (customStartDate && customEndDate) {
         const { start, end, label, aggregation } = getDatePreset("custom");
 
-        // Use context if available, otherwise use prop
         if (dateRangeContext) {
           dateRangeContext.updateDateRange("custom", start, end);
         } else if (onDateRangeChange) {
@@ -253,9 +325,12 @@ export default function DateRangePicker({
       setShowCustomDates(false);
       const { start, end, label, aggregation } = getDatePreset(selectedPreset);
 
-      // Use context if available, otherwise use prop
       if (dateRangeContext) {
-        dateRangeContext.updateDateRange(selectedPreset);
+        if (selectedPreset === "everything") {
+          dateRangeContext.updateDateRange("everything", undefined, undefined, earliestDate);
+        } else {
+          dateRangeContext.updateDateRange(selectedPreset);
+        }
       } else if (onDateRangeChange) {
         onDateRangeChange(start, end, label, aggregation);
       }
