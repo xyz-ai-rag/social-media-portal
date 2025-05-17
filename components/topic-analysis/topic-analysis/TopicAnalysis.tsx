@@ -61,6 +61,21 @@ const TopicAnalysis: FC<AnalysisProps> = ({
     }
   };
 
+  // Topic limits based on category
+  const getTopicLimit = (tabIndex: number) => {
+    switch (tabIndex) {
+      case 0: // General
+        return Infinity; // No limit for General
+      case 1: // Specific
+        return 30; // Maximum 30 topics
+      case 2: // Criticism
+      case 3: // Competitor
+        return 50; // Maximum 50 topics
+      default:
+        return Infinity;
+    }
+  };
+
   // Add state for active tab
   const [activeTab, setActiveTab] = useState(getActiveTab(searchParams.get("topic_type")) || 0);
   useEffect(() => {
@@ -137,6 +152,10 @@ const TopicAnalysis: FC<AnalysisProps> = ({
     };
   }, [clientDetails, businessId, activeTab]);
 
+  // Get the minimum count and maximum number of topics based on active tab
+  const topicLimit = getTopicLimit(activeTab);
+  const minCount = activeTab === 0 ? 2 : 0; // Keep minimum count = 2 for General, otherwise allow count = 1
+
   return (
     <div className="container mx-auto px-4">
 
@@ -170,10 +189,16 @@ const TopicAnalysis: FC<AnalysisProps> = ({
               topics={topics}
               businessId={businessId}
               clientId={clientId}
-              limit={activeTab == 2 || activeTab == 3 ? 0 : 2}
+              minCount={minCount}
+              maxTopics={topicLimit}
               topicType={getTopicType(activeTab)}
             />
-            <BarChart topics={topics} businessId={businessId} clientId={clientId} limit={activeTab == 2 || activeTab == 3 ? 0 : 2}
+            <BarChart 
+              topics={topics} 
+              businessId={businessId} 
+              clientId={clientId} 
+              minCount={minCount}
+              maxTopics={topicLimit}
               topicType={getTopicType(activeTab)}
             />
           </div>
@@ -183,4 +208,4 @@ const TopicAnalysis: FC<AnalysisProps> = ({
   );
 };
 
-export default TopicAnalysis;
+export default TopicAnalysis; 

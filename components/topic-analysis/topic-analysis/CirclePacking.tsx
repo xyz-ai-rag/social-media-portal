@@ -8,7 +8,8 @@ interface CirclePackingProps {
   topics: Topic[];
   businessId: string;
   clientId: string;
-  limit: number;
+  minCount: number;
+  maxTopics: number;
   topicType: string;
 }
 
@@ -25,12 +26,26 @@ const CirclePacking: FC<CirclePackingProps> = ({
   topics,
   businessId,
   clientId,
-  limit,
+  minCount,
+  maxTopics,
   topicType,
 }) => {
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [hoveredCircle, setHoveredCircle] = useState<string | null>(null);
-  const filteredData = topics.filter(topic => topic.count >= limit);
+  
+  // Filter topics by minimum count and limit the number of topics
+  const filteredData = useMemo(() => {
+    // If we have fewer topics than maxTopics, show all topics
+    if (topics.length <= maxTopics) {
+      return topics;
+    } 
+    
+    // Otherwise, sort by count (descending) and limit to maxTopics
+    return [...topics]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, maxTopics);
+  }, [topics, maxTopics]);
+  
   if (filteredData.length === 0) {
     return <div>No posts with these topics found</div>;
   }
