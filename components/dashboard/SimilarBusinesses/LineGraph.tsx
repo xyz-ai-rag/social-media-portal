@@ -69,11 +69,11 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
     [dateRange.endDate]
   );
   const formattedStart = useMemo(
-    () => format(new Date(dateRange.startDate), "MMM d"),
+    () => format(new Date(dateRange.startDate), "MMM d yyyy"),
     [dateRange.startDate]
   );
   const formattedEnd = useMemo(
-    () => format(new Date(dateRange.endDate), "MMM d"),
+    () => format(new Date(dateRange.endDate), "MMM d yyyy"),
     [dateRange.endDate]
   );
   // Derive the similar business ids from clientDetails:

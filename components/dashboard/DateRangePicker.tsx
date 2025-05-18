@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { setStartOfDay, setEndOfDay } from "../../utils/timeUtils";
 import { useDateRange } from "@/context/DateRangeContext";
 import DatePicker from "../business-posts/DatePicker";
 
 interface DateRangePickerProps {
+  page: string;
   businessId?: string;
   onDateRangeChange?: (
     startDate: string,
@@ -17,6 +18,7 @@ interface DateRangePickerProps {
 }
 
 export default function DateRangePicker({
+  page,
   businessId,
   onDateRangeChange,
 }: DateRangePickerProps) {
@@ -37,20 +39,11 @@ export default function DateRangePicker({
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [earliestDate, setEarliestDate] = useState<string>("");
+  const [latestDate, setLatestDate] = useState<string>("");
 
   // Initialize client-side values and load stored preferences
   useEffect(() => {
     setIsClient(true);
-    
-    // Add passive wheel event listeners
-    const wheelOpts = { passive: true };
-    const wheelEvent = 'onwheel' in document.createElement('div') ? 'wheel' : 
-                      (document as any).onmousewheel !== undefined ? 'mousewheel' : 
-                      'DOMMouseScroll';
-    
-    // Remove the preventDefault call since we're using passive listeners
-    document.addEventListener(wheelEvent, () => {}, wheelOpts);
-    
     // Calculate dates on client-side only
     const yesterdayDate = subDays(new Date(), 1);
     const yesterdayStr = format(yesterdayDate, "yyyy-MM-dd");
@@ -61,30 +54,26 @@ export default function DateRangePicker({
     setThirtyDaysAgo(thirtyDaysAgoStr);
     
     // Load preferences from sessionStorage
-    const savedSelected = localStorage.getItem("dashboard_select");
+    const savedSelected = localStorage.getItem(`${page}_select`);
     if (savedSelected) {
       setSelectedPreset(JSON.parse(savedSelected));
       setShowCustomDates(JSON.parse(savedSelected) === "custom");
     }
     
-    const savedStartDate = localStorage.getItem("dashboard_start_date");
+    const savedStartDate = localStorage.getItem(`${page}_start_date`);
     if (savedStartDate) {
       setCustomStartDate(JSON.parse(savedStartDate));
     } else {
       setCustomStartDate(thirtyDaysAgoStr);
     }
     
-    const savedEndDate = localStorage.getItem("dashboard_end_date");
+    const savedEndDate = localStorage.getItem(`${page}_end_date`);
     if (savedEndDate) {
       setCustomEndDate(JSON.parse(savedEndDate));
     } else {
       setCustomEndDate(yesterdayStr);
     }
 
-    // Cleanup function
-    return () => {
-      document.removeEventListener(wheelEvent, () => {});
-    };
   }, []);
 
   // Fetch earliest date when component mounts
@@ -94,28 +83,25 @@ export default function DateRangePicker({
       
       try {
         const response = await fetch(
-          `/api/charts/earliest-date?business_id=${businessId}`
+          `/api/charts/dateRange?business_id=${businessId}`
         );
         if (!response.ok) {
-          throw new Error("Failed to fetch earliest date");
+          throw new Error("Failed to fetch date range");
         }
         const data = await response.json();
-        if (data.earliest_date) {
+        if (data.earliest_date && data.latest_date) {
           setEarliestDate(data.earliest_date);
-        } else {
-          setEarliestDate("2023-01-01");
+          setLatestDate(data.latest_date);
         }
       } catch (error) {
-        // Set a default value if fetch fails
-        setEarliestDate("2023-01-01");
+        console.error("Error fetching date range:", error);
       }
     };
 
     fetchEarliestDate();
   }, [businessId]);
 
-  // Define preset date ranges with useCallback
-  const getDatePreset = useCallback((preset: string) => {
+  const getDatePreset = (preset: string) => {
     if (!isClient) return { start: "", end: "", label: "", aggregation: "daily" as const };
     
     switch (preset) {
@@ -191,7 +177,7 @@ export default function DateRangePicker({
       case "everything": {
         const yesterdayDate = subDays(new Date(), 1);
         const startStr = earliestDate || "2023-01-01";
-        const endStr = format(yesterdayDate, "yyyy-MM-dd");
+        const endStr = latestDate || format(yesterdayDate, "yyyy-MM-dd");
         let aggregation: "hourly" | "daily" | "weekly" | "monthly" = "daily";
 
         if (startStr && endStr) {
@@ -279,36 +265,37 @@ export default function DateRangePicker({
           aggregation: "daily" as const,
         };
     }
-  },  [earliestDate]);
+  };
 
   // Save custom dates to sessionStorage
   useEffect(() => {
     if (!isClient) return;
     
     if (customStartDate) {
-      localStorage.setItem("dashboard_start_date", JSON.stringify(customStartDate));
+      localStorage.setItem(`${page}_start_date`, JSON.stringify(customStartDate));
     }
     if (customEndDate) {
-      localStorage.setItem("dashboard_end_date", JSON.stringify(customEndDate));
+      localStorage.setItem(`${page}_end_date`, JSON.stringify(customEndDate));
     }
   }, [customStartDate, customEndDate, isClient]);
 
   // Update date range when earliestDate changes
   useEffect(() => {
     if (!isClient || !earliestDate) return;
+    if(!latestDate){return}
     
     if (selectedPreset === "everything") {
       if (dateRangeContext) {
-        dateRangeContext.updateDateRange("everything", undefined, undefined, earliestDate);
+        dateRangeContext.updateDateRange("everything", earliestDate, latestDate);
       }
     }
-  }, [earliestDate, selectedPreset, dateRangeContext, isClient]);
+  }, [earliestDate, selectedPreset, dateRangeContext, isClient, latestDate]);
 
   // Update date range when preset changes
   useEffect(() => {
     if (!isClient) return;
     
-    localStorage.setItem("dashboard_select", JSON.stringify(selectedPreset));
+    localStorage.setItem(`${page}_select`, JSON.stringify(selectedPreset));
     
     if (selectedPreset === "custom") {
       setShowCustomDates(true);
@@ -327,7 +314,7 @@ export default function DateRangePicker({
 
       if (dateRangeContext) {
         if (selectedPreset === "everything") {
-          dateRangeContext.updateDateRange("everything", undefined, undefined, earliestDate);
+          dateRangeContext.updateDateRange("everything", start, end);
         } else {
           dateRangeContext.updateDateRange(selectedPreset);
         }
