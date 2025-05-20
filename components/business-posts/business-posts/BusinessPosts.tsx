@@ -56,7 +56,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
   const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
   const [adjacentPagesLoading, setAdjacentPagesLoading] = useState(false);
-  
+
   // Calculate yesterday's date for date limits
   const yesterday = useMemo(() => {
     const date = new Date();
@@ -77,14 +77,14 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       return savedFilters
         ? JSON.parse(savedFilters)
         : {
-            platform: "",
-            sentiment: "",
-            relevance: "",
-            hasCriticism: "",
-            search: "",
-            sortOrder: "desc",
-            page: 1,
-          };
+          platform: "",
+          sentiment: "",
+          relevance: "",
+          hasCriticism: "",
+          search: "",
+          sortOrder: "desc",
+          page: 1,
+        };
     }
     return {
       platform: "",
@@ -96,42 +96,35 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       page: 1,
     };
   });
-  
-  
-    // Get date range from context.
-    const { dateRange } = useDateRange();
 
-    // Process dates using helper functions from timeUtils.
-    const startDateProcessed = useMemo(
-      () => dateRange.startDate.split("T")[0],
-      [dateRange.startDate]
-    );
-    const endDateProcessed = useMemo(
-      () => dateRange.endDate.split("T")[0],
-      [dateRange.endDate]
-    );
-    useEffect(() => {
-      setDateRangeOfPosts({
-        startDate: startDateProcessed,
-        endDate: endDateProcessed,
-      });
-      console.log("dateRangeOfPosts", dateRangeOfPosts);
-    }, [startDateProcessed, endDateProcessed]);
-  
 
-  
+  // Get date range from context.
+  const { dateRange } = useDateRange();
+
   // setting default date
-  const [dateRangeOfPosts, setDateRangeOfPosts] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("business_page_date");
-      return saved
-        ? JSON.parse(saved)
-        : { startDate: thirtyDaysAgo, endDate: yesterday };
-    }
-    return { startDate: thirtyDaysAgo, endDate: yesterday };
+  const [dateRangeOfPosts, setDateRangeOfPosts] = useState({
+    startDate: "",
+    endDate: "",
   });
 
-  
+  // Process dates using helper functions from timeUtils.
+  const startDateProcessed = useMemo(
+    () => dateRange.startDate.split("T")[0],
+    [dateRange.startDate]
+  );
+  const endDateProcessed = useMemo(
+    () => dateRange.endDate.split("T")[0],
+    [dateRange.endDate]
+  );
+  useEffect(() => {
+    setDateRangeOfPosts({
+      startDate: startDateProcessed,
+      endDate: endDateProcessed,
+    });
+    console.log("dateRangeOfPosts", dateRangeOfPosts);
+  }, [startDateProcessed, endDateProcessed]);
+
+
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
     null
@@ -346,8 +339,8 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
             ? pagination.currentPage - 1
             : pagination.totalPages
           : pagination.currentPage < pagination.totalPages
-          ? pagination.currentPage + 1
-          : 1;
+            ? pagination.currentPage + 1
+            : 1;
 
       // Get posts from the appropriate page
       const newPagePosts = direction === "prev" ? prevPagePosts : nextPagePosts;
@@ -421,11 +414,11 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       {/* Title */}
       {/* Head */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <h1 className="text-[34px] font-bold text-[#5D5FEF]">{`Posts for ${businessName || "Business"}`}
-          </h1>
-          <DateRangePicker page="business_page" businessId={businessId} />
-        </div>
-      
+        <h1 className="text-[34px] font-bold text-[#5D5FEF]">{`Posts for ${businessName || "Business"}`}
+        </h1>
+        <DateRangePicker page="business_page" businessId={businessId} />
+      </div>
+
       {/* Filters */}
       <SharedFilter
         title=""
@@ -438,8 +431,8 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         onRefresh={fetchPosts}
         onSortOrderChange={handleSortOrderChange}
       />
-    
-      
+
+
       {/* Posts Table */}
       <SharedPostTable
         listData={posts}
@@ -455,7 +448,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         openModal={openModal}
         openPreviewModal={openPreviewModal}
       />
-      
+
       {/* Modals */}
       <PostCard
         isOpen={isModalOpen}
@@ -467,7 +460,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         isLoadingAdjacentPages={adjacentPagesLoading}
         pagination={pagination}
       />
-      
+
       <PostPreviewCard
         isOpen={isPreviewModalOpen}
         onClose={closePreviewModal}

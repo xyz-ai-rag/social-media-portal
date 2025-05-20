@@ -67,11 +67,10 @@ export async function GET(request: NextRequest) {
     };
 
     // Apply date range filter (default: last 7 days, excluding today)
-    const startDateTime = `${startDate} 0:00:00`;
-    const endDateTime = `${endDate} 23:59:59`;
-
+    const startDateTime = new Date(`${startDate}T00:00:00.000Z`);
+    const endDateTime = new Date(`${endDate}T23:59:59.999Z`);
     whereConditions.last_update_time = {
-      [Op.between]: [new Date(startDateTime), new Date(endDateTime)],
+      [Op.between]: [startDateTime, endDateTime],
     };
 
     // Apply platform filter if provided with mapping
@@ -251,28 +250,13 @@ function formatDateForQuery(date: Date): string {
 }
 
 // Helper function to format date for display
-function formatDisplayDate(date: Date): string {
+function formatDisplayDate(date: Date | string): string {
   const d = new Date(date);
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  const month = months[d.getMonth()];
-  const day = d.getDate();
-  const hours = d.getHours();
-  const minutes = d.getMinutes().toString().padStart(2, "0");
-  const ampm = hours >= 12 ? "PM" : "AM";
-  const formattedHours = hours % 12 || 12;
-
-  return `${month} ${day} - ${formattedHours}:${minutes}${ampm}`;
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 }
