@@ -76,9 +76,9 @@ export default function DateRangePicker({
 
   }, []);
 
-  // Fetch earliest date when component mounts
+  // Fetch date range when component mounts
   useEffect(() => {
-    const fetchEarliestDate = async () => {
+    const fetchDateRange = async () => {
       if (!businessId) return;
       
       try {
@@ -98,7 +98,7 @@ export default function DateRangePicker({
       }
     };
 
-    fetchEarliestDate();
+    fetchDateRange();
   }, [businessId]);
 
   const getDatePreset = (preset: string) => {
