@@ -121,7 +121,6 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       startDate: startDateProcessed,
       endDate: endDateProcessed,
     });
-    console.log("dateRangeOfPosts", dateRangeOfPosts);
   }, [startDateProcessed, endDateProcessed]);
 
 
@@ -411,7 +410,6 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
 
   return (
     <>
-      {/* Title */}
       {/* Head */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">{`Posts for ${businessName || "Business"}`}
