@@ -20,6 +20,19 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
   const { clientDetails } = useAuth();
   const [businessName, setBusinessName] = useState<string>("");
 
+  const getFormattedTimestamp = () => {
+    const date = new Date();
+    const month = date.toLocaleString("en-US", { month: "long" });
+    const day = date.getDate();
+    const year = date.getFullYear();
+    let hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const ampm = hours >= 12 ? "pm" : "am";
+    hours = hours % 12 || 12;
+
+    return `${month} ${day}, ${year} – ${hours}:${minutes}${ampm}`;
+  };
+
   // Find current business name from clientDetails
   useEffect(() => {
     if (clientDetails?.businesses?.length) {
@@ -41,6 +54,11 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
             {businessName} Dashboard
           </h1>
           <DateRangePicker />
+        </div>
+        <div className="">
+          <h2 className="text-base font-medium text-gray-800 italic">
+            Last Update: {getFormattedTimestamp()}
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full items-stretch">
