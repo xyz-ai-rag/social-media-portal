@@ -549,7 +549,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">{competitorName}
         </h1>
-        <DateRangePicker page="business_page" businessId={businessId} />
+        <DateRangePicker page="competitors_page" businessId={businessId} />
       </div>
 
       {/* Filters */}
