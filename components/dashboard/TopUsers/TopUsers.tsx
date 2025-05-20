@@ -46,11 +46,11 @@ export default function TopUsers({ clientId, businessId }: TopUsersProps) {
   
   // Format the raw date strings for display
   const formattedStart = useMemo(
-    () => format(new Date(dateRange.startDate), "MMM d"),
+    () => format(new Date(dateRange.startDate), "MMM d yyyy"),
     [dateRange.startDate]
   );
   const formattedEnd = useMemo(
-    () => format(new Date(dateRange.endDate), "MMM d"),
+    () => format(new Date(dateRange.endDate), "MMM d yyyy"),
     [dateRange.endDate]
   );
   const startDateProcessed = useMemo(
@@ -132,7 +132,7 @@ export default function TopUsers({ clientId, businessId }: TopUsersProps) {
       },
       grid: {
         left: '3%',
-        right: '10%',
+        right: '14%',
         bottom: '3%',
         top: '3%',
         containLabel: true
@@ -180,7 +180,7 @@ export default function TopUsers({ clientId, businessId }: TopUsersProps) {
             show: true,
             position: 'right',
             formatter: function(params: any) {
-              return params.data.percentage + '%';
+              return params.data.value + " posts";
             },
             fontSize: 12,
             color: '#666'
@@ -209,8 +209,11 @@ export default function TopUsers({ clientId, businessId }: TopUsersProps) {
     <div className="bg-white p-6 rounded-lg shadow-md h-full">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-base font-medium text-gray-800">Top Users</h2>
+        <div className="text-sm text-gray-600">
+          Top users with multiple posts
+        </div>
       </div>
-      
+
       <div className="text-sm text-gray-600 mb-4">
         Top users from {formattedStart} to {formattedEnd}
       </div>
