@@ -154,9 +154,8 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
         name: biz.business_name,
         type: "line",
         data: seriesData,
-        smooth: true,
-        symbol: "circle",
-        symbolSize: 8,
+        smooth: false,
+        showSymbol: false,
         lineStyle: { width: 2 },
       };
     };
@@ -172,6 +171,10 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
       },
       legend: {
         bottom: 0,
+        left: 0,
+        itemWidth: 10,
+        itemHeight: 10,
+        icon: "rect",
       },
       grid: {
         top: "8%",
@@ -195,7 +198,6 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
     };
 
     chart.setOption(option);
-    // 用 ResizeObserver 监听容器尺寸变化
     const resizeObserver = new window.ResizeObserver(() => {
       chart.resize();
     });
@@ -227,7 +229,7 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
       <div className="text-sm text-gray-600 mb-4">
         Posts from {formattedStart} to {formattedEnd}
       </div>
-      <div className="h-64">
+      <div className="h-72">
         <div ref={chartRef} style={{ width: "100%", height: "100%" }} />
       </div>
     </div>
