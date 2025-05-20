@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
 import * as echarts from "echarts/core";
 import { BarChart as EBarChart } from "echarts/charts";
 import { TitleComponent, TooltipComponent, GridComponent } from "echarts/components";
@@ -19,19 +19,36 @@ interface BarChartProps {
   topics: Topic[];
   businessId: string;
   clientId: string;
-  limit: number;
+  minCount: number;
+  maxTopics: number;
   topicType: string;
 }
 
-const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, limit, topicType }) => {
+const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, minCount, maxTopics, topicType }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  const filteredTopics = topics.filter(topic => topic.count > limit);
-  const sortedTopics = [...filteredTopics].sort((a, b) => a.count - b.count);
+  // Filter topics by minimum count and limit the number of topics
+  const filteredTopics = useMemo(() => {
+    // If we have fewer topics than maxTopics, show all topics
+    if (topics.length <= maxTopics) {
+      return topics;
+    }
+    
+    // Otherwise, sort by count (descending) and limit to maxTopics
+    return [...topics]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, maxTopics);
+  }, [topics, maxTopics]);
+
+  // For bar chart display, we want to show in ascending order
+  const sortedTopics = useMemo(() => {
+    return [...filteredTopics].sort((a, b) => a.count - b.count);
+  }, [filteredTopics]);
 
   useEffect(() => {
-    if (!chartRef.current) return;
+    if (!chartRef.current || sortedTopics.length === 0) return;
+    
     const chart = echarts.init(chartRef.current);
 
     const option = {
@@ -96,7 +113,7 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, limit
 
     chart.setOption(option);
 
-    // --- ResizeObserver + window.resize 双监听 ---
+    // --- ResizeObserver + window.resize dual monitoring ---
     const resizeHandler = () => {
       chart.resize();
     };
@@ -108,7 +125,6 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, limit
     if (chartRef.current) {
       resizeObserver.observe(chartRef.current);
     }
-
 
     // window resize
     window.addEventListener('resize', resizeHandler);
@@ -126,9 +142,9 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, limit
       window.removeEventListener('resize', resizeHandler);
       chart.dispose();
     };
-  }, [filteredTopics, businessId, clientId, limit, router]);
+  }, [sortedTopics, businessId, clientId, topicType, router]);
 
-  if (filteredTopics.length === 0) {
+  if (sortedTopics.length === 0) {
     return null;
   }
 
@@ -137,10 +153,10 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, limit
       ref={chartRef}
       style={{
         width: '100%',
-        height: `${Math.max(200, filteredTopics.length * 34)}px`
+        height: `${Math.max(200, sortedTopics.length * 34)}px`
       }}
     />
   );
 };
 
-export default BarChart; 
+export default BarChart;
