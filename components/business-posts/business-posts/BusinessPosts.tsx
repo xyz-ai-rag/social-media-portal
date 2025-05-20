@@ -54,7 +54,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
   const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
   const [adjacentPagesLoading, setAdjacentPagesLoading] = useState(false);
-  
+
   // Calculate yesterday's date for date limits
   const yesterday = useMemo(() => {
     const date = new Date();
@@ -94,11 +94,11 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       page: 1,
     };
   });
-  
+
   useEffect(() => {
     localStorage.setItem("business_page_filters", JSON.stringify(filters));
   }, [filters]);
-  
+
   // setting default date
   const [dateRange, setDateRange] = useState(() => {
     if (typeof window !== "undefined") {
@@ -113,7 +113,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   useEffect(() => {
     localStorage.setItem("business_page_date", JSON.stringify(dateRange));
   }, [dateRange]);
-  
+
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
     null
@@ -264,7 +264,12 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     if ((isModalOpen || isPreviewModalOpen) && pagination.totalPages > 1) {
       fetchAdjacentPages();
     }
-  }, [isModalOpen, isPreviewModalOpen, pagination.currentPage, fetchAdjacentPages]);
+  }, [
+    isModalOpen,
+    isPreviewModalOpen,
+    pagination.currentPage,
+    fetchAdjacentPages,
+  ]);
 
   // Handle opening the modal
   const openModal = (row: any) => {
@@ -405,7 +410,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-4">
         {`Posts for ${businessName || "Business"}`}
       </h1>
-      
+
       {/* Filters */}
       <SharedFilter
         title=""
@@ -418,8 +423,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         onRefresh={fetchPosts}
         onSortOrderChange={handleSortOrderChange}
       />
-    
-      
+
       {/* Posts Table */}
       <SharedPostTable
         listData={posts}
@@ -435,7 +439,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         openModal={openModal}
         openPreviewModal={openPreviewModal}
       />
-      
+
       {/* Modals */}
       <PostCard
         isOpen={isModalOpen}
@@ -447,7 +451,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         isLoadingAdjacentPages={adjacentPagesLoading}
         pagination={pagination}
       />
-      
+
       <PostPreviewCard
         isOpen={isPreviewModalOpen}
         onClose={closePreviewModal}

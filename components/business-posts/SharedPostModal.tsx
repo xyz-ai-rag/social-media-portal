@@ -56,7 +56,6 @@ const SharedPostModal = ({
       }
     };
 
-
     // Add event listener when modal is open
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
@@ -171,6 +170,14 @@ const SharedPostModal = ({
                   </div>
                   <div className="col-span-2">
                     <p className="text-sm font-medium text-gray-500">
+                      Post Type
+                    </p>
+                    <p className="text-sm text-gray-900">
+                      {rowData.postType || "Organic Post"}
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium text-gray-500">
                       Negative feedback or criticism
                     </p>
                     <p className="text-sm text-gray-900">
@@ -181,7 +188,6 @@ const SharedPostModal = ({
                   </div>
                 </div>
               </div>
-
             </Modal.Body>
 
             {/* Modal.Footer with Navigation */}

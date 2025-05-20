@@ -2,13 +2,7 @@
 
 import { FC, useState, useEffect, ReactNode, useMemo } from "react";
 import { FaSync } from "react-icons/fa";
-import {
-  TextInput,
-  Select,
-  Badge,
-  Button,
-  Alert,
-} from "flowbite-react";
+import { TextInput, Select, Badge, Button, Alert } from "flowbite-react";
 import DatePicker from "./DatePicker";
 
 // Base post data structure shared between components
@@ -87,6 +81,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
   const [sentiment, setSentiment] = useState("");
   const [relevance, setRelevance] = useState("");
   const [criticism, setCriticism] = useState("");
+  const [postType, setPostType] = useState("");
 
   // Calculate yesterday's date for max date restriction
   const yesterday = useMemo(() => {
@@ -104,6 +99,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
       setSentiment(appliedFilters.sentiment || "");
       setRelevance(appliedFilters.relevance || "");
       setCriticism(appliedFilters.hasCriticism || "");
+      setPostType(appliedFilters.postType || "");
       setSearchQuery(appliedFilters.search || "");
       setSortOrder(appliedFilters.sortOrder || "desc");
     }
@@ -169,6 +165,20 @@ const SharedFilter: FC<SharedFilterProps> = ({
     { value: "Has Criticism", label: "Has negative feedback" },
     { value: "No Criticism", label: "No negative feedback" },
   ];
+
+  const postTypeData = [
+    { value: "all", label: "Post Type" },
+    { value: "Organic Post", label: "Organic Post" },
+    { value: "Commercial Post", label: "Commercial Post" },
+    { value: "Own Posts", label: "Own Posts" },
+  ];
+
+  const handlePostType = (data: string) => {
+    setPostType(data);
+    if (onFilterChange) {
+      onFilterChange({ postType: data });
+    }
+  };
 
   const handleCriticism = (data: string) => {
     setCriticism(data);
@@ -238,6 +248,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
         relevance: "",
         hasCriticism: "",
         search: "",
+        postType: "",
       });
     }
   };
@@ -360,6 +371,20 @@ const SharedFilter: FC<SharedFilterProps> = ({
             );
           })}
         </Select>
+        <Select
+          id="post-type"
+          value={postType}
+          onChange={(e) => handlePostType(e.target.value)}
+          disabled={isLoading}
+        >
+          {postTypeData.map((item, index) => {
+            return (
+              <option key={index} value={item.value}>
+                {item.label}
+              </option>
+            );
+          })}
+        </Select>
         {/* Search */}
         <div className="relative w-1/2 max-w-sm">
           <TextInput
@@ -413,6 +438,11 @@ const SharedFilter: FC<SharedFilterProps> = ({
               Relevance: ≥{appliedFilters.relevance}
             </Badge>
           )}
+          {appliedFilters.postType && (
+            <Badge color="info" className="text-xs">
+              Post Type: {appliedFilters.postType}
+            </Badge>
+          )}
           {appliedFilters.hasCriticism && (
             <Badge color="info" className="text-xs">
               {appliedFilters.hasCriticism === "true" ||
@@ -430,6 +460,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
             appliedFilters.sentiment ||
             appliedFilters.relevance ||
             appliedFilters.hasCriticism ||
+            appliedFilters.postType ||
             appliedFilters.search) && (
             <button
               onClick={clearFilters}
