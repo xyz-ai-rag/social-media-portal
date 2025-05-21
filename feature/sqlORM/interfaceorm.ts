@@ -62,6 +62,7 @@ export interface BusinessInstance extends Model {
   business_type: string; // Optional
   similar_businesses: string[]; // Optional
   total_relevant_posts: number; // Optional
+  last_crawled_time: Date;
 }
 
 export interface ClientInstance extends Model {

@@ -127,6 +127,10 @@ export const BusinessModel = sequelizeDbConnection.define<BusinessInstance>(
       allowNull: true,
       defaultValue: 0,
     },
+    last_crawled_time: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
   },
   {
     tableName: "business",
