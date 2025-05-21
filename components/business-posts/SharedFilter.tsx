@@ -2,13 +2,7 @@
 
 import { FC, useState, useEffect, ReactNode, useMemo } from "react";
 import { FaSync } from "react-icons/fa";
-import {
-  TextInput,
-  Select,
-  Badge,
-  Button,
-  Alert,
-} from "flowbite-react";
+import { TextInput, Select, Badge, Button, Alert } from "flowbite-react";
 import DateRangePicker from "../dashboard/DateRangePicker";
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
 import { useDateRange } from "@/context/DateRangeContext";
@@ -46,6 +40,7 @@ interface AppliedFilters {
   hasCriticism: string;
   search: string;
   sortOrder: string;
+  postCategory?: string | null;
 }
 
 interface SharedFilterProps {
@@ -89,6 +84,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
   const [sentiment, setSentiment] = useState("");
   const [relevance, setRelevance] = useState("");
   const [criticism, setCriticism] = useState("");
+  const [postCategory, setPostCategory] = useState("");
 
   // Calculate yesterday's date for max date restriction
   const yesterday = useMemo(() => {
@@ -106,6 +102,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
       setSentiment(appliedFilters.sentiment || "");
       setRelevance(appliedFilters.relevance || "");
       setCriticism(appliedFilters.hasCriticism || "");
+      setPostCategory(appliedFilters.postCategory || "");
       setSearchQuery(appliedFilters.search || "");
       setSortOrder(appliedFilters.sortOrder || "desc");
     }
@@ -150,6 +147,19 @@ const SharedFilter: FC<SharedFilterProps> = ({
     { value: "Has Criticism", label: "Has negative feedback" },
     { value: "No Criticism", label: "No negative feedback" },
   ];
+
+  const postTypeData = [
+    { value: "organic post", label: "Organic Post" },
+    { value: "commercial post", label: "Commercial Post" },
+    { value: "own post", label: "Own Posts" },
+  ];
+
+  const handlePostCategory = (data: string) => {
+    setPostCategory(data);
+    if (onFilterChange) {
+      onFilterChange({ postCategory: data });
+    }
+  };
 
   const handleCriticism = (data: string) => {
     setCriticism(data);
@@ -219,13 +229,13 @@ const SharedFilter: FC<SharedFilterProps> = ({
         relevance: "",
         hasCriticism: "",
         search: "",
+        postCategory: "",
       });
     }
   };
 
   return (
     <div className="bg-white relative">
-
       {/* Date Range Display */}
       <div className="mb-4">
         <div className="text-gray-500 text-sm">{getDateRangeText()}</div>
@@ -307,6 +317,21 @@ const SharedFilter: FC<SharedFilterProps> = ({
             );
           })}
         </Select>
+        <Select
+          id="Category"
+          value={postCategory}
+          onChange={(e) => handlePostCategory(e.target.value)}
+          disabled={isLoading}
+        >
+          <option value="">Post Type</option>
+          {postTypeData.map((item, index) => {
+            return (
+              <option key={index} value={item.value}>
+                {item.label}
+              </option>
+            );
+          })}
+        </Select>
         {/* Search */}
         <div className="relative w-1/2 max-w-sm">
           <TextInput
@@ -360,6 +385,11 @@ const SharedFilter: FC<SharedFilterProps> = ({
               Relevance: ≥{appliedFilters.relevance}
             </Badge>
           )}
+          {appliedFilters.postCategory && (
+            <Badge color="info" className="text-xs">
+              Post Type: {appliedFilters.postCategory}
+            </Badge>
+          )}
           {appliedFilters.hasCriticism && (
             <Badge color="info" className="text-xs">
               {appliedFilters.hasCriticism === "true" ||
@@ -377,6 +407,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
             appliedFilters.sentiment ||
             appliedFilters.relevance ||
             appliedFilters.hasCriticism ||
+            appliedFilters.postCategory ||
             appliedFilters.search) && (
             <button
               onClick={clearFilters}

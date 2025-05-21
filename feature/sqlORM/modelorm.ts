@@ -82,6 +82,7 @@ export const BusinessPostModel =
       last_modify_action: { type: DataTypes.TEXT, allowNull: true },
       import_id: { type: DataTypes.UUID, allowNull: true },
       is_official_post: { type: DataTypes.BOOLEAN, allowNull: true },
+      post_category: { type: DataTypes.TEXT, allowNull: true },
     },
     {
       tableName: "business_posts",

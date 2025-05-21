@@ -32,6 +32,7 @@ interface AppliedFilters {
   hasCriticism: string;
   search: string;
   sortOrder: string;
+  postCategory: string;
 }
 
 const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
@@ -77,14 +78,15 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       return savedFilters
         ? JSON.parse(savedFilters)
         : {
-          platform: "",
-          sentiment: "",
-          relevance: "",
-          hasCriticism: "",
-          search: "",
-          sortOrder: "desc",
-          page: 1,
-        };
+            platform: "",
+            sentiment: "",
+            relevance: "",
+            hasCriticism: "",
+            search: "",
+            sortOrder: "desc",
+            postCategory: "",
+            page: 1,
+          };
     }
     return {
       platform: "",
@@ -93,10 +95,13 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       hasCriticism: "",
       search: "",
       sortOrder: "desc",
+      postCategory: "",
       page: 1,
     };
   });
-
+  useEffect(() => {
+    localStorage.setItem("business_page_filters", JSON.stringify(filters));
+  }, [filters]);
 
   // Get date range from context.
   const { dateRange } = useDateRange();
@@ -122,8 +127,6 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       endDate: endDateProcessed,
     });
   }, [startDateProcessed, endDateProcessed]);
-
-
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
     null
@@ -169,6 +172,8 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
           queryParams.append("relevance", filters.relevance);
         if (filters.hasCriticism)
           queryParams.append("hasCriticism", filters.hasCriticism);
+        if (filters.postCategory)
+          queryParams.append("postCategory", filters.postCategory);
         if (filters.search) queryParams.append("search", filters.search);
         if (filters.sortOrder)
           queryParams.append("sortOrder", filters.sortOrder);
@@ -274,7 +279,12 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     if ((isModalOpen || isPreviewModalOpen) && pagination.totalPages > 1) {
       fetchAdjacentPages();
     }
-  }, [isModalOpen, isPreviewModalOpen, pagination.currentPage, fetchAdjacentPages]);
+  }, [
+    isModalOpen,
+    isPreviewModalOpen,
+    pagination.currentPage,
+    fetchAdjacentPages,
+  ]);
 
   // Handle opening the modal
   const openModal = (row: any) => {
@@ -338,8 +348,8 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
             ? pagination.currentPage - 1
             : pagination.totalPages
           : pagination.currentPage < pagination.totalPages
-            ? pagination.currentPage + 1
-            : 1;
+          ? pagination.currentPage + 1
+          : 1;
 
       // Get posts from the appropriate page
       const newPagePosts = direction === "prev" ? prevPagePosts : nextPagePosts;
@@ -412,11 +422,11 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     <>
       {/* Head */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 className="text-[34px] font-bold text-[#5D5FEF]">{`Posts for ${businessName || "Business"}`}
+        <h1 className="text-[34px] font-bold text-[#5D5FEF]">
+          {`Posts for ${businessName || "Business"}`}
         </h1>
         <DateRangePicker page="business_page" businessId={businessId} />
       </div>
-
       {/* Filters */}
       <SharedFilter
         title=""
@@ -429,7 +439,6 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         onRefresh={fetchPosts}
         onSortOrderChange={handleSortOrderChange}
       />
-
 
       {/* Posts Table */}
       <SharedPostTable

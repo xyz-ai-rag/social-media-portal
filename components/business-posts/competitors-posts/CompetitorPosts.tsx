@@ -40,6 +40,7 @@ interface AppliedFilters {
   hasCriticism: string;
   search: string;
   sortOrder: string;
+  postCategory: string;
 }
 
 const CompetitorPosts: FC<CompetitorPostsProps> = ({
@@ -97,14 +98,15 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
       return savedFilters
         ? JSON.parse(savedFilters)
         : {
-          platform: "",
-          sentiment: "",
-          relevance: "",
-          hasCriticism: "",
-          search: "",
-          sortOrder: "desc",
-          page: 1,
-        };
+            platform: "",
+            sentiment: "",
+            relevance: "",
+            hasCriticism: "",
+            search: "",
+            sortOrder: "desc",
+            postCategory: "",
+            page: 1,
+          };
     }
     return {
       platform: "",
@@ -112,6 +114,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
       relevance: "",
       hasCriticism: "",
       search: "",
+      postCategory: "",
       sortOrder: "desc",
       page: 1,
     };
@@ -121,7 +124,6 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   useEffect(() => {
     localStorage.setItem("competitors_page_filters", JSON.stringify(filters));
   }, [filters]);
-
 
   // Get date range from context.
   const { dateRange } = useDateRange();
@@ -147,8 +149,6 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
       endDate: endDateProcessed,
     });
   }, [startDateProcessed, endDateProcessed]);
-
-
 
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
@@ -251,6 +251,8 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         if (filters.hasCriticism)
           queryParams.append("hasCriticism", filters.hasCriticism);
         if (filters.search) queryParams.append("search", filters.search);
+        if (filters.postCategory)
+          queryParams.append("postCategory", filters.postCategory);
         if (filters.sortOrder)
           queryParams.append("sortOrder", filters.sortOrder);
         queryParams.append("page", pageNumber.toString());
@@ -413,8 +415,8 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
             ? pagination.currentPage - 1
             : pagination.totalPages
           : pagination.currentPage < pagination.totalPages
-            ? pagination.currentPage + 1
-            : 1;
+          ? pagination.currentPage + 1
+          : 1;
 
       // Get posts from the appropriate page
       const newPagePosts = direction === "prev" ? prevPagePosts : nextPagePosts;
@@ -547,11 +549,11 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   return (
     <>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 className="text-[34px] font-bold text-[#5D5FEF]">{competitorName}
+        <h1 className="text-[34px] font-bold text-[#5D5FEF]">
+          {competitorName}
         </h1>
         <DateRangePicker page="competitors_page" businessId={businessId} />
       </div>
-
       {/* Filters */}
       <SharedFilter
         title=""
@@ -571,13 +573,17 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
       {/* Tabs Section */}
       <div className="mt-6">
         <div className="mb-4 border-b border-gray-200">
-          <ul className="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
+          <ul
+            className="flex flex-wrap -mb-px text-sm font-medium text-center"
+            role="tablist"
+          >
             <li className="mr-2" role="presentation">
               <button
-                className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 0
+                className={`inline-block p-4 border-b-2 rounded-t-lg ${
+                  activeTab === 0
                     ? "text-blue-600 border-blue-600"
                     : "hover:text-gray-600 hover:border-gray-300 border-transparent"
-                  }`}
+                }`}
                 type="button"
                 role="tab"
                 onClick={() => setActiveTab(0)}
@@ -587,10 +593,11 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
             </li>
             <li className="mr-2" role="presentation">
               <button
-                className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 1
+                className={`inline-block p-4 border-b-2 rounded-t-lg ${
+                  activeTab === 1
                     ? "text-blue-600 border-blue-600"
                     : "hover:text-gray-600 hover:border-gray-300 border-transparent"
-                  }`}
+                }`}
                 type="button"
                 role="tab"
                 onClick={() => setActiveTab(1)}
@@ -609,7 +616,10 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
               {!competitorId ? (
                 <div className="bg-white rounded-lg shadow p-6 mb-6">
                   <div className="text-center p-8 text-gray-500">
-                    <p className="mb-2 text-lg">Select a competitor from the dropdown above to view comparison statistics.</p>
+                    <p className="mb-2 text-lg">
+                      Select a competitor from the dropdown above to view
+                      comparison statistics.
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -632,7 +642,10 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
               {!competitorId ? (
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="text-center p-8 text-gray-500">
-                    <p className="mb-2 text-lg">Select a competitor from the dropdown above to view their posts.</p>
+                    <p className="mb-2 text-lg">
+                      Select a competitor from the dropdown above to view their
+                      posts.
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -649,7 +662,6 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
                   onSortOrderChange={handleSortOrderChange}
                   openModal={openModal}
                   openPreviewModal={openPreviewModal}
-
                 />
               )}
             </div>

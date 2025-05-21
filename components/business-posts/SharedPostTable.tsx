@@ -1,11 +1,7 @@
 "use client";
 
 import { FC, useState, useEffect } from "react";
-import {
-  Table,
-  Spinner,
-  Select,
-} from "flowbite-react";
+import { Table, Spinner, Select } from "flowbite-react";
 import { PostData } from "./SharedFilter";
 
 interface PaginationProps {
@@ -52,136 +48,129 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
       pagination.onPageChange(page);
     }
   };
-
   const [isClient, setIsClient] = useState(false);
-  useEffect(() => { setIsClient(true); }, []);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   return (
     <div className="mt-6 bg-white rounded shadow overflow-hidden">
       {/* Table */}
-      <div className="overflow-x-auto">
-        <Table hoverable className="w-full table-auto">
-          <Table.Head>
-            <Table.HeadCell className="w-28 md:w-30 lg:w-38 xl:w-44">
-              Date
-              <div className="pl-2 flex flex-col">
-                {isClient && (
-                  <>
-                    <svg
-                      width="10"
-                      height="8"
-                      viewBox="0 0 6 4"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      onClick={() => handleSortOrderChange("asc")}
-                      className="cursor-pointer mb-1"
-                    >
-                      <path
-                        d="M1.08711 4L4.91289 4C5.34007 4 5.57052 3.49894 5.29252 3.1746L3.37963 0.942899C3.18008 0.710094 2.81992 0.710094 2.62037 0.942899L0.707482 3.1746C0.429479 3.49894 0.659934 4 1.08711 4Z"
-                        fill={sortOrder === "asc" ? "#5D5FEF" : "#A5A6F6"}
-                      />
-                    </svg>
-                    <svg
-                      width="10"
-                      height="8"
-                      viewBox="0 0 6 4"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      onClick={() => handleSortOrderChange("desc")}
-                      className="cursor-pointer"
-                    >
-                      <path
-                        d="M4.91289 0H1.08711C0.659934 0 0.429479 0.501059 0.707482 0.825396L2.62037 3.0571C2.81992 3.28991 3.18008 3.28991 3.37963 3.0571L5.29252 0.825396C5.57052 0.501059 5.34007 0 4.91289 0Z"
-                        fill={sortOrder === "desc" ? "#5D5FEF" : "#A5A6F6"}
-                      />
-                    </svg>
-                  </>
-                )}
-              </div>
-            </Table.HeadCell>
-            <Table.HeadCell className="w-20 text-center">
-              Platform
-            </Table.HeadCell>
-            <Table.HeadCell className="w-40 text-center">User</Table.HeadCell>
-            <Table.HeadCell className="w-auto">Post</Table.HeadCell>
-            <Table.HeadCell className="w-28 text-center">
-              Original Language
-            </Table.HeadCell>
-            <Table.HeadCell className="w-24 text-center">
-              Relevance Score
-            </Table.HeadCell>
-            <Table.HeadCell className="w-32 text-center">
-              Sentiment
-            </Table.HeadCell>
-            {/* <Table.HeadCell className="w-24 text-center">
-              Feedback
-            </Table.HeadCell> */}
-          </Table.Head>
-          <Table.Body className="divide-y">
-            {isLoading ? (
-              <Table.Row>
-                <Table.Cell colSpan={8} className="text-center py-10">
-                  <div className="flex flex-col items-center justify-center">
-                    <Spinner size="xl" color="purple" />
-                    <p className="mt-2 text-gray-500">Loading posts...</p>
-                  </div>
-                </Table.Cell>
-              </Table.Row>
-            ) : listData.length === 0 ? (
-              <Table.Row>
-                <Table.Cell colSpan={8} className="text-center py-10">
-                  <p className="text-gray-500">
-                    No posts found. Try adjusting your filters.
-                  </p>
-                </Table.Cell>
-              </Table.Row>
-            ) : (
-              listData.map((item, index) => {
-                return (
+      <div className="w-full max-w-[1396px] mx-auto">
+        <div className=" overflow-x-auto">
+          <Table hoverable className="min-w-[1500px]">
+            <Table.Head>
+              <Table.HeadCell className="w-32">
+                Date
+                <div className="pl-2 flex flex-col">
+                  <svg
+                    width="10"
+                    height="8"
+                    viewBox="0 0 6 4"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    onClick={() => handleSortOrderChange("asc")}
+                    className="cursor-pointer mb-1"
+                  >
+                    <path
+                      d="M1.08711 4L4.91289 4C5.34007 4 5.57052 3.49894 5.29252 3.1746L3.37963 0.942899C3.18008 0.710094 2.81992 0.710094 2.62037 0.942899L0.707482 3.1746C0.429479 3.49894 0.659934 4 1.08711 4Z"
+                      fill={sortOrder === "asc" ? "#5D5FEF" : "#A5A6F6"}
+                    />
+                  </svg>
+                  <svg
+                    width="10"
+                    height="8"
+                    viewBox="0 0 6 4"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    onClick={() => handleSortOrderChange("desc")}
+                    className="cursor-pointer"
+                  >
+                    <path
+                      d="M4.91289 0H1.08711C0.659934 0 0.429479 0.501059 0.707482 0.825396L2.62037 3.0571C2.81992 3.28991 3.18008 3.28991 3.37963 3.0571L5.29252 0.825396C5.57052 0.501059 5.34007 0 4.91289 0Z"
+                      fill={sortOrder === "desc" ? "#5D5FEF" : "#A5A6F6"}
+                    />
+                  </svg>
+                </div>
+              </Table.HeadCell>
+
+              <Table.HeadCell className="w-24 text-center">
+                Platform
+              </Table.HeadCell>
+              <Table.HeadCell className="w-32 text-center">User</Table.HeadCell>
+              <Table.HeadCell className="min-w-[450px] max-w-[600px]">
+                Post
+              </Table.HeadCell>
+              <Table.HeadCell className="w-32 text-center">
+                Original Language
+              </Table.HeadCell>
+              <Table.HeadCell className="w-28 text-center">
+                Relevance Score
+              </Table.HeadCell>
+              <Table.HeadCell className="w-36 text-center">
+                Post Type
+              </Table.HeadCell>
+              <Table.HeadCell className="w-28 text-center">
+                Sentiment
+              </Table.HeadCell>
+              <Table.HeadCell className="w-36 text-center"></Table.HeadCell>
+            </Table.Head>
+
+            <Table.Body className="divide-y">
+              {isLoading ? (
+                <Table.Row>
+                  <Table.Cell colSpan={9} className="text-center py-10">
+                    <div className="flex flex-col items-center justify-center">
+                      <Spinner size="xl" color="purple" />
+                      <p className="mt-2 text-gray-500">Loading posts...</p>
+                    </div>
+                  </Table.Cell>
+                </Table.Row>
+              ) : listData.length === 0 ? (
+                <Table.Row>
+                  <Table.Cell colSpan={9} className="text-center py-10">
+                    <p className="text-gray-500">
+                      No posts found. Try adjusting your filters.
+                    </p>
+                  </Table.Cell>
+                </Table.Row>
+              ) : (
+                listData.map((item, index) => (
                   <Table.Row
                     key={item.id || index}
-                    onClick={() =>
-                      openPreviewModal ? openPreviewModal(item) : null
-                    }
+                    onClick={() => openPreviewModal?.(item)}
                     className="cursor-pointer"
                   >
                     <Table.Cell className="text-[#DD9A19] align-middle whitespace-nowrap">
                       {item.showDate}
                     </Table.Cell>
-
                     <Table.Cell className="text-center align-middle">
                       <a
                         href={item.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline hover:text-black-600"
-                        onClick={(e) => {
-                          e.stopPropagation(); // This prevents the click from reaching the row
-                        }}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {item.platform}
                       </a>
                     </Table.Cell>
-
-                    <Table.Cell className="align-middle">
-                      <div className="line-clamp-2 text-sm break-words text-right md:text-center">
+                    <Table.Cell className="text-center align-middle">
+                      <div className="line-clamp-2 text-sm break-words">
                         {item.nickname}
                       </div>
                     </Table.Cell>
-
-                    {/* Updated Post Cell with Multi-line Support */}
-                    <Table.Cell className="align-middle w-[40%] max-w-[400px]">
+                    <Table.Cell className="align-middle min-w-[450px] max-w-[600px]">
                       <div className="line-clamp-5 text-sm break-words">
                         {item.post}
                       </div>
                     </Table.Cell>
-
-                    <Table.Cell className=" align-middle">
+                    <Table.Cell className="text-center align-middle">
                       <button
                         className="text-white text-xs bg-[#5D5FEF] shadow-sm w-[69px] h-[32px] justify-center items-center border rounded"
                         onClick={(e) => {
                           e.stopPropagation();
-                          openModal ? openModal(item) : null;
+                          openModal?.(item);
                         }}
                       >
                         Original
@@ -190,20 +179,13 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                     <Table.Cell className="text-center align-middle">
                       {item.relvance}
                     </Table.Cell>
-                    {/* Sentiment */}
+                    <Table.Cell className="text-center align-middle">
+                      {item.postCategory || "Null"}
+                    </Table.Cell>
                     <Table.Cell className="text-center align-middle">
                       {item.sentiment}
                     </Table.Cell>
-                    {/* Feedback */}
-                    <Table.Cell
-                      className={`
-                        text-center 
-                        align-middle 
-                        whitespace-nowrap 
-                        transition-all duration-200
-                        ${item.hasCriticism ? 'w-max' : 'w-min'}
-                      `}
-                    >
+                    <Table.Cell className="text-center align-middle whitespace-nowrap">
                       {item.hasCriticism && (
                         <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-sm dark:bg-red-900 dark:text-red-300">
                           Has negative feedback
@@ -211,11 +193,11 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                       )}
                     </Table.Cell>
                   </Table.Row>
-                );
-              })
-            )}
-          </Table.Body>
-        </Table>
+                ))
+              )}
+            </Table.Body>
+          </Table>
+        </div>
       </div>
 
       {/* Pagination */}

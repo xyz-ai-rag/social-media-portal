@@ -50,6 +50,7 @@ export interface BusinessPostInstance extends Model {
   last_modify_action: string;
   import_id: string; // uuid,
   is_official_post: boolean;
+  post_category: string;
 }
 
 export interface BusinessInstance extends Model {
