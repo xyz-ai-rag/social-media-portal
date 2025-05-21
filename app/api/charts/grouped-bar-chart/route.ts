@@ -16,15 +16,12 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
-    
-    // Parse dates and ensure start_date is always at 00:00:00 and end_date is at 23:59:59
-    let startDate = parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date());
-    let endDate = parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date());
-    
-    // Set the time components explicitly
-    startDate.setHours(0, 0, 0, 0);  // Set to beginning of day (00:00:00.000)
-    endDate.setHours(23, 59, 59, 999);  // Set to end of day (23:59:59.999)
-    
+
+
+    // Parse dates without timezone conversion
+    const startDate = parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+    const endDate = parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
@@ -57,17 +54,17 @@ export async function GET(request: NextRequest) {
     // Get min and max dates from the actual data to ensure we cover all posts
     let minDate = startDate;
     let maxDate = endDate;
-    
+
     posts.forEach(post => {
       const postDate = new Date(post.getDataValue("last_update_time"));
       if (postDate < minDate) minDate = postDate;
       if (postDate > maxDate) maxDate = postDate;
     });
-    
+
     // Initialize daily counts with the entire range that covers all data
     const counts: Record<string, number> = {};
     const dailyKeys: string[] = [];
-    
+
     // Use startOfDay for the minDate to ensure we start at the beginning of the day
     // Use endOfDay for the maxDate to ensure we include the entire last day
     for (let d = startOfDay(minDate); d <= endOfDay(maxDate); d.setDate(d.getDate() + 1)) {
@@ -89,12 +86,12 @@ export async function GET(request: NextRequest) {
         console.log(`[BarChart] Post with date ${dt.toISOString()} (key: ${key}) doesn't match any initialized day`);
       }
     });
-    
+
     console.log(`[BarChart] Total posts counted: ${countedPosts}`);
-    
+
     // Build an ordered array of daily counts
     const dailyCounts = dailyKeys.map(key => ({ date: key, count: counts[key] }));
-    
+
     const totalPosts = Object.values(counts).reduce((sum, count) => sum + count, 0);
     console.log(`[BarChart] Total posts in dailyCounts: ${totalPosts}`);
     console.log(`[BarChart] Response array length: ${dailyCounts.length}`);

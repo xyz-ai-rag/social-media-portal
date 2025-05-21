@@ -49,6 +49,9 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
     }
   };
 
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => { setIsClient(true); }, []);
+
   return (
     <div className="mt-6 bg-white rounded shadow overflow-hidden">
       {/* Table */}
@@ -131,7 +134,8 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                   </Table.Cell>
                 </Table.Row>
               ) : (
-                listData.map((item, index) => (
+              listData.map((item, index) => {
+                return (
                   <Table.Row
                     key={item.id || index}
                     onClick={() => openPreviewModal?.(item)}

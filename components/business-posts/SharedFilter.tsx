@@ -2,8 +2,17 @@
 
 import { FC, useState, useEffect, ReactNode, useMemo } from "react";
 import { FaSync } from "react-icons/fa";
-import { TextInput, Select, Badge, Button, Alert } from "flowbite-react";
-import DatePicker from "./DatePicker";
+
+import {
+  TextInput,
+  Select,
+  Badge,
+  Button,
+  Alert,
+} from "flowbite-react";
+import DateRangePicker from "../dashboard/DateRangePicker";
+import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
+import { useDateRange } from "@/context/DateRangeContext";
 
 // Base post data structure shared between components
 export interface PostData {
@@ -113,27 +122,6 @@ const SharedFilter: FC<SharedFilterProps> = ({
     setPlatform(data);
     if (onFilterChange) {
       onFilterChange({ platform: data });
-    }
-  };
-
-  // Handle Start Date Change
-  const handleStartDateChange = (date: string) => {
-    setStartDate(date);
-    if (onFilterChange) {
-      onFilterChange({ startDate: date });
-    }
-  };
-
-  // Handle End Date Change
-  const handleEndDateChange = (date: string) => {
-    // Prevent dates after yesterday
-    if (date > yesterday) {
-      date = yesterday;
-    }
-
-    setEndDate(date);
-    if (onFilterChange) {
-      onFilterChange({ endDate: date });
     }
   };
 
@@ -255,23 +243,6 @@ const SharedFilter: FC<SharedFilterProps> = ({
 
   return (
     <div className="bg-white relative">
-      {/* Head */}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-[34px] font-bold text-[#5D5FEF]">{title}</h1>
-
-        {/* Refresh button */}
-        {/* <Button
-          color="light"
-          pill
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isLoading}
-          title="Refresh data"
-        >
-          <FaSync className={`${isLoading ? "animate-spin" : ""} mr-2`} />
-          Refresh
-        </Button> */}
-      </div>
 
       {/* Date Range Display */}
       <div className="mb-4">
@@ -298,23 +269,6 @@ const SharedFilter: FC<SharedFilterProps> = ({
           <div className="min-w-40">{additionalFilters}</div>
         )}
 
-        <DatePicker
-          id="start-date"
-          label="Start Date"
-          value={startDate}
-          onChange={handleStartDateChange}
-          max={yesterday}
-          disabled={isLoading}
-        />
-
-        <DatePicker
-          id="end-date"
-          label="End Date"
-          value={endDate}
-          onChange={handleEndDateChange}
-          max={yesterday}
-          disabled={isLoading}
-        />
         <Select
           id="platform"
           value={platform}

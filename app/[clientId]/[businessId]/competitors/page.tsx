@@ -1,5 +1,6 @@
 "use client";
 import CompetitorPosts from "@/components/business-posts/competitors-posts/CompetitorPosts";
+import { DateRangeProvider } from "@/context/DateRangeContext";
 import { useParams } from "next/navigation";
 export default function CompetitorsPostsPage() {
   const params = useParams();
@@ -8,7 +9,9 @@ export default function CompetitorsPostsPage() {
   const businessId = params.businessId as string;
   return (
     <div className="space-y-6">
-      <CompetitorPosts clientId={clientId} businessId={businessId} />
+      <DateRangeProvider>
+        <CompetitorPosts clientId={clientId} businessId={businessId} />
+      </DateRangeProvider>
     </div>
   );
 }
