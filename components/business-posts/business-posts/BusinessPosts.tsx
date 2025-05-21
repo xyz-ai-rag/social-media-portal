@@ -8,6 +8,8 @@ import PostCard from "./PostCard";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "../SharedFilter";
 import PostPreviewCard from "../PostPreviewCard";
+import { useDateRange } from "@/context/DateRangeContext";
+import DateRangePicker from "@/components/dashboard/DateRangePicker";
 
 interface BusinessPostsProps {
   clientId: string;
@@ -103,16 +105,20 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   }, [filters]);
 
   // setting default date
-  const [dateRange, setDateRange] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("business_page_date");
-      return saved
-        ? JSON.parse(saved)
-        : { startDate: thirtyDaysAgo, endDate: yesterday };
-    }
-    return { startDate: thirtyDaysAgo, endDate: yesterday };
+  const [dateRangeOfPosts, setDateRangeOfPosts] = useState({
+    startDate: "",
+    endDate: "",
   });
 
+  // Process dates using helper functions from timeUtils.
+  const startDateProcessed = useMemo(
+    () => dateRange.startDate.split("T")[0],
+    [dateRange.startDate]
+  );
+  const endDateProcessed = useMemo(
+    () => dateRange.endDate.split("T")[0],
+    [dateRange.endDate]
+  );
   useEffect(() => {
     localStorage.setItem("business_page_date", JSON.stringify(dateRange));
   }, [dateRange]);
@@ -144,16 +150,16 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       try {
         // Ensure endDate is not after yesterday
         const endDate =
-          new Date(dateRange.endDate) > new Date(yesterday)
+          new Date(dateRangeOfPosts.endDate) > new Date(yesterday)
             ? yesterday
-            : dateRange.endDate;
+            : dateRangeOfPosts.endDate;
 
         // Build query parameters
         const queryParams = new URLSearchParams();
         queryParams.append("businessId", businessId);
 
-        if (dateRange.startDate)
-          queryParams.append("startDate", dateRange.startDate);
+        if (dateRangeOfPosts.startDate)
+          queryParams.append("startDate", dateRangeOfPosts.startDate);
         queryParams.append("endDate", endDate);
         if (filters.platform) queryParams.append("platform", filters.platform);
         if (filters.sentiment)
@@ -198,7 +204,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         return { posts: [], pagination: null, appliedFilters: null };
       }
     },
-    [businessId, filters, dateRange, yesterday]
+    [businessId, filters, dateRangeOfPosts, yesterday]
   );
 
   // Main fetch function for current page
@@ -380,11 +386,10 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     ) {
       newFilters.endDate = yesterday;
     }
-    // Extract startDate / endDate and save to local dateRange
     const { startDate, endDate, ...otherFilters } = newFilters;
 
     if (endDate || startDate) {
-      setDateRange((prevdate: object) => ({
+      setDateRangeOfPosts((prevdate: object) => ({
         ...prevdate,
         ...(startDate && { startDate: startDate }),
         ...(endDate && { endDate: endDate }),

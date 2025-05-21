@@ -55,7 +55,7 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           <h1 className="text-[34px] font-bold text-[#5D5FEF]">
             {businessName} Dashboard
           </h1>
-          <DateRangePicker />
+          <DateRangePicker page="dashboard" businessId={businessId} />
         </div>
         <div className="">
           <h2 className="text-base font-medium text-gray-800 italic">

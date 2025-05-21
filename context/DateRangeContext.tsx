@@ -83,6 +83,84 @@ export const DATE_PRESETS = {
       };
     }
   },
+  last60Days: {
+    label: 'Last 60 days',
+    getRange: () => {
+      const yesterday = subDays(new Date(), 1);
+      const start = subDays(yesterday, 59); // 60 days ending with yesterday
+      const startStr = format(start, 'yyyy-MM-dd');
+      const endStr = format(yesterday, 'yyyy-MM-dd');
+      return {
+        startDate: setStartOfDay(startStr),
+        endDate: setEndOfDay(endStr),
+        label: 'Last 60 days',
+        aggregationType: 'daily' as AggregationType
+      };
+    }
+  },
+  last90Days: {
+    label: 'Last 90 days', 
+    getRange: () => {
+      const yesterday = subDays(new Date(), 1);
+      const start = subDays(yesterday, 89); // 90 days ending with yesterday
+      const startStr = format(start, 'yyyy-MM-dd');
+      const endStr = format(yesterday, 'yyyy-MM-dd');
+      return {
+        startDate: setStartOfDay(startStr),
+        endDate: setEndOfDay(endStr),
+        label: 'Last 90 days',
+        aggregationType: 'weekly' as AggregationType
+      };
+    }
+  },
+  last120Days: {
+    label: 'Last 120 days',
+    getRange: () => {
+      const yesterday = subDays(new Date(), 1);
+      const start = subDays(yesterday, 119); // 120 days ending with yesterday
+      const startStr = format(start, 'yyyy-MM-dd');
+      const endStr = format(yesterday, 'yyyy-MM-dd');
+      return {
+        startDate: setStartOfDay(startStr),
+        endDate: setEndOfDay(endStr),
+        label: 'Last 120 days',
+        aggregationType: 'weekly' as AggregationType
+      };
+    }
+  },
+  everything: {
+    label: 'Everything',
+    getRange: (customStartDate?: string, customEndDate?: string) => {
+      const yesterday = subDays(new Date(), 1);
+      const startStr = customStartDate || '2023-01-01';
+      const endStr = customEndDate || format(yesterday, 'yyyy-MM-dd');
+      let aggregationType: AggregationType = 'daily';
+      if (startStr && endStr) {
+        const start = new Date(startStr);
+        const end = new Date(endStr);
+        const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffDays <= 2) {
+          aggregationType = 'daily';
+        } else if (diffDays <= 60) {
+          aggregationType = 'daily';
+        } else if (diffDays <= 180) {
+          aggregationType = 'weekly';
+        } else {
+          aggregationType = 'monthly';
+        }
+      }
+      
+      console.log("Final aggregation type:", aggregationType);
+      
+      return {
+        startDate: setStartOfDay(startStr),
+        endDate: setEndOfDay(endStr),
+        label: 'Everything',
+        aggregationType
+      };
+    }
+  },
   thisMonth: {
     label: 'This month',
     getRange: () => {
@@ -158,15 +236,18 @@ export function DateRangeProvider({ children }: DateRangeProviderProps) {
 
   // Wrap updateDateRange with useCallback and only update if values change.
   const updateDateRange = useCallback((preset: string, customStartDate?: string, customEndDate?: string) => {
+    
     let newRange: DateRange;
     if (preset === 'custom' && customStartDate && customEndDate) {
       newRange = DATE_PRESETS.custom.getRange(customStartDate, customEndDate);
+    } else if (preset === 'everything' && customStartDate && customEndDate) {
+      newRange = DATE_PRESETS.everything.getRange(customStartDate, customEndDate);
     } else if (preset in DATE_PRESETS) {
       const presetKey = preset as keyof typeof DATE_PRESETS;
       newRange = DATE_PRESETS[presetKey].getRange();
     } else {
       return;
-    }
+    }    
     // Update only if the range values are actually different from current state
     setDateRange(prev => {
       if (
