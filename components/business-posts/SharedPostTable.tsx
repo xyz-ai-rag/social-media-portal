@@ -48,6 +48,10 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
       pagination.onPageChange(page);
     }
   };
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   return (
     <div className="mt-6 bg-white rounded shadow overflow-hidden">
