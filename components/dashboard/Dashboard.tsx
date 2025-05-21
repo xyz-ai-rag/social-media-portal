@@ -19,9 +19,10 @@ interface DashboardProps {
 export default function Dashboard({ clientId, businessId }: DashboardProps) {
   const { clientDetails } = useAuth();
   const [businessName, setBusinessName] = useState<string>("");
+  const [lastCrawlTime, setLastCrawlTime] = useState<Date>(new Date());
 
-  const getFormattedTimestamp = () => {
-    const date = new Date();
+  const getFormattedTimestamp = (data: Date) => {
+    const date = new Date(data);
     const month = date.toLocaleString("en-US", { month: "long" });
     const day = date.getDate();
     const year = date.getFullYear();
@@ -42,6 +43,7 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
 
       if (currentBusiness) {
         setBusinessName(currentBusiness.business_name);
+        setLastCrawlTime(currentBusiness.last_crawled_time);
       }
     }
   }, [clientDetails, businessId]);
@@ -57,7 +59,7 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
         </div>
         <div className="">
           <h2 className="text-base font-medium text-gray-800 italic">
-            Last Update: {getFormattedTimestamp()}
+            Last Update: {getFormattedTimestamp(lastCrawlTime)}
           </h2>
         </div>
 

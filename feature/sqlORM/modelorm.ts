@@ -1,76 +1,96 @@
-import { DataTypes } from 'sequelize';
-import { sequelizeDbConnection } from './sqlDbConnection';
-import { 
+import { DataTypes } from "sequelize";
+import { sequelizeDbConnection } from "./sqlDbConnection";
+import {
   BusinessPostInstance,
   BusinessInstance,
   ClientInstance,
   ClientUsersInstance,
   ActiveSessionsInstance,
-  BusinessTopicsInstance
- } from './interfaceorm'; 
+  BusinessTopicsInstance,
+} from "./interfaceorm";
 
 // BusinessPosts table
-export const BusinessPostModel = sequelizeDbConnection.define<BusinessPostInstance>(
-  'business_posts',
-  {
-    platform: { type: DataTypes.TEXT, allowNull: false },
-    note_id: { type: DataTypes.TEXT, allowNull: false, primaryKey: true },
-    original_note_id: { type: DataTypes.UUID, allowNull: true },
-    type: { type: DataTypes.TEXT, allowNull: true },
-    title: { type: DataTypes.TEXT, allowNull: true },
-    description: { type: DataTypes.TEXT, allowNull: true },
-    video_url: { type: DataTypes.TEXT, allowNull: true },
-    create_time: { type: DataTypes.DATE, allowNull: false },
-    last_update_time: { type: DataTypes.DATE, allowNull: true },
-    user_id: { type: DataTypes.TEXT, allowNull: true },
-    nickname: { type: DataTypes.TEXT, allowNull: true },
-    avatar: { type: DataTypes.TEXT, allowNull: true },
-    liked_count: { type: DataTypes.INTEGER, allowNull: true, defaultValue: 0 },
-    collected_count: { type: DataTypes.INTEGER, allowNull: true, defaultValue: 0 },
-    comment_count: { type: DataTypes.INTEGER, allowNull: true, defaultValue: 0 },
-    share_count: { type: DataTypes.INTEGER, allowNull: true, defaultValue: 0 },
-    ip_location: { type: DataTypes.TEXT, allowNull: true },
-    image_list: { type: DataTypes.TEXT, allowNull: true },
-    tag_list: { type: DataTypes.TEXT, allowNull: true },
-    last_modify_ts: { type: DataTypes.DATE, allowNull: true },
-    note_url: { type: DataTypes.TEXT, allowNull: true },
-    source_keyword: { type: DataTypes.TEXT, allowNull: true },
-    post_topic: { type: DataTypes.TEXT, allowNull: true },
-    post_language: { type: DataTypes.TEXT, allowNull: true },
-    english_title: { type: DataTypes.TEXT, allowNull: true },
-    english_desc: { type: DataTypes.TEXT, allowNull: true },
-    english_ip_location: { type: DataTypes.TEXT, allowNull: true },
-    english_summary: { type: DataTypes.TEXT, allowNull: true },
-    english_sentiment: { type: DataTypes.STRING(10), allowNull: true },
-    english_positive_topics: { type: DataTypes.TEXT, allowNull: true },
-    english_negative_topics: { type: DataTypes.TEXT, allowNull: true },
-    business_id: { type: DataTypes.UUID, allowNull: true },
-    is_relevant: { type: DataTypes.BOOLEAN, allowNull: true },
-    cover_url: { type: DataTypes.TEXT, allowNull: true },
-    video_download_url: { type: DataTypes.TEXT, allowNull: true },
-    english_tag_list: { type: DataTypes.TEXT, allowNull: true },
-    hashtag_topic_category: { type: DataTypes.TEXT, allowNull: true },
-    english_desc_literal: { type: DataTypes.TEXT, allowNull: true },
-    relevance_percent: { type: DataTypes.INTEGER, allowNull: true },
-    has_negative_or_critical_feedback: { type: DataTypes.BOOLEAN, allowNull: true },
-    negative_feedback: { type: DataTypes.TEXT, allowNull: true },
-    is_wrong_relevancy: { type: DataTypes.BOOLEAN, allowNull: true },
-    is_good_summary: { type: DataTypes.BOOLEAN, allowNull: true },
-    is_good_negative_feedback: { type: DataTypes.BOOLEAN, allowNull: true },
-    tiebreaker_in_relevancy: { type: DataTypes.BOOLEAN, allowNull: true },
-    english_preview_text: { type: DataTypes.TEXT, allowNull: true },
-    last_modify_action: { type: DataTypes.TEXT, allowNull: true },
-    import_id: { type: DataTypes.UUID, allowNull: true },
-    is_official_post: { type: DataTypes.BOOLEAN, allowNull: true },
-  },
-  {
-    tableName: 'business_posts',
-    timestamps: false,
-  }
-);
+export const BusinessPostModel =
+  sequelizeDbConnection.define<BusinessPostInstance>(
+    "business_posts",
+    {
+      platform: { type: DataTypes.TEXT, allowNull: false },
+      note_id: { type: DataTypes.TEXT, allowNull: false, primaryKey: true },
+      original_note_id: { type: DataTypes.UUID, allowNull: true },
+      type: { type: DataTypes.TEXT, allowNull: true },
+      title: { type: DataTypes.TEXT, allowNull: true },
+      description: { type: DataTypes.TEXT, allowNull: true },
+      video_url: { type: DataTypes.TEXT, allowNull: true },
+      create_time: { type: DataTypes.DATE, allowNull: false },
+      last_update_time: { type: DataTypes.DATE, allowNull: true },
+      user_id: { type: DataTypes.TEXT, allowNull: true },
+      nickname: { type: DataTypes.TEXT, allowNull: true },
+      avatar: { type: DataTypes.TEXT, allowNull: true },
+      liked_count: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+      },
+      collected_count: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+      },
+      comment_count: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+      },
+      share_count: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+      },
+      ip_location: { type: DataTypes.TEXT, allowNull: true },
+      image_list: { type: DataTypes.TEXT, allowNull: true },
+      tag_list: { type: DataTypes.TEXT, allowNull: true },
+      last_modify_ts: { type: DataTypes.DATE, allowNull: true },
+      note_url: { type: DataTypes.TEXT, allowNull: true },
+      source_keyword: { type: DataTypes.TEXT, allowNull: true },
+      post_topic: { type: DataTypes.TEXT, allowNull: true },
+      post_language: { type: DataTypes.TEXT, allowNull: true },
+      english_title: { type: DataTypes.TEXT, allowNull: true },
+      english_desc: { type: DataTypes.TEXT, allowNull: true },
+      english_ip_location: { type: DataTypes.TEXT, allowNull: true },
+      english_summary: { type: DataTypes.TEXT, allowNull: true },
+      english_sentiment: { type: DataTypes.STRING(10), allowNull: true },
+      english_positive_topics: { type: DataTypes.TEXT, allowNull: true },
+      english_negative_topics: { type: DataTypes.TEXT, allowNull: true },
+      business_id: { type: DataTypes.UUID, allowNull: true },
+      is_relevant: { type: DataTypes.BOOLEAN, allowNull: true },
+      cover_url: { type: DataTypes.TEXT, allowNull: true },
+      video_download_url: { type: DataTypes.TEXT, allowNull: true },
+      english_tag_list: { type: DataTypes.TEXT, allowNull: true },
+      hashtag_topic_category: { type: DataTypes.TEXT, allowNull: true },
+      english_desc_literal: { type: DataTypes.TEXT, allowNull: true },
+      relevance_percent: { type: DataTypes.INTEGER, allowNull: true },
+      has_negative_or_critical_feedback: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+      },
+      negative_feedback: { type: DataTypes.TEXT, allowNull: true },
+      is_wrong_relevancy: { type: DataTypes.BOOLEAN, allowNull: true },
+      is_good_summary: { type: DataTypes.BOOLEAN, allowNull: true },
+      is_good_negative_feedback: { type: DataTypes.BOOLEAN, allowNull: true },
+      tiebreaker_in_relevancy: { type: DataTypes.BOOLEAN, allowNull: true },
+      english_preview_text: { type: DataTypes.TEXT, allowNull: true },
+      last_modify_action: { type: DataTypes.TEXT, allowNull: true },
+      import_id: { type: DataTypes.UUID, allowNull: true },
+      is_official_post: { type: DataTypes.BOOLEAN, allowNull: true },
+    },
+    {
+      tableName: "business_posts",
+      timestamps: false,
+    }
+  );
 
 export const BusinessModel = sequelizeDbConnection.define<BusinessInstance>(
-  'business',
+  "business",
   {
     business_id: {
       type: DataTypes.UUID,
@@ -106,15 +126,19 @@ export const BusinessModel = sequelizeDbConnection.define<BusinessInstance>(
       allowNull: true,
       defaultValue: 0,
     },
+    last_crawled_time: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
   },
   {
-    tableName: 'business',
+    tableName: "business",
     timestamps: false,
   }
 );
 
 export const ClientModel = sequelizeDbConnection.define<ClientInstance>(
-  'clients',
+  "clients",
   {
     id: {
       type: DataTypes.UUID,
@@ -147,108 +171,111 @@ export const ClientModel = sequelizeDbConnection.define<ClientInstance>(
     },
   },
   {
-    tableName: 'clients',
+    tableName: "clients",
     timestamps: false,
   }
 );
 
-export const ClientUsersModel = sequelizeDbConnection.define<ClientUsersInstance>(
-  'client_users',
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      allowNull: false,
+export const ClientUsersModel =
+  sequelizeDbConnection.define<ClientUsersInstance>(
+    "client_users",
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        allowNull: false,
+      },
+      client_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+      },
+      registered_email: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
     },
-    client_id: {
-      type: DataTypes.UUID,
-      allowNull: false,
-    },
-    registered_email: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    
-  },
-  {
-    tableName: 'client_users',
-    timestamps: false,
-  }
-);
-
-export const ActiveSessionsModel = sequelizeDbConnection.define<ActiveSessionsInstance>(
-  'active_sessions',
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-      allowNull: false,
-    },
-    user_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    session_id: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      unique: true
-    },
-    browser_id: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
-    },
-    last_active: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
-    },
-    user_agent: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    ip_address: {
-      type: DataTypes.TEXT,
-      allowNull: true
+    {
+      tableName: "client_users",
+      timestamps: false,
     }
-  },
-  {
-    tableName: 'active_sessions',
-    timestamps: false,
-  }
-);
+  );
 
-export const BusinessTopicsModel = sequelizeDbConnection.define<BusinessTopicsInstance>(
-  'business_topics',
-  {
-    id: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
-    business_id: { type: DataTypes.UUID, allowNull: false },
-    topic_type: { type: DataTypes.STRING, allowNull: false },
-    topic: { type: DataTypes.STRING, allowNull: false },
-    note_id: { type: DataTypes.STRING, allowNull: false },
-    created_at: { type: DataTypes.DATE, allowNull: false },
-  },
-  {
-    tableName: 'business_topics',
-    timestamps: false,
-  }
-);
+export const ActiveSessionsModel =
+  sequelizeDbConnection.define<ActiveSessionsInstance>(
+    "active_sessions",
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+        allowNull: false,
+      },
+      user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      session_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        unique: true,
+      },
+      browser_id: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      created_at: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+      last_active: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+      user_agent: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      ip_address: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+    },
+    {
+      tableName: "active_sessions",
+      timestamps: false,
+    }
+  );
 
-export const TestBusinessTopicsModel = sequelizeDbConnection.define<BusinessTopicsInstance>(
-  'test_business_topics',
-  {
-    id: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
-    business_id: { type: DataTypes.UUID, allowNull: false },
-    topic_type: { type: DataTypes.STRING, allowNull: false },
-    topic: { type: DataTypes.STRING, allowNull: false },
-    note_id: { type: DataTypes.STRING, allowNull: false },
-    created_at: { type: DataTypes.DATE, allowNull: false },
-  },
-  {
-    tableName: 'test_business_topics',
-    timestamps: false,
-  }
-);
+export const BusinessTopicsModel =
+  sequelizeDbConnection.define<BusinessTopicsInstance>(
+    "business_topics",
+    {
+      id: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
+      business_id: { type: DataTypes.UUID, allowNull: false },
+      topic_type: { type: DataTypes.STRING, allowNull: false },
+      topic: { type: DataTypes.STRING, allowNull: false },
+      note_id: { type: DataTypes.STRING, allowNull: false },
+      created_at: { type: DataTypes.DATE, allowNull: false },
+    },
+    {
+      tableName: "business_topics",
+      timestamps: false,
+    }
+  );
+
+export const TestBusinessTopicsModel =
+  sequelizeDbConnection.define<BusinessTopicsInstance>(
+    "test_business_topics",
+    {
+      id: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
+      business_id: { type: DataTypes.UUID, allowNull: false },
+      topic_type: { type: DataTypes.STRING, allowNull: false },
+      topic: { type: DataTypes.STRING, allowNull: false },
+      note_id: { type: DataTypes.STRING, allowNull: false },
+      created_at: { type: DataTypes.DATE, allowNull: false },
+    },
+    {
+      tableName: "test_business_topics",
+      timestamps: false,
+    }
+  );
