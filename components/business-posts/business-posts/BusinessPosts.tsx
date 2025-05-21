@@ -30,6 +30,7 @@ interface AppliedFilters {
   hasCriticism: string;
   search: string;
   sortOrder: string;
+  postCategory: string;
 }
 
 const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
@@ -81,6 +82,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
             hasCriticism: "",
             search: "",
             sortOrder: "desc",
+            postCategory: "",
             page: 1,
           };
     }
@@ -91,6 +93,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       hasCriticism: "",
       search: "",
       sortOrder: "desc",
+      postCategory: "",
       page: 1,
     };
   });
@@ -159,6 +162,8 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
           queryParams.append("relevance", filters.relevance);
         if (filters.hasCriticism)
           queryParams.append("hasCriticism", filters.hasCriticism);
+        if (filters.postCategory)
+          queryParams.append("postCategory", filters.postCategory);
         if (filters.search) queryParams.append("search", filters.search);
         if (filters.sortOrder)
           queryParams.append("sortOrder", filters.sortOrder);

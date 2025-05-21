@@ -173,7 +173,7 @@ const SharedPostModal = ({
                       Post Type
                     </p>
                     <p className="text-sm text-gray-900">
-                      {rowData.postType || "Organic Post"}
+                      {rowData.postCategory || "Null"}
                     </p>
                   </div>
                   <div className="col-span-2">

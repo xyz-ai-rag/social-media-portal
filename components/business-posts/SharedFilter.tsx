@@ -38,6 +38,7 @@ interface AppliedFilters {
   hasCriticism: string;
   search: string;
   sortOrder: string;
+  postCategory: string;
 }
 
 interface SharedFilterProps {
@@ -81,7 +82,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
   const [sentiment, setSentiment] = useState("");
   const [relevance, setRelevance] = useState("");
   const [criticism, setCriticism] = useState("");
-  const [postType, setPostType] = useState("");
+  const [postCategory, setPostCategory] = useState("");
 
   // Calculate yesterday's date for max date restriction
   const yesterday = useMemo(() => {
@@ -99,7 +100,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
       setSentiment(appliedFilters.sentiment || "");
       setRelevance(appliedFilters.relevance || "");
       setCriticism(appliedFilters.hasCriticism || "");
-      setPostType(appliedFilters.postType || "");
+      setPostCategory(appliedFilters.postCategory || "");
       setSearchQuery(appliedFilters.search || "");
       setSortOrder(appliedFilters.sortOrder || "desc");
     }
@@ -167,16 +168,15 @@ const SharedFilter: FC<SharedFilterProps> = ({
   ];
 
   const postTypeData = [
-    { value: "all", label: "Post Type" },
-    { value: "Organic Post", label: "Organic Post" },
-    { value: "Commercial Post", label: "Commercial Post" },
-    { value: "Own Posts", label: "Own Posts" },
+    { value: "organic post", label: "Organic Post" },
+    { value: "commercial post", label: "Commercial Post" },
+    { value: "own post", label: "Own Posts" },
   ];
 
-  const handlePostType = (data: string) => {
-    setPostType(data);
+  const handlePostCategory = (data: string) => {
+    setPostCategory(data);
     if (onFilterChange) {
-      onFilterChange({ postType: data });
+      onFilterChange({ postCategory: data });
     }
   };
 
@@ -248,7 +248,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
         relevance: "",
         hasCriticism: "",
         search: "",
-        postType: "",
+        postCategory: "",
       });
     }
   };
@@ -372,11 +372,12 @@ const SharedFilter: FC<SharedFilterProps> = ({
           })}
         </Select>
         <Select
-          id="post-type"
-          value={postType}
-          onChange={(e) => handlePostType(e.target.value)}
+          id="Category"
+          value={postCategory}
+          onChange={(e) => handlePostCategory(e.target.value)}
           disabled={isLoading}
         >
+          <option value="">Post Type</option>
           {postTypeData.map((item, index) => {
             return (
               <option key={index} value={item.value}>
@@ -438,9 +439,9 @@ const SharedFilter: FC<SharedFilterProps> = ({
               Relevance: ≥{appliedFilters.relevance}
             </Badge>
           )}
-          {appliedFilters.postType && (
+          {appliedFilters.postCategory && (
             <Badge color="info" className="text-xs">
-              Post Type: {appliedFilters.postType}
+              Post Type: {appliedFilters.postCategory}
             </Badge>
           )}
           {appliedFilters.hasCriticism && (
@@ -460,7 +461,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
             appliedFilters.sentiment ||
             appliedFilters.relevance ||
             appliedFilters.hasCriticism ||
-            appliedFilters.postType ||
+            appliedFilters.postCategory ||
             appliedFilters.search) && (
             <button
               onClick={clearFilters}

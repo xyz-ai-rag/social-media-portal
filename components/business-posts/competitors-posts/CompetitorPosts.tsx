@@ -38,6 +38,7 @@ interface AppliedFilters {
   hasCriticism: string;
   search: string;
   sortOrder: string;
+  postCategory: string;
 }
 
 const CompetitorPosts: FC<CompetitorPostsProps> = ({
@@ -74,7 +75,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
   const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
   const [adjacentPagesLoading, setAdjacentPagesLoading] = useState(false);
-  
+
   // Calculate yesterday's date for date limits
   const yesterday = useMemo(() => {
     const date = new Date();
@@ -101,6 +102,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
             hasCriticism: "",
             search: "",
             sortOrder: "desc",
+            postCategory: "",
             page: 1,
           };
     }
@@ -110,11 +112,12 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
       relevance: "",
       hasCriticism: "",
       search: "",
+      postCategory: "",
       sortOrder: "desc",
       page: 1,
     };
   });
-  
+
   // Add this effect to save filters to session storage when they change
   useEffect(() => {
     localStorage.setItem("competitors_page_filters", JSON.stringify(filters));
@@ -236,6 +239,8 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         if (filters.hasCriticism)
           queryParams.append("hasCriticism", filters.hasCriticism);
         if (filters.search) queryParams.append("search", filters.search);
+        if (filters.postCategory)
+          queryParams.append("postCategory", filters.postCategory);
         if (filters.sortOrder)
           queryParams.append("sortOrder", filters.sortOrder);
         queryParams.append("page", pageNumber.toString());
@@ -458,7 +463,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     });
     setIsPreviewModalOpen(true);
   };
-  
+
   const closePreviewModal = () => {
     setIsPreviewModalOpen(false);
   };
@@ -531,8 +536,10 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
 
   return (
     <>
-      <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-4">{competitorName}</h1>
-      
+      <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-4">
+        {competitorName}
+      </h1>
+
       {/* Filters */}
       <SharedFilter
         title=""
@@ -548,11 +555,14 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         onRefresh={fetchCompetitorPosts}
         onSortOrderChange={handleSortOrderChange}
       />
-      
+
       {/* Tabs Section */}
       <div className="mt-6">
         <div className="mb-4 border-b border-gray-200">
-          <ul className="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
+          <ul
+            className="flex flex-wrap -mb-px text-sm font-medium text-center"
+            role="tablist"
+          >
             <li className="mr-2" role="presentation">
               <button
                 className={`inline-block p-4 border-b-2 rounded-t-lg ${
@@ -583,7 +593,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
             </li>
           </ul>
         </div>
-      
+
         {/* Tab content */}
         <div className="tab-content">
           {activeTab === 0 && (
@@ -592,12 +602,15 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
               {!competitorId ? (
                 <div className="bg-white rounded-lg shadow p-6 mb-6">
                   <div className="text-center p-8 text-gray-500">
-                    <p className="mb-2 text-lg">Select a competitor from the dropdown above to view comparison statistics.</p>
+                    <p className="mb-2 text-lg">
+                      Select a competitor from the dropdown above to view
+                      comparison statistics.
+                    </p>
                   </div>
                 </div>
               ) : (
                 <div className="mb-6">
-                  <CompetitorStatsCard 
+                  <CompetitorStatsCard
                     competitorId={competitorId}
                     competitorName={competitorName}
                     businessId={businessId}
@@ -608,14 +621,17 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
               )}
             </>
           )}
-          
+
           {activeTab === 1 && (
             // Competitor Posts Tab Content
             <div>
               {!competitorId ? (
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="text-center p-8 text-gray-500">
-                    <p className="mb-2 text-lg">Select a competitor from the dropdown above to view their posts.</p>
+                    <p className="mb-2 text-lg">
+                      Select a competitor from the dropdown above to view their
+                      posts.
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -632,14 +648,13 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
                   onSortOrderChange={handleSortOrderChange}
                   openModal={openModal}
                   openPreviewModal={openPreviewModal}
-                
                 />
               )}
             </div>
           )}
         </div>
       </div>
-      
+
       {/* Modals */}
       <PostPreviewCard
         isOpen={isPreviewModalOpen}
@@ -651,7 +666,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         isLoadingAdjacentPages={adjacentPagesLoading}
         pagination={pagination}
       />
-      
+
       <CompetitorPostCard
         isOpen={isModalOpen}
         onClose={closeModal}

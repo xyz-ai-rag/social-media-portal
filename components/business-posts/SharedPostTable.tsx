@@ -176,7 +176,7 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                       {item.relvance}
                     </Table.Cell>
                     <Table.Cell className="text-center align-middle">
-                      {item.post_category}
+                      {item.postCategory || "Null"}
                     </Table.Cell>
                     <Table.Cell className="text-center align-middle">
                       {item.sentiment}
