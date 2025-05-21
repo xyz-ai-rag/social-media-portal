@@ -2,7 +2,7 @@
 
 import React, { ReactNode, useRef, useEffect } from "react";
 import { Modal, Spinner } from "flowbite-react";
-import { PostData } from "./SharedFilter"; 
+import { PostData } from "./SharedFilter";
 
 // Base interface for shared post data
 export interface PreviewModalProps {
@@ -179,6 +179,14 @@ const PreviewModal = ({
                         : "Not specified"}
                     </p>
                   </div>
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium text-gray-500">
+                      Post Type
+                    </p>
+                    <p className="text-sm text-gray-900">
+                      {rowData.postCategory || "Null"}
+                    </p>
+                  </div>
                   {/* Negative Feedback Summary */}
                   <div className="col-span-2">
                     <p className="text-sm font-medium text-gray-500">
@@ -190,10 +198,8 @@ const PreviewModal = ({
                         : "No negative feedback"}
                     </p>
                   </div>
-                    
                 </div>
               </div>
-
             </Modal.Body>
 
             {/* Modal.Footer with Navigation */}

@@ -8,6 +8,8 @@ import PostCard from "./PostCard";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "../SharedFilter";
 import PostPreviewCard from "../PostPreviewCard";
+import { useDateRange } from "@/context/DateRangeContext";
+import DateRangePicker from "@/components/dashboard/DateRangePicker";
 
 interface BusinessPostsProps {
   clientId: string;
@@ -30,6 +32,7 @@ interface AppliedFilters {
   hasCriticism: string;
   search: string;
   sortOrder: string;
+  postCategory: string;
 }
 
 const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
@@ -54,7 +57,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
   const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
   const [adjacentPagesLoading, setAdjacentPagesLoading] = useState(false);
-  
+
   // Calculate yesterday's date for date limits
   const yesterday = useMemo(() => {
     const date = new Date();
@@ -81,6 +84,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
             hasCriticism: "",
             search: "",
             sortOrder: "desc",
+            postCategory: "",
             page: 1,
           };
     }
@@ -91,29 +95,38 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       hasCriticism: "",
       search: "",
       sortOrder: "desc",
+      postCategory: "",
       page: 1,
     };
   });
-  
   useEffect(() => {
     localStorage.setItem("business_page_filters", JSON.stringify(filters));
   }, [filters]);
-  
+
+  // Get date range from context.
+  const { dateRange } = useDateRange();
+
   // setting default date
-  const [dateRange, setDateRange] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("business_page_date");
-      return saved
-        ? JSON.parse(saved)
-        : { startDate: thirtyDaysAgo, endDate: yesterday };
-    }
-    return { startDate: thirtyDaysAgo, endDate: yesterday };
+  const [dateRangeOfPosts, setDateRangeOfPosts] = useState({
+    startDate: "",
+    endDate: "",
   });
 
+  // Process dates using helper functions from timeUtils.
+  const startDateProcessed = useMemo(
+    () => dateRange.startDate.split("T")[0],
+    [dateRange.startDate]
+  );
+  const endDateProcessed = useMemo(
+    () => dateRange.endDate.split("T")[0],
+    [dateRange.endDate]
+  );
   useEffect(() => {
-    localStorage.setItem("business_page_date", JSON.stringify(dateRange));
-  }, [dateRange]);
-  
+    setDateRangeOfPosts({
+      startDate: startDateProcessed,
+      endDate: endDateProcessed,
+    });
+  }, [startDateProcessed, endDateProcessed]);
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
     null
@@ -141,16 +154,16 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       try {
         // Ensure endDate is not after yesterday
         const endDate =
-          new Date(dateRange.endDate) > new Date(yesterday)
+          new Date(dateRangeOfPosts.endDate) > new Date(yesterday)
             ? yesterday
-            : dateRange.endDate;
+            : dateRangeOfPosts.endDate;
 
         // Build query parameters
         const queryParams = new URLSearchParams();
         queryParams.append("businessId", businessId);
 
-        if (dateRange.startDate)
-          queryParams.append("startDate", dateRange.startDate);
+        if (dateRangeOfPosts.startDate)
+          queryParams.append("startDate", dateRangeOfPosts.startDate);
         queryParams.append("endDate", endDate);
         if (filters.platform) queryParams.append("platform", filters.platform);
         if (filters.sentiment)
@@ -159,6 +172,8 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
           queryParams.append("relevance", filters.relevance);
         if (filters.hasCriticism)
           queryParams.append("hasCriticism", filters.hasCriticism);
+        if (filters.postCategory)
+          queryParams.append("postCategory", filters.postCategory);
         if (filters.search) queryParams.append("search", filters.search);
         if (filters.sortOrder)
           queryParams.append("sortOrder", filters.sortOrder);
@@ -193,7 +208,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         return { posts: [], pagination: null, appliedFilters: null };
       }
     },
-    [businessId, filters, dateRange, yesterday]
+    [businessId, filters, dateRangeOfPosts, yesterday]
   );
 
   // Main fetch function for current page
@@ -264,7 +279,12 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     if ((isModalOpen || isPreviewModalOpen) && pagination.totalPages > 1) {
       fetchAdjacentPages();
     }
-  }, [isModalOpen, isPreviewModalOpen, pagination.currentPage, fetchAdjacentPages]);
+  }, [
+    isModalOpen,
+    isPreviewModalOpen,
+    pagination.currentPage,
+    fetchAdjacentPages,
+  ]);
 
   // Handle opening the modal
   const openModal = (row: any) => {
@@ -370,11 +390,10 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     ) {
       newFilters.endDate = yesterday;
     }
-    // Extract startDate / endDate and save to local dateRange
     const { startDate, endDate, ...otherFilters } = newFilters;
 
     if (endDate || startDate) {
-      setDateRange((prevdate: object) => ({
+      setDateRangeOfPosts((prevdate: object) => ({
         ...prevdate,
         ...(startDate && { startDate: startDate }),
         ...(endDate && { endDate: endDate }),
@@ -401,11 +420,13 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
 
   return (
     <>
-      {/* Title */}
-      <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-4">
-        {`Posts for ${businessName || "Business"}`}
-      </h1>
-      
+      {/* Head */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <h1 className="text-[34px] font-bold text-[#5D5FEF]">
+          {`Posts for ${businessName || "Business"}`}
+        </h1>
+        <DateRangePicker page="business_page" businessId={businessId} />
+      </div>
       {/* Filters */}
       <SharedFilter
         title=""
@@ -418,8 +439,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         onRefresh={fetchPosts}
         onSortOrderChange={handleSortOrderChange}
       />
-    
-      
+
       {/* Posts Table */}
       <SharedPostTable
         listData={posts}
@@ -435,7 +455,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         openModal={openModal}
         openPreviewModal={openPreviewModal}
       />
-      
+
       {/* Modals */}
       <PostCard
         isOpen={isModalOpen}
@@ -447,7 +467,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         isLoadingAdjacentPages={adjacentPagesLoading}
         pagination={pagination}
       />
-      
+
       <PostPreviewCard
         isOpen={isPreviewModalOpen}
         onClose={closePreviewModal}

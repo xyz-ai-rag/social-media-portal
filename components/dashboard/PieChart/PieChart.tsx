@@ -231,8 +231,8 @@ export default function PieChartComponent({
         Platform Distribution
       </h2>
       <div className="text-sm text-gray-600 mb-4">
-        Posts from {format(new Date(dateRange.startDate), "MMM d")} to{" "}
-        {format(new Date(dateRange.endDate), "MMM d")}
+        Posts from {format(new Date(dateRange.startDate), "MMM d yyyy")} to{" "}
+        {format(new Date(dateRange.endDate), "MMM d yyyy")}
       </div>
       <div className="h-80">
         <div ref={chartRef} style={{ width: "100%", height: "100%" }} />

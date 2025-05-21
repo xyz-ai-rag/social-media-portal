@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "10");
     const sortOrder = (searchParams.get("sortOrder") || "desc").toLowerCase();
+    const postCategory = searchParams.get("postCategory") || "";
 
     // Build query conditions. Note the description filter preserves extra white spaces.
     const whereConditions: any = {
@@ -67,11 +68,10 @@ export async function GET(request: NextRequest) {
     };
 
     // Apply date range filter (default: last 7 days, excluding today)
-    const startDateTime = `${startDate} 0:00:00`;
-    const endDateTime = `${endDate} 23:59:59`;
-
+    const startDateTime = new Date(`${startDate}T00:00:00.000Z`);
+    const endDateTime = new Date(`${endDate}T23:59:59.999Z`);
     whereConditions.last_update_time = {
-      [Op.between]: [new Date(startDateTime), new Date(endDateTime)],
+      [Op.between]: [startDateTime, endDateTime],
     };
 
     // Apply platform filter if provided with mapping
@@ -120,6 +120,10 @@ export async function GET(request: NextRequest) {
       whereConditions.has_negative_or_criticism = criticismValue;
     }
 
+    if (postCategory) {
+      whereConditions.post_category = postCategory;
+    }
+
     // Apply search filter if provided
     if (search) {
       const keywords = search.trim().split(/\s+/);
@@ -132,6 +136,7 @@ export async function GET(request: NextRequest) {
           { tag_list: { [Op.iLike]: `%${keyword}%` } },
           { english_tag_list: { [Op.iLike]: `%${keyword}%` } },
           { nickname: { [Op.iLike]: `%${keyword}%` } },
+          { post_category: { [Op.iLike]: `%${keyword}%` } },
         ],
       }));
     }
@@ -148,23 +153,24 @@ export async function GET(request: NextRequest) {
     const { rows } = await BusinessPostModel.findAndCountAll({
       where: whereConditions,
       attributes: [
-        'business_id',
-        'note_id',
-        'description',
-        'title',
-        'english_desc',
-        'english_preview_text',
-        'english_title',
-        'tag_list',
-        'english_tag_list',
-        'last_update_time',
-        'english_sentiment',
-        'nickname',
-        'relevance_percentage',
-        'platform',
-        'has_negative_or_criticism',
-        'negative_feedback_summary',
-        'note_url'
+        "business_id",
+        "note_id",
+        "description",
+        "title",
+        "english_desc",
+        "english_preview_text",
+        "english_title",
+        "tag_list",
+        "english_tag_list",
+        "last_update_time",
+        "english_sentiment",
+        "nickname",
+        "relevance_percentage",
+        "platform",
+        "has_negative_or_criticism",
+        "negative_feedback_summary",
+        "note_url",
+        "post_category",
       ],
       order: [["last_update_time", sortOrder === "asc" ? "ASC" : "DESC"]],
       limit: pageSize,
@@ -192,9 +198,12 @@ export async function GET(request: NextRequest) {
       return {
         id: postData.note_id,
         businessId: postData.business_id,
-        description: postData.description,         // Original description (preserving white spaces)
-        englishDesc: postData.english_desc,         // English description
-        post: postData.english_preview_text || postData.english_desc || postData.description,
+        description: postData.description, // Original description (preserving white spaces)
+        englishDesc: postData.english_desc, // English description
+        post:
+          postData.english_preview_text ||
+          postData.english_desc ||
+          postData.description,
         title: postData.title,
         englishTitle: postData.english_title,
         displayTitle: postData.english_title || postData.title,
@@ -210,7 +219,8 @@ export async function GET(request: NextRequest) {
         dbPlatform: postData.platform,
         hasCriticism: postData.has_negative_or_criticism,
         criticismSummary: postData.negative_feedback_summary,
-        url: postData.note_url
+        url: postData.note_url,
+        postCategory: postData.post_category,
       };
     });
 
@@ -231,6 +241,7 @@ export async function GET(request: NextRequest) {
         hasCriticism,
         search,
         sortOrder,
+        postCategory,
       },
     });
   } catch (error: any) {
@@ -251,28 +262,13 @@ function formatDateForQuery(date: Date): string {
 }
 
 // Helper function to format date for display
-function formatDisplayDate(date: Date): string {
+function formatDisplayDate(date: Date | string): string {
   const d = new Date(date);
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  const month = months[d.getMonth()];
-  const day = d.getDate();
-  const hours = d.getHours();
-  const minutes = d.getMinutes().toString().padStart(2, "0");
-  const ampm = hours >= 12 ? "PM" : "AM";
-  const formattedHours = hours % 12 || 12;
-
-  return `${month} ${day} - ${formattedHours}:${minutes}${ampm}`;
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 }

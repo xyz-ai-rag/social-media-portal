@@ -2,14 +2,10 @@
 
 import { FC, useState, useEffect, ReactNode, useMemo } from "react";
 import { FaSync } from "react-icons/fa";
-import {
-  TextInput,
-  Select,
-  Badge,
-  Button,
-  Alert,
-} from "flowbite-react";
-import DatePicker from "./DatePicker";
+import { TextInput, Select, Badge, Button, Alert } from "flowbite-react";
+import DateRangePicker from "../dashboard/DateRangePicker";
+import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
+import { useDateRange } from "@/context/DateRangeContext";
 
 // Base post data structure shared between components
 export interface PostData {
@@ -44,6 +40,7 @@ interface AppliedFilters {
   hasCriticism: string;
   search: string;
   sortOrder: string;
+  postCategory?: string | null;
 }
 
 interface SharedFilterProps {
@@ -87,6 +84,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
   const [sentiment, setSentiment] = useState("");
   const [relevance, setRelevance] = useState("");
   const [criticism, setCriticism] = useState("");
+  const [postCategory, setPostCategory] = useState("");
 
   // Calculate yesterday's date for max date restriction
   const yesterday = useMemo(() => {
@@ -104,6 +102,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
       setSentiment(appliedFilters.sentiment || "");
       setRelevance(appliedFilters.relevance || "");
       setCriticism(appliedFilters.hasCriticism || "");
+      setPostCategory(appliedFilters.postCategory || "");
       setSearchQuery(appliedFilters.search || "");
       setSortOrder(appliedFilters.sortOrder || "desc");
     }
@@ -116,27 +115,6 @@ const SharedFilter: FC<SharedFilterProps> = ({
     setPlatform(data);
     if (onFilterChange) {
       onFilterChange({ platform: data });
-    }
-  };
-
-  // Handle Start Date Change
-  const handleStartDateChange = (date: string) => {
-    setStartDate(date);
-    if (onFilterChange) {
-      onFilterChange({ startDate: date });
-    }
-  };
-
-  // Handle End Date Change
-  const handleEndDateChange = (date: string) => {
-    // Prevent dates after yesterday
-    if (date > yesterday) {
-      date = yesterday;
-    }
-
-    setEndDate(date);
-    if (onFilterChange) {
-      onFilterChange({ endDate: date });
     }
   };
 
@@ -169,6 +147,19 @@ const SharedFilter: FC<SharedFilterProps> = ({
     { value: "Has Criticism", label: "Has negative feedback" },
     { value: "No Criticism", label: "No negative feedback" },
   ];
+
+  const postTypeData = [
+    { value: "organic post", label: "Organic Post" },
+    { value: "commercial post", label: "Commercial Post" },
+    { value: "own post", label: "Own Posts" },
+  ];
+
+  const handlePostCategory = (data: string) => {
+    setPostCategory(data);
+    if (onFilterChange) {
+      onFilterChange({ postCategory: data });
+    }
+  };
 
   const handleCriticism = (data: string) => {
     setCriticism(data);
@@ -238,30 +229,13 @@ const SharedFilter: FC<SharedFilterProps> = ({
         relevance: "",
         hasCriticism: "",
         search: "",
+        postCategory: "",
       });
     }
   };
 
   return (
     <div className="bg-white relative">
-      {/* Head */}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-[34px] font-bold text-[#5D5FEF]">{title}</h1>
-
-        {/* Refresh button */}
-        {/* <Button
-          color="light"
-          pill
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isLoading}
-          title="Refresh data"
-        >
-          <FaSync className={`${isLoading ? "animate-spin" : ""} mr-2`} />
-          Refresh
-        </Button> */}
-      </div>
-
       {/* Date Range Display */}
       <div className="mb-4">
         <div className="text-gray-500 text-sm">{getDateRangeText()}</div>
@@ -287,23 +261,6 @@ const SharedFilter: FC<SharedFilterProps> = ({
           <div className="min-w-40">{additionalFilters}</div>
         )}
 
-        <DatePicker
-          id="start-date"
-          label="Start Date"
-          value={startDate}
-          onChange={handleStartDateChange}
-          max={yesterday}
-          disabled={isLoading}
-        />
-
-        <DatePicker
-          id="end-date"
-          label="End Date"
-          value={endDate}
-          onChange={handleEndDateChange}
-          max={yesterday}
-          disabled={isLoading}
-        />
         <Select
           id="platform"
           value={platform}
@@ -353,6 +310,21 @@ const SharedFilter: FC<SharedFilterProps> = ({
         >
           <option value="">Feedback</option>
           {criticismData.map((item, index) => {
+            return (
+              <option key={index} value={item.value}>
+                {item.label}
+              </option>
+            );
+          })}
+        </Select>
+        <Select
+          id="Category"
+          value={postCategory}
+          onChange={(e) => handlePostCategory(e.target.value)}
+          disabled={isLoading}
+        >
+          <option value="">Post Type</option>
+          {postTypeData.map((item, index) => {
             return (
               <option key={index} value={item.value}>
                 {item.label}
@@ -413,6 +385,11 @@ const SharedFilter: FC<SharedFilterProps> = ({
               Relevance: ≥{appliedFilters.relevance}
             </Badge>
           )}
+          {appliedFilters.postCategory && (
+            <Badge color="info" className="text-xs">
+              Post Type: {appliedFilters.postCategory}
+            </Badge>
+          )}
           {appliedFilters.hasCriticism && (
             <Badge color="info" className="text-xs">
               {appliedFilters.hasCriticism === "true" ||
@@ -430,6 +407,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
             appliedFilters.sentiment ||
             appliedFilters.relevance ||
             appliedFilters.hasCriticism ||
+            appliedFilters.postCategory ||
             appliedFilters.search) && (
             <button
               onClick={clearFilters}

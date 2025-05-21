@@ -1,17 +1,15 @@
 import { BusinessModel } from "@/feature/sqlORM/modelorm";
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * API endpoint to get business information by ID
  * GET /api/business/:businessId
  */
-export async function GET(
-  request: NextRequest
-) {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const businessId = searchParams.get("businessId");
-    
+
     if (!businessId) {
       return NextResponse.json(
         { error: "Business ID is required" },
@@ -21,7 +19,7 @@ export async function GET(
 
     // Find the business by ID
     const business = await BusinessModel.findOne({
-      where: { business_id: businessId }
+      where: { business_id: businessId },
     });
 
     if (!business) {
@@ -37,6 +35,7 @@ export async function GET(
       business_name: business.business_name,
       business_city: business.business_city,
       business_type: business.business_type,
+      last_crawled_time: business.last_crawled_time,
     });
   } catch (error: any) {
     console.error("Error fetching business:", error.message);

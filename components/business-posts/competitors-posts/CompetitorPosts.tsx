@@ -11,6 +11,8 @@ import { PostData } from "../SharedFilter";
 import CompetitorStatsCard from "./CompetitorStatsCard";
 import PostPreviewCard from "../PostPreviewCard";
 import { FaSync } from "react-icons/fa";
+import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import { useDateRange } from "@/context/DateRangeContext";
 
 interface CompetitorPostsProps {
   clientId: string;
@@ -38,6 +40,7 @@ interface AppliedFilters {
   hasCriticism: string;
   search: string;
   sortOrder: string;
+  postCategory: string;
 }
 
 const CompetitorPosts: FC<CompetitorPostsProps> = ({
@@ -74,7 +77,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
   const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
   const [adjacentPagesLoading, setAdjacentPagesLoading] = useState(false);
-  
+
   // Calculate yesterday's date for date limits
   const yesterday = useMemo(() => {
     const date = new Date();
@@ -101,6 +104,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
             hasCriticism: "",
             search: "",
             sortOrder: "desc",
+            postCategory: "",
             page: 1,
           };
     }
@@ -110,30 +114,41 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
       relevance: "",
       hasCriticism: "",
       search: "",
+      postCategory: "",
       sortOrder: "desc",
       page: 1,
     };
   });
-  
+
   // Add this effect to save filters to session storage when they change
   useEffect(() => {
     localStorage.setItem("competitors_page_filters", JSON.stringify(filters));
   }, [filters]);
 
+  // Get date range from context.
+  const { dateRange } = useDateRange();
+
   // setting default date
-  const [dateRange, setDateRange] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("competitors_page_date");
-      return saved
-        ? JSON.parse(saved)
-        : { startDate: thirtyDaysAgo, endDate: yesterday };
-    }
-    return { startDate: thirtyDaysAgo, endDate: yesterday };
+  const [dateRangeOfPosts, setDateRangeOfPosts] = useState({
+    startDate: "",
+    endDate: "",
   });
 
+  // Process dates using helper functions from timeUtils.
+  const startDateProcessed = useMemo(
+    () => dateRange.startDate.split("T")[0],
+    [dateRange.startDate]
+  );
+  const endDateProcessed = useMemo(
+    () => dateRange.endDate.split("T")[0],
+    [dateRange.endDate]
+  );
   useEffect(() => {
-    localStorage.setItem("competitors_page_date", JSON.stringify(dateRange));
-  }, [dateRange]);
+    setDateRangeOfPosts({
+      startDate: startDateProcessed,
+      endDate: endDateProcessed,
+    });
+  }, [startDateProcessed, endDateProcessed]);
 
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
@@ -222,11 +237,11 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         const queryParams = new URLSearchParams();
         queryParams.append("businessId", competitorId); // Use competitorId as businessId for API
         const endDate =
-          new Date(dateRange.endDate) > new Date(yesterday)
+          new Date(dateRangeOfPosts.endDate) > new Date(yesterday)
             ? yesterday
-            : dateRange.endDate;
-        if (dateRange.startDate)
-          queryParams.append("startDate", dateRange.startDate);
+            : dateRangeOfPosts.endDate;
+        if (dateRangeOfPosts.startDate)
+          queryParams.append("startDate", dateRangeOfPosts.startDate);
         queryParams.append("endDate", endDate);
         if (filters.platform) queryParams.append("platform", filters.platform);
         if (filters.sentiment)
@@ -236,6 +251,8 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         if (filters.hasCriticism)
           queryParams.append("hasCriticism", filters.hasCriticism);
         if (filters.search) queryParams.append("search", filters.search);
+        if (filters.postCategory)
+          queryParams.append("postCategory", filters.postCategory);
         if (filters.sortOrder)
           queryParams.append("sortOrder", filters.sortOrder);
         queryParams.append("page", pageNumber.toString());
@@ -271,7 +288,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         return { posts: [], pagination: null, appliedFilters: null };
       }
     },
-    [competitorId, filters, dateRange, yesterday]
+    [competitorId, filters, dateRangeOfPosts, yesterday]
   );
 
   // Main fetch function for competitor posts
@@ -458,7 +475,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     });
     setIsPreviewModalOpen(true);
   };
-  
+
   const closePreviewModal = () => {
     setIsPreviewModalOpen(false);
   };
@@ -476,7 +493,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     const { startDate, endDate, ...otherFilters } = newFilters;
 
     if (endDate || startDate) {
-      setDateRange((prevdate: object) => ({
+      setDateRangeOfPosts((prevdate: object) => ({
         ...prevdate,
         ...(startDate && { startDate: startDate }),
         ...(endDate && { endDate: endDate }),
@@ -531,8 +548,12 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
 
   return (
     <>
-      <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-4">{competitorName}</h1>
-      
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <h1 className="text-[34px] font-bold text-[#5D5FEF]">
+          {competitorName}
+        </h1>
+        <DateRangePicker page="competitors_page" businessId={businessId} />
+      </div>
       {/* Filters */}
       <SharedFilter
         title=""
@@ -548,11 +569,14 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         onRefresh={fetchCompetitorPosts}
         onSortOrderChange={handleSortOrderChange}
       />
-      
+
       {/* Tabs Section */}
       <div className="mt-6">
         <div className="mb-4 border-b border-gray-200">
-          <ul className="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
+          <ul
+            className="flex flex-wrap -mb-px text-sm font-medium text-center"
+            role="tablist"
+          >
             <li className="mr-2" role="presentation">
               <button
                 className={`inline-block p-4 border-b-2 rounded-t-lg ${
@@ -583,7 +607,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
             </li>
           </ul>
         </div>
-      
+
         {/* Tab content */}
         <div className="tab-content">
           {activeTab === 0 && (
@@ -592,30 +616,36 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
               {!competitorId ? (
                 <div className="bg-white rounded-lg shadow p-6 mb-6">
                   <div className="text-center p-8 text-gray-500">
-                    <p className="mb-2 text-lg">Select a competitor from the dropdown above to view comparison statistics.</p>
+                    <p className="mb-2 text-lg">
+                      Select a competitor from the dropdown above to view
+                      comparison statistics.
+                    </p>
                   </div>
                 </div>
               ) : (
                 <div className="mb-6">
-                  <CompetitorStatsCard 
+                  <CompetitorStatsCard
                     competitorId={competitorId}
                     competitorName={competitorName}
                     businessId={businessId}
-                    startDate={dateRange.startDate}
-                    endDate={dateRange.endDate}
+                    startDate={dateRangeOfPosts.startDate}
+                    endDate={dateRangeOfPosts.endDate}
                   />
                 </div>
               )}
             </>
           )}
-          
+
           {activeTab === 1 && (
             // Competitor Posts Tab Content
             <div>
               {!competitorId ? (
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="text-center p-8 text-gray-500">
-                    <p className="mb-2 text-lg">Select a competitor from the dropdown above to view their posts.</p>
+                    <p className="mb-2 text-lg">
+                      Select a competitor from the dropdown above to view their
+                      posts.
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -632,14 +662,13 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
                   onSortOrderChange={handleSortOrderChange}
                   openModal={openModal}
                   openPreviewModal={openPreviewModal}
-                
                 />
               )}
             </div>
           )}
         </div>
       </div>
-      
+
       {/* Modals */}
       <PostPreviewCard
         isOpen={isPreviewModalOpen}
@@ -651,7 +680,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         isLoadingAdjacentPages={adjacentPagesLoading}
         pagination={pagination}
       />
-      
+
       <CompetitorPostCard
         isOpen={isModalOpen}
         onClose={closeModal}

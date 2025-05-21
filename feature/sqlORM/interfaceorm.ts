@@ -1,4 +1,4 @@
-import { Model } from 'sequelize';
+import { Model } from "sequelize";
 
 export interface BusinessPostInstance extends Model {
   platform: string;
@@ -49,7 +49,8 @@ export interface BusinessPostInstance extends Model {
   english_preview_text: string;
   last_modify_action: string;
   import_id: string; // uuid,
-  is_official_post:boolean
+  is_official_post: boolean;
+  post_category: string;
 }
 
 export interface BusinessInstance extends Model {
@@ -61,6 +62,7 @@ export interface BusinessInstance extends Model {
   business_type: string; // Optional
   similar_businesses: string[]; // Optional
   total_relevant_posts: number; // Optional
+  last_crawled_time: Date;
 }
 
 export interface ClientInstance extends Model {
@@ -71,13 +73,13 @@ export interface ClientInstance extends Model {
   business_mapping: string[]; // Array of text
   email_trigger_time?: string; // Optional (can be null)
   report_days?: number[]; // Optional (array of integers)
-  registered_email:string;
+  registered_email: string;
 }
 
 export interface ClientUsersInstance extends Model {
   id: string; // UUID
-  client_id:string;
-  registered_email:string;
+  client_id: string;
+  registered_email: string;
 }
 
 export interface ActiveSessionsInstance extends Model {

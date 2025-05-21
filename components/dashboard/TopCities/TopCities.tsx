@@ -33,7 +33,7 @@ const TopCitiesChart = ({ clientId, businessId }: TopCitiesChartProps) => {
     const d = new Date(date);
     const month = d.toLocaleString("default", { month: "short" });
     const day = d.getDate();
-    return `${month} ${day}`;
+    return `${month} ${day} ${d.getFullYear()}`;
   };
 
   useEffect(() => {
