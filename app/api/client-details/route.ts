@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { ClientModel } from '@/feature/sqlORM/modelorm';
-import { BusinessModel } from '@/feature/sqlORM/modelorm';
-import { ClientUsersModel } from '@/feature/sqlORM/modelorm';
-import { Op } from 'sequelize';
+import { NextRequest, NextResponse } from "next/server";
+import { ClientModel } from "@/feature/sqlORM/modelorm";
+import { BusinessModel } from "@/feature/sqlORM/modelorm";
+import { ClientUsersModel } from "@/feature/sqlORM/modelorm";
+import { Op } from "sequelize";
 
 interface Business {
   business_id: string;
@@ -16,20 +16,20 @@ interface Business {
 export async function GET(request: NextRequest) {
   // Extract email from query parameter, e.g. /api/client-details?email=user@example.com
   const { searchParams } = new URL(request.url);
-  const email = searchParams.get('email');
+  const email = searchParams.get("email");
   if (!email) {
-    return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    return NextResponse.json({ error: "Email is required" }, { status: 400 });
   }
 
   try {
     // First, query the client_users table to find the user with the given email
     const userRecord = await ClientUsersModel.findOne({
       where: { registered_email: email },
-      attributes: ['client_id'],
+      attributes: ["client_id"],
     });
 
     if (!userRecord) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Extract client_id from the user record
@@ -38,20 +38,23 @@ export async function GET(request: NextRequest) {
     // Now query the clients table using the client_id
     const clientRecord = await ClientModel.findOne({
       where: { id: clientId },
-      attributes: ['id', 'client_name', 'business_mapping'],
+      attributes: ["id", "client_name", "business_mapping"],
     });
-    
+
     if (!clientRecord) {
-      return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+      return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
-    
+
     // Extract and normalize business_mapping from the found client.
     let businessIds: string[] = [];
 
     // First, check if business_mapping is already an array.
     if (Array.isArray(clientRecord.business_mapping)) {
       // If it's a nested array (e.g. string[][]), flatten it.
-      if (clientRecord.business_mapping.length > 0 && Array.isArray(clientRecord.business_mapping[0])) {
+      if (
+        clientRecord.business_mapping.length > 0 &&
+        Array.isArray(clientRecord.business_mapping[0])
+      ) {
         businessIds = clientRecord.business_mapping.flat();
       } else {
         businessIds = clientRecord.business_mapping as string[];
@@ -84,29 +87,34 @@ export async function GET(request: NextRequest) {
           business_id: { [Op.in]: businessIds },
         },
         attributes: [
-          'business_id',
-          'business_name',
-          'search_keywords',
-          'business_city',
-          'business_type',
-          'similar_businesses'
+          "business_id",
+          "business_name",
+          "search_keywords",
+          "business_city",
+          "business_type",
+          "similar_businesses",
+          "last_crawled_time",
         ],
       });
-      
+
       // Ensure businesses is always an array of properly structured business objects
       businesses = businessRecords.map((biz: any) => {
         const business = biz.toJSON();
-        
+
         // Ensure search_keywords is an array
         if (!Array.isArray(business.search_keywords)) {
-          business.search_keywords = business.search_keywords ? [business.search_keywords] : [];
+          business.search_keywords = business.search_keywords
+            ? [business.search_keywords]
+            : [];
         }
-        
+
         // Ensure similar_businesses is an array
         if (!Array.isArray(business.similar_businesses)) {
-          business.similar_businesses = business.similar_businesses ? [business.similar_businesses] : [];
+          business.similar_businesses = business.similar_businesses
+            ? [business.similar_businesses]
+            : [];
         }
-        
+
         return business;
       });
     }
@@ -120,7 +128,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(responseData);
   } catch (error: any) {
-    console.error('API Error:', error);
+    console.error("API Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
