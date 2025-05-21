@@ -40,7 +40,7 @@ interface AppliedFilters {
   hasCriticism: string;
   search: string;
   sortOrder: string;
-  postCategory: string;
+  postCategory?: string | null;
 }
 
 interface SharedFilterProps {
