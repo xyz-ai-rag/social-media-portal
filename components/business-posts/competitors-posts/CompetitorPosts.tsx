@@ -128,9 +128,6 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   // Get date range from context.
   const { dateRange } = useDateRange();
 
-  // Get date range from context.
-  const { dateRange } = useDateRange();
-
   // setting default date
   const [dateRangeOfPosts, setDateRangeOfPosts] = useState({
     startDate: "",
