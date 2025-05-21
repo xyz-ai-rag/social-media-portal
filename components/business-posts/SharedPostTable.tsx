@@ -53,6 +53,9 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
     }
   };
 
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => { setIsClient(true); }, []);
+
   return (
     <div className="mt-6 bg-white rounded shadow overflow-hidden">
       {/* Table */}
@@ -62,34 +65,38 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
             <Table.HeadCell className="w-28 md:w-30 lg:w-38 xl:w-44">
               Date
               <div className="pl-2 flex flex-col">
-                <svg
-                  width="10"
-                  height="8"
-                  viewBox="0 0 6 4"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  onClick={() => handleSortOrderChange("asc")}
-                  className="cursor-pointer mb-1"
-                >
-                  <path
-                    d="M1.08711 4L4.91289 4C5.34007 4 5.57052 3.49894 5.29252 3.1746L3.37963 0.942899C3.18008 0.710094 2.81992 0.710094 2.62037 0.942899L0.707482 3.1746C0.429479 3.49894 0.659934 4 1.08711 4Z"
-                    fill={sortOrder === "asc" ? "#5D5FEF" : "#A5A6F6"}
-                  />
-                </svg>
-                <svg
-                  width="10"
-                  height="8"
-                  viewBox="0 0 6 4"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  onClick={() => handleSortOrderChange("desc")}
-                  className="cursor-pointer"
-                >
-                  <path
-                    d="M4.91289 0H1.08711C0.659934 0 0.429479 0.501059 0.707482 0.825396L2.62037 3.0571C2.81992 3.28991 3.18008 3.28991 3.37963 3.0571L5.29252 0.825396C5.57052 0.501059 5.34007 0 4.91289 0Z"
-                    fill={sortOrder === "desc" ? "#5D5FEF" : "#A5A6F6"}
-                  />
-                </svg>
+                {isClient && (
+                  <>
+                    <svg
+                      width="10"
+                      height="8"
+                      viewBox="0 0 6 4"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      onClick={() => handleSortOrderChange("asc")}
+                      className="cursor-pointer mb-1"
+                    >
+                      <path
+                        d="M1.08711 4L4.91289 4C5.34007 4 5.57052 3.49894 5.29252 3.1746L3.37963 0.942899C3.18008 0.710094 2.81992 0.710094 2.62037 0.942899L0.707482 3.1746C0.429479 3.49894 0.659934 4 1.08711 4Z"
+                        fill={sortOrder === "asc" ? "#5D5FEF" : "#A5A6F6"}
+                      />
+                    </svg>
+                    <svg
+                      width="10"
+                      height="8"
+                      viewBox="0 0 6 4"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      onClick={() => handleSortOrderChange("desc")}
+                      className="cursor-pointer"
+                    >
+                      <path
+                        d="M4.91289 0H1.08711C0.659934 0 0.429479 0.501059 0.707482 0.825396L2.62037 3.0571C2.81992 3.28991 3.18008 3.28991 3.37963 3.0571L5.29252 0.825396C5.57052 0.501059 5.34007 0 4.91289 0Z"
+                        fill={sortOrder === "desc" ? "#5D5FEF" : "#A5A6F6"}
+                      />
+                    </svg>
+                  </>
+                )}
               </div>
             </Table.HeadCell>
             <Table.HeadCell className="w-20 text-center">
