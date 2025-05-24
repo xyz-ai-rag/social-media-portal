@@ -1,8 +1,10 @@
 "use client";
 
 import { FC, useState, useEffect } from "react";
-import { Table, Spinner, Select } from "flowbite-react";
+import { Table, Spinner, Select, Tooltip } from "flowbite-react";
 import { PostData } from "./SharedFilter";
+import { FaThumbsUp, FaThumbsDown, FaHandPaper } from "react-icons/fa"
+import { FaCommentAlt } from "react-icons/fa"
 
 interface PaginationProps {
   currentPage: number;
@@ -63,34 +65,38 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
               <Table.HeadCell className="w-32">
                 Date
                 <div className="pl-2 flex flex-col">
-                  <svg
-                    width="10"
-                    height="8"
-                    viewBox="0 0 6 4"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    onClick={() => handleSortOrderChange("asc")}
-                    className="cursor-pointer mb-1"
-                  >
-                    <path
-                      d="M1.08711 4L4.91289 4C5.34007 4 5.57052 3.49894 5.29252 3.1746L3.37963 0.942899C3.18008 0.710094 2.81992 0.710094 2.62037 0.942899L0.707482 3.1746C0.429479 3.49894 0.659934 4 1.08711 4Z"
-                      fill={sortOrder === "asc" ? "#5D5FEF" : "#A5A6F6"}
-                    />
-                  </svg>
-                  <svg
-                    width="10"
-                    height="8"
-                    viewBox="0 0 6 4"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    onClick={() => handleSortOrderChange("desc")}
-                    className="cursor-pointer"
-                  >
-                    <path
-                      d="M4.91289 0H1.08711C0.659934 0 0.429479 0.501059 0.707482 0.825396L2.62037 3.0571C2.81992 3.28991 3.18008 3.28991 3.37963 3.0571L5.29252 0.825396C5.57052 0.501059 5.34007 0 4.91289 0Z"
-                      fill={sortOrder === "desc" ? "#5D5FEF" : "#A5A6F6"}
-                    />
-                  </svg>
+                  {isClient && (
+                    <>
+                      <svg
+                        width="10"
+                        height="8"
+                        viewBox="0 0 6 4"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        onClick={() => handleSortOrderChange("asc")}
+                        className="cursor-pointer mb-1"
+                      >
+                        <path
+                          d="M1.08711 4L4.91289 4C5.34007 4 5.57052 3.49894 5.29252 3.1746L3.37963 0.942899C3.18008 0.710094 2.81992 0.710094 2.62037 0.942899L0.707482 3.1746C0.429479 3.49894 0.659934 4 1.08711 4Z"
+                          fill={sortOrder === "asc" ? "#5D5FEF" : "#A5A6F6"}
+                        />
+                      </svg>
+                      <svg
+                        width="10"
+                        height="8"
+                        viewBox="0 0 6 4"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        onClick={() => handleSortOrderChange("desc")}
+                        className="cursor-pointer"
+                      >
+                        <path
+                          d="M4.91289 0H1.08711C0.659934 0 0.429479 0.501059 0.707482 0.825396L2.62037 3.0571C2.81992 3.28991 3.18008 3.28991 3.37963 3.0571L5.29252 0.825396C5.57052 0.501059 5.34007 0 4.91289 0Z"
+                          fill={sortOrder === "desc" ? "#5D5FEF" : "#A5A6F6"}
+                        />
+                      </svg>
+                    </>
+                  )}
                 </div>
               </Table.HeadCell>
 
@@ -107,13 +113,11 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
               <Table.HeadCell className="w-28 text-center">
                 Relevance Score
               </Table.HeadCell>
-              <Table.HeadCell className="w-36 text-center">
-                Post Type
+              <Table.HeadCell className="w-12 text-center">
               </Table.HeadCell>
-              <Table.HeadCell className="w-28 text-center">
-                Sentiment
+              <Table.HeadCell className="w-12 text-center">
               </Table.HeadCell>
-              <Table.HeadCell className="w-36 text-center"></Table.HeadCell>
+              <Table.HeadCell className="w-12 text-center"></Table.HeadCell>
             </Table.Head>
 
             <Table.Body className="divide-y">
@@ -180,16 +184,30 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                       {item.relvance}
                     </Table.Cell>
                     <Table.Cell className="text-center align-middle">
-                      {item.postCategory || "Null"}
+                      <Tooltip content={item.postCategory || "Null"} placement="top">
+                          {item.postCategory
+                            ? item.postCategory.charAt(0).toUpperCase()
+                            : "Null"}
+                      </Tooltip>
                     </Table.Cell>
                     <Table.Cell className="text-center align-middle">
-                      {item.sentiment}
+                      <Tooltip content={item.sentiment} placement="top">
+                        {item.sentiment === "Positive" ? (
+                          <FaThumbsUp />
+                        ) : item.sentiment === "Negative" ? (
+                          <FaThumbsDown />
+                        ) : (
+                          <FaHandPaper />
+                        )}
+                      </Tooltip>
                     </Table.Cell>
                     <Table.Cell className="text-center align-middle whitespace-nowrap">
                       {item.hasCriticism && (
-                        <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-sm dark:bg-red-900 dark:text-red-300">
-                          Has negative feedback
-                        </span>
+                        <Tooltip content="Has negative feedback" placement="top">
+                          <span className="flex justify-center items-center cursor-pointer">
+                            <FaCommentAlt />
+                          </span>
+                        </Tooltip>
                       )}
                     </Table.Cell>
                   </Table.Row>
@@ -209,11 +227,10 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
             <button
               disabled={currentPage <= 1 || isLoading}
               onClick={() => handlePageChange(currentPage - 1)}
-              className={`bg-transparent text-white p-2 ${
-                currentPage <= 1 || isLoading
-                  ? "opacity-50 cursor-not-allowed"
-                  : ""
-              }`}
+              className={`bg-transparent text-white p-2 ${currentPage <= 1 || isLoading
+                ? "opacity-50 cursor-not-allowed"
+                : ""
+                }`}
             >
               <svg
                 width="18"
@@ -238,11 +255,10 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
             <button
               disabled={currentPage >= totalPages || isLoading}
               onClick={() => handlePageChange(currentPage + 1)}
-              className={`bg-transparent text-white p-2 ${
-                currentPage >= totalPages || isLoading
-                  ? "opacity-50 cursor-not-allowed"
-                  : ""
-              }`}
+              className={`bg-transparent text-white p-2 ${currentPage >= totalPages || isLoading
+                ? "opacity-50 cursor-not-allowed"
+                : ""
+                }`}
             >
               <svg
                 width="18"

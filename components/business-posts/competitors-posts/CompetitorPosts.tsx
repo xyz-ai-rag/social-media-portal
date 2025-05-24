@@ -552,11 +552,10 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">
           {competitorName}
         </h1>
-        <DateRangePicker page="competitors_page" businessId={businessId} />
       </div>
       {/* Filters */}
       <SharedFilter
-        title=""
+        title="competitor_page"
         clientId={clientId}
         businessId={businessId}
         competitorId={competitorId}
