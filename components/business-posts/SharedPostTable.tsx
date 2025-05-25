@@ -3,8 +3,8 @@
 import { FC, useState, useEffect } from "react";
 import { Table, Spinner, Select, Tooltip } from "flowbite-react";
 import { PostData } from "./SharedFilter";
-import { FaThumbsUp, FaThumbsDown, FaHandPaper } from "react-icons/fa"
-import { FaCommentAlt } from "react-icons/fa"
+import { FaThumbsUp, FaThumbsDown, FaMinus } from "react-icons/fa"
+import { TbMessageExclamation } from "react-icons/tb"
 
 interface PaginationProps {
   currentPage: number;
@@ -184,7 +184,7 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                       {item.relvance}
                     </Table.Cell>
                     <Table.Cell className="text-center align-middle">
-                      <Tooltip content={item.postCategory || "Null"} placement="top">
+                      <Tooltip content={item.postCategory ? item.postCategory.charAt(0).toUpperCase() + item.postCategory.slice(1).toLowerCase() : "Null"} placement="top">
                           {item.postCategory
                             ? item.postCategory.charAt(0).toUpperCase()
                             : "Null"}
@@ -197,7 +197,7 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                         ) : item.sentiment === "Negative" ? (
                           <FaThumbsDown />
                         ) : (
-                          <FaHandPaper />
+                          <FaMinus />
                         )}
                       </Tooltip>
                     </Table.Cell>
@@ -205,7 +205,7 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                       {item.hasCriticism && (
                         <Tooltip content="Has negative feedback" placement="top">
                           <span className="flex justify-center items-center cursor-pointer">
-                            <FaCommentAlt />
+                            <TbMessageExclamation size={18} />
                           </span>
                         </Tooltip>
                       )}
