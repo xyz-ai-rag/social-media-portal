@@ -1,11 +1,8 @@
 "use client";
 
 import { FC, useState, useEffect, ReactNode, useMemo } from "react";
-import { FaSync } from "react-icons/fa";
 import { TextInput, Select, Badge, Button, Alert } from "flowbite-react";
 import DateRangePicker from "../dashboard/DateRangePicker";
-import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
-import { useDateRange } from "@/context/DateRangeContext";
 
 // Base post data structure shared between components
 export interface PostData {
@@ -44,7 +41,7 @@ interface AppliedFilters {
 }
 
 interface SharedFilterProps {
-  title: string | ReactNode;
+  title: string;
   clientId?: string;
   businessId?: string;
   competitorId?: string;
@@ -272,10 +269,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
             return <option key={index}>{item}</option>;
           })}
         </Select>
-      </div>
 
-      {/* Second Row Components */}
-      <div className="flex flex-wrap mt-4 gap-4">
         <Select
           id="sentiment"
           value={sentiment}
@@ -287,6 +281,13 @@ const SharedFilter: FC<SharedFilterProps> = ({
             return <option key={index}>{item}</option>;
           })}
         </Select>
+        <DateRangePicker page={title} businessId={businessId} />
+
+      </div>
+
+      {/* Second Row Components */}
+      <div className="flex flex-wrap mt-4 gap-4">
+        
         <Select
           id="relevance"
           value={relevance}
