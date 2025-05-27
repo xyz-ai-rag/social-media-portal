@@ -425,11 +425,10 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">
           {`Posts for ${businessName || "Business"}`}
         </h1>
-        <DateRangePicker page="business_page" businessId={businessId} />
       </div>
       {/* Filters */}
       <SharedFilter
-        title=""
+        title="business_page"
         clientId={clientId}
         businessId={businessId}
         isLoading={isLoading}
