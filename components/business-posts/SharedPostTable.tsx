@@ -187,7 +187,7 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                       <Tooltip content={item.postCategory ? item.postCategory.charAt(0).toUpperCase() + item.postCategory.slice(1).toLowerCase() : "Null"} placement="top">
                           {item.postCategory
                             ? item.postCategory.charAt(0).toUpperCase()
-                            : "Null"}
+                            : ""}
                       </Tooltip>
                     </Table.Cell>
                     <Table.Cell className="text-center align-middle">
