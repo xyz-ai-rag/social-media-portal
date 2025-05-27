@@ -27,6 +27,12 @@ export default function Footer() {
               Privacy Policy
             </a>
           </div>
+          {/* Disclaimer */}
+          <p className="text-gray-500 text-xs italic max-w-2xl mx-auto mb-2">
+            We use AI to monitor, analyze and report on the data. While we
+            strive for accuracy, AI can produce mistakes. Always double-check
+            important details for accuracy and reliability.
+          </p>
         </div>
       </div>
     </footer>
