@@ -184,10 +184,16 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                       {item.relvance}
                     </Table.Cell>
                     <Table.Cell className="text-center align-middle">
-                      <Tooltip content={item.postCategory ? item.postCategory.charAt(0).toUpperCase() + item.postCategory.slice(1).toLowerCase() : "Null"} placement="top">
-                          {item.postCategory
-                            ? item.postCategory.charAt(0).toUpperCase()
-                            : ""}
+                      <Tooltip content={
+                        item.postCategory === "organic post" ? "Organic Post" :
+                        item.postCategory === "commercial post" ? "Commercial Post" :
+                        item.postCategory === "own post" ? "Own Post" :
+                        "Null"
+                      } placement="top">
+                          {item.postCategory === "organic post" ? "O" :
+                           item.postCategory === "commercial post" ? "C" :
+                           item.postCategory === "own post" ? "W" :
+                           ""}
                       </Tooltip>
                     </Table.Cell>
                     <Table.Cell className="text-center align-middle">
@@ -195,7 +201,7 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                         {item.sentiment === "Positive" ? (
                           <FaThumbsUp />
                         ) : item.sentiment === "Negative" ? (
-                          <FaThumbsDown />
+                          <FaThumbsDown className="text-pink-300"/>
                         ) : (
                           <FaMinus />
                         )}
@@ -205,7 +211,7 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                       {item.hasCriticism && (
                         <Tooltip content="Has negative feedback" placement="top">
                           <span className="flex justify-center items-center cursor-pointer">
-                            <TbMessageExclamation size={18} />
+                            <TbMessageExclamation className="text-pink-300" size={18} />
                           </span>
                         </Tooltip>
                       )}
@@ -220,7 +226,7 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
 
       {/* Pagination */}
       {totalPages > 0 && (
-        <div className="flex justify-center w-full h-auto mt-3">
+        <div className="flex justify-center w-full h-auto mt-3 mb-4">
           <div className="flex items-center space-x-4">
             <span className="py-2">Page</span>
             {/* Left Arrow */}

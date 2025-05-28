@@ -58,7 +58,7 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           <DateRangePicker page="dashboard" businessId={businessId} />
         </div>
         <div className="flex flex-col items-end gap-2">
-          <h2 className="text-base font-medium text-gray-600 italic">
+          <h2 className="text-base font-light text-gray-600 italic">
             Last Update: {getFormattedTimestamp(lastCrawlTime)}
           </h2>
         </div>
