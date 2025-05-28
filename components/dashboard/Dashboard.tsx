@@ -31,7 +31,7 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
     const ampm = hours >= 12 ? "pm" : "am";
     hours = hours % 12 || 12;
 
-    return `${month} ${day}, ${year} – ${hours}:${minutes}${ampm}`;
+    return `${month} ${day}, ${year} – ${hours}:${minutes} ${ampm}`;
   };
 
   // Find current business name from clientDetails
@@ -57,8 +57,8 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           </h1>
           <DateRangePicker page="dashboard" businessId={businessId} />
         </div>
-        <div className="">
-          <h2 className="text-base font-medium text-gray-800 italic">
+        <div className="flex flex-col items-end gap-2">
+          <h2 className="text-base font-medium text-gray-600 italic">
             Last Update: {getFormattedTimestamp(lastCrawlTime)}
           </h2>
         </div>
