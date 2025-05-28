@@ -148,7 +148,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
   const postTypeData = [
     { value: "organic post", label: "Organic Post" },
     { value: "commercial post", label: "Commercial Post" },
-    { value: "own post", label: "Own Posts" },
+    { value: "own post", label: "Own Post" },
   ];
 
   const handlePostCategory = (data: string) => {
