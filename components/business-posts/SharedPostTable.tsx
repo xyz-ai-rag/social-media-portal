@@ -58,9 +58,9 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
   return (
     <div className="mt-6 bg-white rounded shadow overflow-hidden">
       {/* Table */}
-      <div className="w-full max-w-[1396px] mx-auto">
+      <div className="w-full">
         <div className=" overflow-x-auto">
-          <Table hoverable className="min-w-[1500px]">
+          <Table hoverable className="w-full">
             <Table.Head>
               <Table.HeadCell className="w-32">
                 Date
@@ -104,7 +104,7 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                 Platform
               </Table.HeadCell>
               <Table.HeadCell className="w-32 text-center">User</Table.HeadCell>
-              <Table.HeadCell className="min-w-[450px] max-w-[600px]">
+              <Table.HeadCell className="w-auto">
                 Post
               </Table.HeadCell>
               <Table.HeadCell className="w-32 text-center">
