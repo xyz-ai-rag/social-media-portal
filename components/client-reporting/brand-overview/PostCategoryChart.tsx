@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import * as echarts from "echarts/core";
-import { GraphChart, PieChart } from "echarts/charts";
+import { PieChart } from "echarts/charts";
 import {
   TitleComponent,
   TooltipComponent,
@@ -12,9 +12,6 @@ import { format } from "date-fns";
 
 // Import helper functions from timeUtils.
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
-// Import date range context.
-import { useDateRange } from "@/context/DateRangeContext";
-import { useAuth } from "@/context/AuthContext";
 
 echarts.use([
   TitleComponent,
@@ -37,6 +34,7 @@ interface PlatformRingChartProps {
   businessId: string;
   earliestDate: string;
   latestDate: string;
+  allBusinessIds: string;
 }
 
 export default function PlatformRingChart({
@@ -44,11 +42,12 @@ export default function PlatformRingChart({
   businessId,
   earliestDate,
   latestDate,
+  allBusinessIds,
 }: PlatformRingChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartData, setChartData] = useState<PieDataItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { clientDetails } = useAuth();
+
 
   // Process dates for API query.
   const startDateProcessed = useMemo(
@@ -76,51 +75,40 @@ export default function PlatformRingChart({
       setIsLoading(true); // Set loading state when the request is made
 
       try {
-        const allBizParam = [clientDetails?.businesses.map((biz) => biz.business_id)].join(",");
-        const url = `/api/charts/piechart?business_id=${encodeURIComponent(
+        const url = `/api/client-reporting/category-chart?business_id=${encodeURIComponent(
           businessId
         )}&start_date=${encodeURIComponent(
           startDateProcessed
-        )}&end_date=${encodeURIComponent(endDateProcessed)}
+        )}&end_date=${encodeURIComponent(
+          endDateProcessed
       )}&all_business_ids=${encodeURIComponent(
-        allBizParam
-      )}`;
+          allBusinessIds
+        )}`;
 
         const res = await fetch(url);
         const data = await res.json();
+        const categoryData = data.categoryStats;
 
         // Only update state if this is the current request
         if (isCurrent) {
-          let total = 0;
-          if (Array.isArray(data)) {
-            total = data.reduce((sum, item) => sum + item.value, 0);
-          }
-
-          // If the API already returns an array, then map each item to add a color (if missing)
-          if (Array.isArray(data)) {
-            const mappedData: PieDataItem[] = data.map((item: any) => ({
-              ...item,
-              color:
-                item.color ||
-                (item.name.toLowerCase() === "rednote"
-                  ? "#5A6ACF"
-                  : item.name.toLowerCase() === "weibo"
-                    ? "#8593ED"
-                    : item.name.toLowerCase() === "douyin"
-                      ? "#C7CEFF"
-                      : "#5470c6"),
-              percentage:
-                total > 0 ? Math.round((item.value / total) * 100) : 0,
-            }));
-
-            if (isCurrent) {
-              setChartData(mappedData);
-            }
-          } else {
-            if (isCurrent) {
-              setChartData([]);
-            }
-          }
+          const filtered = Array.isArray(categoryData)
+            ? categoryData.filter((item: any) => typeof item.count === 'number' && item.count > 0)
+            : [];
+          const total = filtered.reduce((sum, item) => sum + item.count, 0);
+          const mappedData: PieDataItem[] = filtered.map((item: any) => ({
+            name: item.category,
+            value: item.count,
+            color:
+              item.category.toLowerCase() === "organic post"
+                ? "#5A6ACF"
+                : item.category.toLowerCase() === "commercial post"
+                  ? "#8593ED"
+                  : item.category.toLowerCase() === "own post"
+                    ? "#C7CEFF"
+                    : "#5470c6",
+            percentage: total > 0 ? Math.round((item.count / total) * 100) : 0,
+          }));
+          setChartData(mappedData);
         }
       } catch (err) {
         if (isCurrent) {
@@ -139,7 +127,7 @@ export default function PlatformRingChart({
     return () => {
       isCurrent = false;
     };
-  }, [businessId, startDateProcessed, endDateProcessed]);
+  }, [businessId, startDateProcessed, endDateProcessed, allBusinessIds]);
 
   // Initialize and configure the chart once data is loaded.
   useEffect(() => {
@@ -214,11 +202,11 @@ export default function PlatformRingChart({
     <div className="bg-white p-6 rounded-lg shadow-md w-full min-h-[400px] flex flex-col">
       <div className="flex-1 flex flex-col">
         {isLoading ? (
-          <div className="h-80 flex items-center justify-center w-full">
+          <div className="h-64 flex items-center justify-center w-full">
             <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
           </div>
         ) : chartData.length === 0 ? (
-          <div className="h-80 flex items-center justify-center w-full">
+          <div className="h-64 flex items-center justify-center w-full">
             <p className="text-gray-500">No post type data available</p>
           </div>
         ) : (
@@ -229,7 +217,7 @@ export default function PlatformRingChart({
             <div className="text-sm text-gray-600 mb-4">
               Posts from {formattedStart} to {formattedEnd}
             </div>
-            <div className="h-80 flex items-center justify-center w-full">
+            <div className="h-64 flex items-center justify-center w-full">
               <div ref={chartRef} style={{ width: "100%", height: "100%" }} />
             </div>
             {/* Legend below the chart */}

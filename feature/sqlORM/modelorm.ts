@@ -69,7 +69,7 @@ export const BusinessPostModel =
       hashtag_topic_category: { type: DataTypes.TEXT, allowNull: true },
       english_desc_literal: { type: DataTypes.TEXT, allowNull: true },
       relevance_percent: { type: DataTypes.INTEGER, allowNull: true },
-      has_negative_or_critical_feedback: {
+      has_negative_or_criticism: {
         type: DataTypes.BOOLEAN,
         allowNull: true,
       },

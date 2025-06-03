@@ -48,16 +48,13 @@ interface LineGraphProps {
   businessId: string; // Selected business id from the URL.
   earliestDate: string;
   latestDate: string;
+  allBusinessIds: string;
 }
 
-export default function LineGraph({ clientId, businessId, earliestDate, latestDate }: LineGraphProps) {
+export default function LineGraph({ clientId, businessId, earliestDate, latestDate, allBusinessIds }: LineGraphProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [graphData, setGraphData] = useState<LineGraphData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Get global client details from AuthContext.
-  const { clientDetails } = useAuth();
-  const allBizParam = [clientDetails?.businesses.map((biz) => biz.business_id)].join(",");
 
 
   // Process dates for API query.
@@ -90,7 +87,7 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
         const url = `/api/client-reporting/line-graph?business_id=${encodeURIComponent(
           businessId
         )}&all_business_ids=${encodeURIComponent(
-          allBizParam
+          allBusinessIds
         )}&start_date=${encodeURIComponent(
           startDateProcessed
         )}&end_date=${encodeURIComponent(endDateProcessed)}`;
@@ -119,7 +116,7 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     return () => {
       isCurrent = false;
     };
-  }, [businessId, startDateProcessed, endDateProcessed,allBizParam]);
+  }, [businessId, startDateProcessed, endDateProcessed, allBusinessIds]);
 
   // Build and initialize the chart using ECharts.
   useEffect(() => {

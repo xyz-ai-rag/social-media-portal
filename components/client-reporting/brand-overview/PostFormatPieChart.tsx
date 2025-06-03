@@ -33,6 +33,7 @@ interface ContentTypeProps {
   businessId: string;
   earliestDate: string;
   latestDate: string;
+  allBusinessIds: string;
 }
 
 interface ContentTypeStat {
@@ -46,7 +47,7 @@ interface ContentTypeData {
   totalCount: number;
 }
 
-export default function PostFormatPieChart({ clientId, businessId, earliestDate, latestDate }: ContentTypeProps) {
+export default function PostFormatPieChart({ clientId, businessId, earliestDate, latestDate, allBusinessIds }: ContentTypeProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [contentTypeData, setContentTypeData] = useState<ContentTypeData>({
     contentTypeStats: [],
@@ -64,14 +65,13 @@ export default function PostFormatPieChart({ clientId, businessId, earliestDate,
     [latestDate]
   );
   const formattedStart = useMemo(
-    () => format(new Date(earliestDate), "MMM d yyyy"),
+    () => format(new Date(earliestDate), "MMM yyyy"),
     [earliestDate]
   );
   const formattedEnd = useMemo(
-    () => format(new Date(latestDate), "MMM d yyyy"),
+    () => format(new Date(latestDate), "MMM yyyy"),
     [latestDate]
   );
-
 
   // Fetch content type data
   useEffect(() => {
@@ -79,28 +79,18 @@ export default function PostFormatPieChart({ clientId, businessId, earliestDate,
 
     async function fetchContentTypeData() {
       setIsLoading(true);
-      const { clientDetails } = useAuth();
-      const allBusinessIds = clientDetails?.businesses.map((biz) => biz.business_id).join(",");
 
       try {
-        const response = await fetch(
-          constructVercelURL(
-            `/api/charts/getContentTypeStats?business_id=${businessId}&start_date=${startDateProcessed}&end_date=${endDateProcessed}&all_business_ids=${allBusinessIds}`
-          ),
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch content type data");
-        }
-
-        const data = await response.json();
-
+        const url = `/api/charts/getContentTypeStats?business_id=${encodeURIComponent(
+          businessId
+        )}&all_business_ids=${encodeURIComponent(
+          allBusinessIds
+        )}&start_date=${encodeURIComponent(
+          startDateProcessed
+        )}&end_date=${encodeURIComponent(endDateProcessed)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
         if (isCurrent) {
           setContentTypeData(data);
         }
@@ -109,9 +99,7 @@ export default function PostFormatPieChart({ clientId, businessId, earliestDate,
           console.error("Error fetching content type data:", error);
         }
       } finally {
-        if (isCurrent) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     }
 
@@ -120,7 +108,7 @@ export default function PostFormatPieChart({ clientId, businessId, earliestDate,
     return () => {
       isCurrent = false;
     };
-  }, [businessId, startDateProcessed, endDateProcessed]);
+  }, [businessId, startDateProcessed, endDateProcessed, allBusinessIds]);
 
   // Initialize and configure the chart
   useEffect(() => {
@@ -184,13 +172,13 @@ export default function PostFormatPieChart({ clientId, businessId, earliestDate,
   return (
     <div className="bg-white p-6 rounded-lg shadow-md w-full min-h-[400px] flex flex-col">
 
-      <div className="flex-1 flex flex-col justify-center">
+      <div className="flex-1 flex flex-col">
         {isLoading ? (
-          <div className="h-80 flex items-center justify-center w-full">
+          <div className="h-64 flex items-center justify-center w-full">
             <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
           </div>
         ) : contentTypeData.contentTypeStats.length === 0 ? (
-          <div className="h-80 flex items-center justify-center w-full">
+          <div className="h-64 flex items-center justify-center w-full">
             <p className="text-gray-500">No content type data available</p>
           </div>
         ) : (
@@ -201,7 +189,7 @@ export default function PostFormatPieChart({ clientId, businessId, earliestDate,
             <div className="text-sm text-gray-600 mb-4">
               Content type from {formattedStart} to {formattedEnd}
             </div>
-            <div className="h-80 flex items-center justify-center w-full">
+            <div className="h-64 flex items-center justify-center w-full">
               <div ref={chartRef} style={{ width: "100%", height: "100%" }} />
             </div>
             {/* Legend below the chart - matching your example image */}

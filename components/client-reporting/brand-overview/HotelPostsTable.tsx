@@ -17,16 +17,13 @@ interface BusinessLineData {
   monthly_counts: MonthlyCount[];
 }
 
-interface LineGraphData {
-  current: BusinessLineData;
-  similar: BusinessLineData[];
-}
 
 interface HotelPostsTableProps {
   clientId: string;
   businessId: string;
   earliestDate: string;
   latestDate: string;
+  allBusinessIds: string;
 }
 
 export default function HotelPostsTable({
@@ -34,6 +31,7 @@ export default function HotelPostsTable({
   businessId,
   earliestDate,
   latestDate,
+  allBusinessIds,
 }: HotelPostsTableProps) {
   const [tableData, setTableData] = useState<{ business_id: string; name: string; total: number }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,17 +60,16 @@ export default function HotelPostsTable({
     async function fetchData() {
       setIsLoading(true);
       try {
-        const allBizParam = [clientDetails?.businesses.map((biz) => biz.business_id)].join(",");
         const url = `/api/client-reporting/line-graph?business_id=${encodeURIComponent(
           businessId
         )}&all_business_ids=${encodeURIComponent(
-          allBizParam
+          allBusinessIds
         )}&start_date=${encodeURIComponent(
           startDateProcessed
         )}&end_date=${encodeURIComponent(endDateProcessed)}`;
         const res = await fetch(url);
         const data = await res.json();
-        
+
         const allBusinesses: BusinessLineData[] = data.similar || [];
         const tableRows = allBusinesses.map((biz) => ({
           business_id: biz.business_id,
@@ -94,7 +91,7 @@ export default function HotelPostsTable({
     return () => {
       isCurrent = false;
     };
-  }, [businessId, earliestDate, latestDate, clientDetails]);
+  }, [businessId, earliestDate, latestDate, allBusinessIds]);
   const grandTotal = tableData.reduce((sum, row) => sum + row.total, 0);
 
   if (isLoading) {

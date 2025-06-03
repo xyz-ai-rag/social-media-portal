@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import LineGraph from "@/components/client-reporting/brand-overview/LineGraph";
 
 import PlatformRingChart from '@/components/client-reporting/brand-overview/PlatformRingChart';
 import PostFormatPieChart from '@/components/client-reporting/brand-overview/PostFormatPieChart';
-import PostTypeChart from '@/components/client-reporting/brand-overview/PostTypeChart';
+import PostTypeChart from '@/components/client-reporting/brand-overview/PostCategoryChart';
 import HotelPostsTable from '@/components/client-reporting/brand-overview/HotelPostsTable';
-import CriticalFeedbackBubbleChart from '@/components/client-reporting/brand-overview/CriticalFeedbackBubbleChart';
+import NegativeFeedbackBubbleChart from '@/components/client-reporting/brand-overview/NegativeFeedbackBubbleChart';
+import NegativeFeedbackLineGraph from '@/components/client-reporting/brand-overview/NegativeFeedbackLineGraph';
+import { useAuth } from '@/context/AuthContext';
 
 interface BrandOverviewProps {
   clientId: string;
@@ -16,6 +18,11 @@ export default function BrandOverview({ clientId, businessId }: BrandOverviewPro
 
   const [earliestDate, setEarliestDate] = useState<string>("2024-06-01");
   const [latestDate, setLatestDate] = useState<string>("2025-06-01"); 
+  const { clientDetails } = useAuth();
+  const allBusinessIds = useMemo(
+    () => clientDetails?.businesses.map((biz) => biz.business_id).join(",") || "",
+    [clientDetails]
+  );
 
   // Fetch date range when component mounts
   useEffect(() => {
@@ -51,26 +58,32 @@ export default function BrandOverview({ clientId, businessId }: BrandOverviewPro
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
         {/* line 1*/}
         <div className="md:col-span-3 w-full min-h-[340px] flex items-stretch">
-          <LineGraph clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} />
+          <LineGraph clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds} />
         </div>
 
         {/* line 2*/}
         <div className="md:col-span-1 min-h-64 flex items-stretch">
-          <PlatformRingChart clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} />
+          <PlatformRingChart clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds} />
         </div>
         <div className="md:col-span-1 min-h-64 flex items-stretch">
-          <PostFormatPieChart clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} />
+          <PostFormatPieChart clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds} />
         </div>
         <div className="md:col-span-1 min-h-64 flex items-stretch">
-          <PostTypeChart clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} />
+          <PostTypeChart clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds} />
         </div>
 
         {/* line 3*/}
         <div className="md:col-span-1">
-          <HotelPostsTable clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} />
+          <HotelPostsTable clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds} />
         </div>
         <div className="md:col-span-2">
-          <CriticalFeedbackBubbleChart clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} minCount={0} maxTopics={0} topicType={"Criticism"} />
+          <NegativeFeedbackBubbleChart clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds} />
+        </div>
+
+
+        {/* line 4*/}
+        <div className="md:col-span-3">
+          <NegativeFeedbackLineGraph clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds}/>
         </div>
       </div>
     </div>

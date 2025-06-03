@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     }
 
     const posts = await BusinessPostModel.findAll({
-      attributes: ['type', 'note_id', 'last_update_time', 'business_id'],
+      attributes: ['post_category', 'note_id', 'last_update_time', 'business_id'],
       where: {
         business_id: { [Op.in]: businessIds },
         is_relevant: true,
@@ -45,51 +45,52 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    const typeCounts: Record<string, number> = {};
+    const categoryCounts: Record<string, number> = {
+      'Organic Post': 0,
+      'Commercial Post': 0,
+      'Own Post': 0
+    };
     const uniqueNoteIds = new Set<string>();
 
     posts.forEach(post => {
       const noteId = post.getDataValue("note_id");
-      if (uniqueNoteIds.has(noteId)) return;
+      if (!noteId || uniqueNoteIds.has(noteId)) return;
       uniqueNoteIds.add(noteId);
 
-      const type = post.getDataValue('type') || 'normal';
-      if (!(type in typeCounts)) typeCounts[type] = 0;
-      typeCounts[type]++;
-    });
+      const postCategory = post.getDataValue('post_category')?.toLowerCase() || '';
+      let category: string;
 
-    console.log(`[ContentTypeStats] Type counts:`, typeCounts);
-    console.log(`[ContentTypeStats] Total unique note_ids: ${uniqueNoteIds.size}`);
-
-    // Map type codes to display names
-    const typeMapping: Record<string, string> = {
-      'video': 'Video',
-      'note': 'Text',
-      'normal': 'Text'
-    };
-
-    const mergedStats: Record<string, { type: string, count: number, percentage: number }> = {};
-    Object.entries(typeCounts).forEach(([type, count]) => {
-      const displayType = typeMapping[type] || 'Text';
-      if (!mergedStats[displayType]) {
-        mergedStats[displayType] = { type: displayType, count: 0, percentage: 0 };
+      if (postCategory === 'organic post') {
+        category = 'Organic Post';
+      } else if (postCategory === 'commercial post') {
+        category = 'Commercial Post';
+      } else if (postCategory === 'own post') {
+        category = 'Own Post';
+      } else {
+        category = 'Other';
       }
-      mergedStats[displayType].count += count;
+
+      categoryCounts[category]++;
     });
 
-    const totalPosts = Object.values(mergedStats).reduce((sum, stat) => sum + stat.count, 0);
-    Object.values(mergedStats).forEach(stat => {
-      stat.percentage = totalPosts > 0 ? Math.round((stat.count * 100) / totalPosts) : 0;
-    });
+    const categoryStats = Object.entries(categoryCounts).map(([category, count]) => ({
+      category,
+      count,
+    }));
 
-    const contentTypeStats = Object.values(mergedStats);
+    const totalPosts = Object.values(categoryCounts).reduce((sum, count) => sum + count, 0);
+
+    categoryStats.sort((a, b) => b.count - a.count);
+
+    console.log(`[CategoryChart] Total category counts:`, categoryCounts);
+    console.log(`[CategoryChart] Total posts: ${totalPosts}`);
 
     return NextResponse.json({
-      contentTypeStats,
+      categoryStats,
       totalCount: totalPosts
     });
   } catch (error: any) {
-    console.error(`[ContentTypeStats] Error:`, error);
+    console.error(`[CategoryChart] Error:`, error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

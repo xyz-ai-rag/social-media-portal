@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import * as echarts from "echarts/core";
-import { GraphChart, PieChart } from "echarts/charts";
+import { PieChart } from "echarts/charts";
 import {
   TitleComponent,
   TooltipComponent,
@@ -12,9 +12,7 @@ import { format } from "date-fns";
 
 // Import helper functions from timeUtils.
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
-// Import date range context.
-import { useDateRange } from "@/context/DateRangeContext";
-import { useAuth } from "@/context/AuthContext";
+
 
 echarts.use([
   TitleComponent,
@@ -37,6 +35,7 @@ interface PlatformRingChartProps {
   businessId: string;
   earliestDate: string;
   latestDate: string;
+  allBusinessIds: string;
 }
 
 export default function PlatformRingChart({
@@ -44,12 +43,11 @@ export default function PlatformRingChart({
   businessId,
   earliestDate,
   latestDate,
+  allBusinessIds,
 }: PlatformRingChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartData, setChartData] = useState<PieDataItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { clientDetails } = useAuth();
-
 
 // Process dates for API query.
 const startDateProcessed = useMemo(
@@ -77,11 +75,10 @@ const formattedEnd = useMemo(
       setIsLoading(true); // Set loading state when the request is made
 
       try {
-        const allBizParam = [clientDetails?.businesses.map((biz) => biz.business_id)].join(",");
         const url = `/api/charts/piechart?business_id=${encodeURIComponent(
           businessId
         )}&all_business_ids=${encodeURIComponent(
-          allBizParam
+          allBusinessIds
         )}&start_date=${encodeURIComponent(
           startDateProcessed
         )}&end_date=${encodeURIComponent(endDateProcessed)}`;
@@ -139,7 +136,7 @@ const formattedEnd = useMemo(
     return () => {
       isCurrent = false;
     };
-  }, [businessId, startDateProcessed, endDateProcessed]);
+  }, [businessId, startDateProcessed, endDateProcessed, allBusinessIds]);
 
   // Initialize and configure the chart once data is loaded.
   useEffect(() => {
@@ -213,11 +210,11 @@ const formattedEnd = useMemo(
     <div className="bg-white p-6 rounded-lg shadow-md w-full min-h-[400px] flex flex-col">
       <div className="flex-1 flex flex-col">
         {isLoading ? (
-          <div className="h-80 flex items-center justify-center w-full">
+          <div className="h-64 flex items-center justify-center w-full">
             <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
           </div>
         ) : chartData.length === 0 ? (
-          <div className="h-80 flex items-center justify-center w-full">
+          <div className="h-64 flex items-center justify-center w-full">
             <p className="text-gray-500">No platform data available</p>
           </div>
         ) : (
@@ -228,7 +225,7 @@ const formattedEnd = useMemo(
             <div className="text-sm text-gray-600 mb-4">
               Posts from {formattedStart} to {formattedEnd}
             </div>
-            <div className="h-80 flex items-center justify-center w-full">
+            <div className="h-64 flex items-center justify-center w-full">
               <div ref={chartRef} style={{ width: "100%", height: "100%" }} />
             </div>
             {/* Legend below the chart */}

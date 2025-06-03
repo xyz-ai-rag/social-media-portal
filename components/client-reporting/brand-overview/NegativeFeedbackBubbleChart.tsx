@@ -2,17 +2,14 @@
 import { FC, useMemo, useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { convertTopicsToTree, Topic, Tree } from "@/utils/topicTree";
-import { useRouter } from 'next/navigation';
-import { constructVercelURL } from "@/utils/generateURL";
-
-interface CriticalFeedbackBubbleChartProps {
+import { setEndOfDay, setStartOfDay } from "@/utils/timeUtils";
+import { format } from "date-fns";
+interface NegativeFeedbackBubbleChartProps {
   businessId: string;
   clientId: string;
-  minCount: number;
-  maxTopics: number;
-  topicType: string;
   earliestDate: string;
   latestDate: string;
+  allBusinessIds: string;
 }
 
 interface TooltipData {
@@ -24,13 +21,12 @@ interface TooltipData {
   r: number;
 }
 
-const CriticalFeedbackBubbleChart: FC<CriticalFeedbackBubbleChartProps> = ({
+const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
   businessId,
   clientId,
-  minCount,
-  maxTopics,
   earliestDate,
   latestDate,
+  allBusinessIds,
 }) => {
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [hoveredCircle, setHoveredCircle] = useState<string | null>(null);
@@ -40,44 +36,43 @@ const CriticalFeedbackBubbleChart: FC<CriticalFeedbackBubbleChartProps> = ({
   const [topics, setTopics] = useState<Topic[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
+  // Process dates for API query.
+  const startDateProcessed = useMemo(
+    () => setStartOfDay(earliestDate),
+    [earliestDate]
+  );
+  const endDateProcessed = useMemo(
+    () => setEndOfDay(latestDate),
+    [latestDate]
+  );
+  const formattedStart = useMemo(
+    () => format(new Date(earliestDate), "MMM yyyy"),
+    [earliestDate]
+  );
+  const formattedEnd = useMemo(
+    () => format(new Date(latestDate), "MMM yyyy"),
+    [latestDate]
+  );
   // Fetch topic data - just add request tracking
   useEffect(() => {
     const fetchData = async () => {
       try {
         if (!businessId) return;
 
-        // Create a cache key based on the current request parameters
-        const requestKey = `${businessId}_Criticism}`;
+        const url = `/api/client-reporting/negative-feedback?business_id=${encodeURIComponent(
+          businessId
+        )}&start_date=${encodeURIComponent(
+          startDateProcessed
+        )}&end_date=${encodeURIComponent(
+          endDateProcessed
+        )}&all_business_ids=${encodeURIComponent(
+          allBusinessIds
+        )}`;
 
-        // Skip duplicate requests in the same render cycle
-        if (requestTracker.current.has(requestKey)) {
-          console.log('Skipping duplicate request:', requestKey);
-          return;
-        }
+        const res = await fetch(url);
+        const data = await res.json();
 
-        // Add to request tracker
-        requestTracker.current.add(requestKey);
-
-        // Fetch competitor details using the batch API
-        const response = await fetch(
-          constructVercelURL("/api/businesses/getBusinessTopicStats"),
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              businessId: businessId,
-              topicType: "Criticism",
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch post topics");
-        }
-
-        const data = await response.json();
-        setTopics(data.topics);
+        setTopics(data.feedbackStats);
         setTotal(data.total);
         setIsLoading(false);
 
@@ -95,7 +90,7 @@ const CriticalFeedbackBubbleChart: FC<CriticalFeedbackBubbleChartProps> = ({
     return () => {
       requestTracker.current.clear();
     };
-  }, [businessId]);
+  }, [businessId, startDateProcessed, endDateProcessed, allBusinessIds]);
 
 
 
@@ -141,7 +136,7 @@ const CriticalFeedbackBubbleChart: FC<CriticalFeedbackBubbleChartProps> = ({
 
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md overflow-auto">
+    <div className="bg-white p-6 rounded-lg shadow-md overflow-auto relative">
       {isLoading ? (
         <div className="h-64 flex items-center justify-center">
           <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
@@ -156,6 +151,9 @@ const CriticalFeedbackBubbleChart: FC<CriticalFeedbackBubbleChartProps> = ({
             <h2 className="text-base font-medium text-gray-800">              Criticism
             </h2>
           </div>
+          <div className="text-sm text-gray-600 mb-4">
+              Posts from {formattedStart} to {formattedEnd}
+            </div>
           <div className="flex items-center justify-center w-full h-full">
             <svg width={width} height={height} className="">
               {root
@@ -236,7 +234,7 @@ const CriticalFeedbackBubbleChart: FC<CriticalFeedbackBubbleChartProps> = ({
                 style={{
                   left: tooltipData.x + 10,
                   top: tooltipData.y - 10,
-                  fontSize: `${Math.min(13, tooltipData.r / 3)}px`,
+                  fontSize: "13px",
                   fontWeight: "bold"
                 }}
               >
@@ -251,4 +249,4 @@ const CriticalFeedbackBubbleChart: FC<CriticalFeedbackBubbleChartProps> = ({
   );
 };
 
-      export default CriticalFeedbackBubbleChart;
+export default NegativeFeedbackBubbleChart;
