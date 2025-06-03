@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
 // Import date range context.
 import { useDateRange } from "@/context/DateRangeContext";
+import { useAuth } from "@/context/AuthContext";
 
 echarts.use([
   TitleComponent,
@@ -47,6 +48,7 @@ export default function PlatformRingChart({
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartData, setChartData] = useState<PieDataItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { clientDetails } = useAuth();
 
   // Process dates for API query.
   const startDateProcessed = useMemo(
@@ -74,11 +76,15 @@ export default function PlatformRingChart({
       setIsLoading(true); // Set loading state when the request is made
 
       try {
+        const allBizParam = [clientDetails?.businesses.map((biz) => biz.business_id)].join(",");
         const url = `/api/charts/piechart?business_id=${encodeURIComponent(
           businessId
         )}&start_date=${encodeURIComponent(
           startDateProcessed
-        )}&end_date=${encodeURIComponent(endDateProcessed)}`;
+        )}&end_date=${encodeURIComponent(endDateProcessed)}
+      )}&all_business_ids=${encodeURIComponent(
+        allBizParam
+      )}`;
 
         const res = await fetch(url);
         const data = await res.json();

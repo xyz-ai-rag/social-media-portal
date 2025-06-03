@@ -13,7 +13,6 @@ import { CanvasRenderer } from "echarts/renderers";
 import { format } from "date-fns";
 
 import { useAuth } from "@/context/AuthContext";
-import { useDateRange } from "@/context/DateRangeContext";
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
 
 echarts.use([
@@ -25,9 +24,9 @@ echarts.use([
   CanvasRenderer,
 ]);
 
-// Define type for a daily count.
-interface DailyCount {
-  date: string; // e.g., '2025-04-01'
+// Define type for a monthly count.
+interface MonthlyCount {
+  date: string; // e.g., '2025-04'
   count: number;
 }
 
@@ -35,7 +34,7 @@ interface DailyCount {
 interface BusinessLineData {
   business_id: string;
   business_name: string;
-  daily_counts: DailyCount[];
+  monthly_counts: MonthlyCount[];
 }
 
 // The API returns an object with two keys.
@@ -58,8 +57,8 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
 
   // Get global client details from AuthContext.
   const { clientDetails } = useAuth();
-  console.log("earliestDate", earliestDate);
-  console.log("latestDate", latestDate);
+  const allBizParam = [clientDetails?.businesses.map((biz) => biz.business_id)].join(",");
+
 
   // Process dates for API query.
   const startDateProcessed = useMemo(
@@ -71,11 +70,11 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     [latestDate]
   );
   const formattedStart = useMemo(
-    () => format(new Date(earliestDate), "MMM d yyyy"),
+    () => format(new Date(earliestDate), "MMM yyyy"),
     [earliestDate]
   );
   const formattedEnd = useMemo(
-    () => format(new Date(latestDate), "MMM d yyyy"),
+    () => format(new Date(latestDate), "MMM yyyy"),
     [latestDate]
   );
 
@@ -88,10 +87,9 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
 
       try {
         // Pass the current business id separately and the similar business ids as a comma-separated list.
-        const allBizParam = [clientDetails?.businesses.map((biz) => biz.business_id)].join(",");
         const url = `/api/client-reporting/line-graph?business_id=${encodeURIComponent(
           businessId
-        )}&similar_business_ids=${encodeURIComponent(
+        )}&all_business_ids=${encodeURIComponent(
           allBizParam
         )}&start_date=${encodeURIComponent(
           startDateProcessed
@@ -121,7 +119,7 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     return () => {
       isCurrent = false;
     };
-  }, [businessId, startDateProcessed, endDateProcessed]);
+  }, [businessId, startDateProcessed, endDateProcessed,allBizParam]);
 
   // Build and initialize the chart using ECharts.
   useEffect(() => {
@@ -129,18 +127,22 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
 
     const chart = echarts.init(chartRef.current);
 
-    // Merge all dates from the current and similar series.
-    const allDatesSet = new Set<string>();
+    // Merge all months from all businesses.
+    const allMonthsSet = new Set<string>();
     [graphData.current, ...graphData.similar].forEach((biz) => {
-      biz.daily_counts.forEach((dc) => allDatesSet.add(dc.date));
+      biz.monthly_counts.forEach((mc) => allMonthsSet.add(mc.date));
     });
-    const sortedDates = Array.from(allDatesSet).sort(); // Ascending order
+    const sortedMonths = Array.from(allMonthsSet).sort(); // Ascending order
 
     // Build series for each business.
     const buildSeriesForBiz = (biz: BusinessLineData) => {
-      const dateMap = new Map<string, number>();
-      biz.daily_counts.forEach((dc) => dateMap.set(dc.date, dc.count));
-      const seriesData = sortedDates.map((date) => dateMap.get(date) || 0);
+      const monthMap = new Map<string, number>();
+      biz.monthly_counts.forEach((mc) => monthMap.set(mc.date, mc.count));
+      let cumulative = 0;
+      const seriesData = sortedMonths.map((month) => {
+        cumulative += monthMap.get(month) || 0;
+        return cumulative;
+      });
       return {
         name: biz.business_name,
         type: "line",
@@ -171,14 +173,14 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
         top: "8%",
         left: "3%",
         right: "4%",
-        bottom: "15%",
+        bottom: "20%",
         containLabel: true,
       },
       xAxis: {
         type: "category",
-        data: sortedDates,
+        data: sortedMonths,
         axisLabel: {
-          formatter: (value: string) => value.slice(5), // Displays MM-DD
+          formatter: (value: string) => value, //  YYYY-MM
         },
       },
       yAxis: {
@@ -214,13 +216,13 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     <div className="bg-white p-6 rounded-lg shadow-md w-full">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-base font-medium text-gray-800">
-          Vs Similar Businesses
+          Total Posts
         </h2>
       </div>
       <div className="text-sm text-gray-600 mb-4">
         Posts from {formattedStart} to {formattedEnd}
       </div>
-      <div className="h-72">
+      <div className="h-80">
         <div ref={chartRef} style={{ width: "100%", height: "100%" }} />
       </div>
     </div>

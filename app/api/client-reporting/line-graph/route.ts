@@ -1,4 +1,3 @@
-// /api/charts/similar-line/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { Op } from 'sequelize';
 import { BusinessPostModel, BusinessModel } from '@/feature/sqlORM/modelorm';
@@ -8,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const currentBusinessId = searchParams.get("business_id");
-    const similarIdsParam = searchParams.get("similar_business_ids");
+    const allBusinessIds = searchParams.get("all_business_ids");
     const start_date = searchParams.get("start_date");
     const end_date = searchParams.get("end_date");
 
@@ -31,12 +30,12 @@ export async function GET(request: NextRequest) {
     console.log(`[LineGraph] Parsed dates: startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
 
     // Parse similar business IDs from comma-delimited string.
-    const similarBusinessIds = similarIdsParam
-      ? similarIdsParam.split(',').map(id => id.trim())
+    const allBusinessIdsArray = allBusinessIds
+      ? allBusinessIds.split(',').map(id => id.trim())
       : [];
 
-    // Helper function: fetch daily counts for a given business.
-    async function fetchDailyCounts(bizId: string) {
+    // Helper function: fetch monthly counts for a given business.
+    async function fetchMonthlyCounts(bizId: string) {
       const rows = await BusinessPostModel.findAll({
         attributes: ['last_update_time'],
         where: {
@@ -47,27 +46,17 @@ export async function GET(request: NextRequest) {
         order: [['last_update_time', 'ASC']]
       });
       
-      const dayMap: Record<string, number> = {};
-      const days: string[] = [];
-      // Initialize a count for every day in the range.
-      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-        const dayStr = format(d, 'yyyy-MM-dd');
-        dayMap[dayStr] = 0;
-        days.push(dayStr);
-      }
-      
-      // Count posts per day.
+      const monthMap: Record<string, number> = {};
+      // Count posts per month.
       rows.forEach(row => {
         const created = row.getDataValue("last_update_time");
-        const dayStr = format(new Date(created), 'yyyy-MM-dd');
-        if (dayMap.hasOwnProperty(dayStr)) {
-          dayMap[dayStr]++;
-        }
+        const monthStr = format(new Date(created), 'yyyy-MM');
+        monthMap[monthStr] = (monthMap[monthStr] || 0) + 1;
       });
-      
-      // Build a sorted array of daily counts.
-      const daily_counts = days.map(day => ({ date: day, count: dayMap[day] }));
-      return daily_counts;
+      // Build a sorted array of monthly counts.
+      const months = Object.keys(monthMap).sort();
+      const monthly_counts = months.map(month => ({ date: month, count: monthMap[month] }));
+      return monthly_counts;
     }
 
     // Helper function: fetch the business name from the business table.
@@ -83,23 +72,23 @@ export async function GET(request: NextRequest) {
       return `Business ${bizId}`;
     }
 
-    // Fetch current business daily counts.
-    const currentDailyCounts = await fetchDailyCounts(currentBusinessId);
+    // Fetch current business monthly counts.
+    const currentMonthlyCounts = await fetchMonthlyCounts(currentBusinessId);
     const currentBusinessName = await getBusinessName(currentBusinessId);
     const currentBusinessData = {
       business_id: currentBusinessId,
       business_name: currentBusinessName,
-      daily_counts: currentDailyCounts
+      monthly_counts: currentMonthlyCounts
     };
 
-    // Fetch similar businesses daily counts.
-    const similarData = await Promise.all(similarBusinessIds.map(async (bizId) => {
-      const daily_counts = await fetchDailyCounts(bizId);
+    // Fetch all businesses monthly counts.
+    const similarData = await Promise.all(allBusinessIdsArray.map(async (bizId) => {
+      const monthly_counts = await fetchMonthlyCounts(bizId);
       const business_name = await getBusinessName(bizId);
       return {
         business_id: bizId,
         business_name,
-        daily_counts
+        monthly_counts
       };
     }));
 

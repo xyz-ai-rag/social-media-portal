@@ -17,6 +17,7 @@ import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
 // Import date range context
 import { useDateRange } from "@/context/DateRangeContext";
 import { constructVercelURL } from "@/utils/generateURL";
+import { useAuth } from "@/context/AuthContext";
 
 echarts.use([
   TitleComponent,
@@ -78,11 +79,13 @@ export default function PostFormatPieChart({ clientId, businessId, earliestDate,
 
     async function fetchContentTypeData() {
       setIsLoading(true);
+      const { clientDetails } = useAuth();
+      const allBusinessIds = clientDetails?.businesses.map((biz) => biz.business_id).join(",");
 
       try {
         const response = await fetch(
           constructVercelURL(
-            `/api/charts/getContentTypeStats?business_id=${businessId}&start_date=${startDateProcessed}&end_date=${endDateProcessed}`
+            `/api/charts/getContentTypeStats?business_id=${businessId}&start_date=${startDateProcessed}&end_date=${endDateProcessed}&all_business_ids=${allBusinessIds}`
           ),
           {
             method: "GET",

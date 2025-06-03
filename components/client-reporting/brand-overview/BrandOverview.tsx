@@ -3,7 +3,7 @@ import LineGraph from "@/components/client-reporting/brand-overview/LineGraph";
 
 import PlatformRingChart from '@/components/client-reporting/brand-overview/PlatformRingChart';
 import PostFormatPieChart from '@/components/client-reporting/brand-overview/PostFormatPieChart';
-import PostTypeDoughnutChart from '@/components/client-reporting/brand-overview/PostTypeDoughnutChart';
+import PostTypeChart from '@/components/client-reporting/brand-overview/PostTypeChart';
 import HotelPostsTable from '@/components/client-reporting/brand-overview/HotelPostsTable';
 import CriticalFeedbackBubbleChart from '@/components/client-reporting/brand-overview/CriticalFeedbackBubbleChart';
 
@@ -62,7 +62,7 @@ export default function BrandOverview({ clientId, businessId }: BrandOverviewPro
           <PostFormatPieChart clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} />
         </div>
         <div className="md:col-span-1 min-h-64 flex items-stretch">
-          <PostTypeDoughnutChart clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} />
+          <PostTypeChart clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} />
         </div>
 
         {/* line 3*/}

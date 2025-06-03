@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
 // Import date range context.
 import { useDateRange } from "@/context/DateRangeContext";
+import { useAuth } from "@/context/AuthContext";
 
 echarts.use([
   TitleComponent,
@@ -47,6 +48,8 @@ export default function PlatformRingChart({
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartData, setChartData] = useState<PieDataItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { clientDetails } = useAuth();
+
 
 // Process dates for API query.
 const startDateProcessed = useMemo(
@@ -58,11 +61,11 @@ const endDateProcessed = useMemo(
   [latestDate]
 );
 const formattedStart = useMemo(
-  () => format(new Date(earliestDate), "MMM d yyyy"),
+  () => format(new Date(earliestDate), "MMM yyyy"),
   [earliestDate]
 );
 const formattedEnd = useMemo(
-  () => format(new Date(latestDate), "MMM d yyyy"),
+  () => format(new Date(latestDate), "MMM yyyy"),
   [latestDate]
 );
 
@@ -74,25 +77,28 @@ const formattedEnd = useMemo(
       setIsLoading(true); // Set loading state when the request is made
 
       try {
+        const allBizParam = [clientDetails?.businesses.map((biz) => biz.business_id)].join(",");
         const url = `/api/charts/piechart?business_id=${encodeURIComponent(
           businessId
+        )}&all_business_ids=${encodeURIComponent(
+          allBizParam
         )}&start_date=${encodeURIComponent(
           startDateProcessed
         )}&end_date=${encodeURIComponent(endDateProcessed)}`;
-
         const res = await fetch(url);
         const data = await res.json();
+        const platformData = data.platformData;
 
         // Only update state if this is the current request
         if (isCurrent) {
           let total = 0;
-          if (Array.isArray(data)) {
-            total = data.reduce((sum, item) => sum + item.value, 0);
+          if (Array.isArray(platformData)) {
+            total = platformData.reduce((sum, item) => sum + item.value, 0);
           }
 
           // If the API already returns an array, then map each item to add a color (if missing)
-          if (Array.isArray(data)) {
-            const mappedData: PieDataItem[] = data.map((item: any) => ({
+          if (Array.isArray(platformData)) {
+            const mappedData: PieDataItem[] = platformData.map((item: any) => ({
               ...item,
               color:
                 item.color ||
