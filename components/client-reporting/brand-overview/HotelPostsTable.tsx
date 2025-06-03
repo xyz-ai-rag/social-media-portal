@@ -14,7 +14,7 @@ interface MonthlyCount {
 interface BusinessLineData {
   business_id: string;
   business_name: string;
-  monthly_counts: MonthlyCount[];
+  counts: MonthlyCount[];
 }
 
 
@@ -35,7 +35,6 @@ export default function HotelPostsTable({
 }: HotelPostsTableProps) {
   const [tableData, setTableData] = useState<{ business_id: string; name: string; total: number }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { clientDetails } = useAuth();
 
   // Process dates for API query.
   const startDateProcessed = useMemo(
@@ -74,7 +73,7 @@ export default function HotelPostsTable({
         const tableRows = allBusinesses.map((biz) => ({
           business_id: biz.business_id,
           name: biz.business_name,
-          total: biz.monthly_counts.reduce((sum, mc) => sum + mc.count, 0),
+          total: biz.counts.reduce((sum, mc) => sum + mc.count, 0),
         }));
         tableRows.sort((a, b) => b.total - a.total);
         if (isCurrent) setTableData(tableRows);

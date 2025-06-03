@@ -58,7 +58,7 @@ export default function BrandOverview({ clientId, businessId }: BrandOverviewPro
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
         {/* line 1*/}
         <div className="md:col-span-3 w-full min-h-[340px] flex items-stretch">
-          <LineGraph clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds} />
+          <LineGraph clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds} level={"monthly"}/>
         </div>
 
         {/* line 2*/}

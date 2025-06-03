@@ -4,7 +4,7 @@ import { DateRangeProvider } from "@/context/DateRangeContext";
 import { useAuth } from "@/context/AuthContext";
 import { useSearchParams } from "next/navigation";
 import BrandOverview from "./brand-overview/BrandOverview";
-import MonthlyReporting from "./MonthlyReporting";
+import MonthlyReporting from "./monthly-reporting/MonthlyReporting";
 import BusinessReporting from "./BusinessReporting";
 
 interface ClientReportingProps {
@@ -13,7 +13,6 @@ interface ClientReportingProps {
 }
 
 export default function ClientReporting({ clientId, businessId }: ClientReportingProps) {
-    const { clientDetails } = useAuth();
 
     // Find current business name from clientDetails
     //   useEffect(() => {
@@ -29,7 +28,7 @@ export default function ClientReporting({ clientId, businessId }: ClientReportin
     //   }, [clientDetails, businessId]);
 
     const searchParams = useSearchParams();
-    const tab = searchParams.get('tab') || 'brand-overview';
+    const tab = searchParams.get('tab') || 'monthly-reporting';
 
     return (
         <DateRangeProvider>

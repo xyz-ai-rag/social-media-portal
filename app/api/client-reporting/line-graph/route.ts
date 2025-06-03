@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const allBusinessIds = searchParams.get("all_business_ids");
     const start_date = searchParams.get("start_date");
     const end_date = searchParams.get("end_date");
+    const level = searchParams.get("level");
 
     if (!currentBusinessId || !start_date || !end_date) {
       return NextResponse.json(
@@ -29,10 +30,9 @@ export async function GET(request: NextRequest) {
     console.log(`[LineGraph] Query params: business_id=${currentBusinessId}, start_date=${start_date}, end_date=${end_date}`);
     console.log(`[LineGraph] Parsed dates: startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
 
-    // Parse similar business IDs from comma-delimited string.
     const allBusinessIdsArray = allBusinessIds
       ? allBusinessIds.split(',').map(id => id.trim())
-      : [];
+      : [currentBusinessId];
 
     // Helper function: fetch monthly counts for a given business.
     async function fetchMonthlyCounts(bizId: string) {
@@ -50,13 +50,37 @@ export async function GET(request: NextRequest) {
       // Count posts per month.
       rows.forEach(row => {
         const created = row.getDataValue("last_update_time");
-        const monthStr = format(new Date(created), 'yyyy-MM');
+        // Use system timezone
+        const localDate = new Date(created);
+        const monthStr = format(localDate, 'yyyy-MM');
         monthMap[monthStr] = (monthMap[monthStr] || 0) + 1;
       });
       // Build a sorted array of monthly counts.
       const months = Object.keys(monthMap).sort();
       const monthly_counts = months.map(month => ({ date: month, count: monthMap[month] }));
       return monthly_counts;
+    }
+
+    // Helper function: fetch daily counts for a given business.
+    async function fetchDailyCounts(bizId: string) {
+      const rows = await BusinessPostModel.findAll({
+        attributes: ['last_update_time'],
+        where: { business_id: bizId, is_relevant: true, last_update_time: { [Op.between]: [startDate, endDate] }
+      },
+      order: [['last_update_time', 'ASC']]
+      });
+      
+      const dayMap: Record<string, number> = {};
+      rows.forEach(row => {
+        const created = row.getDataValue("last_update_time");
+        // Use system timezone
+        const localDate = new Date(created);
+        const dayStr = format(localDate, 'MM-dd');
+        dayMap[dayStr] = (dayMap[dayStr] || 0) + 1;
+      });
+      const days = Object.keys(dayMap).sort();
+      const daily_counts = days.map(day => ({ date: day, count: dayMap[day] }));
+      return daily_counts;
     }
 
     // Helper function: fetch the business name from the business table.
@@ -72,28 +96,23 @@ export async function GET(request: NextRequest) {
       return `Business ${bizId}`;
     }
 
-    // Fetch current business monthly counts.
-    const currentMonthlyCounts = await fetchMonthlyCounts(currentBusinessId);
-    const currentBusinessName = await getBusinessName(currentBusinessId);
-    const currentBusinessData = {
-      business_id: currentBusinessId,
-      business_name: currentBusinessName,
-      monthly_counts: currentMonthlyCounts
-    };
-
     // Fetch all businesses monthly counts.
     const similarData = await Promise.all(allBusinessIdsArray.map(async (bizId) => {
-      const monthly_counts = await fetchMonthlyCounts(bizId);
+      let counts;
+      if (level === "daily") {
+        counts = await fetchDailyCounts(bizId);
+      }else{
+        counts = await fetchMonthlyCounts(bizId);
+      }
       const business_name = await getBusinessName(bizId);
       return {
         business_id: bizId,
         business_name,
-        monthly_counts
+        counts: counts
       };
     }));
 
     return NextResponse.json({
-      current: currentBusinessData,
       similar: similarData
     });
   } catch (error: any) {

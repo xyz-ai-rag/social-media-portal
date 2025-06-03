@@ -12,7 +12,6 @@ import {
 import { CanvasRenderer } from "echarts/renderers";
 import { format } from "date-fns";
 
-import { useAuth } from "@/context/AuthContext";
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
 
 echarts.use([
@@ -34,12 +33,11 @@ interface MonthlyCount {
 interface BusinessLineData {
   business_id: string;
   business_name: string;
-  monthly_counts: MonthlyCount[];
+  counts: MonthlyCount[];
 }
 
 // The API returns an object with two keys.
 interface LineGraphData {
-  current: BusinessLineData;
   similar: BusinessLineData[];
 }
 
@@ -49,9 +47,10 @@ interface LineGraphProps {
   earliestDate: string;
   latestDate: string;
   allBusinessIds: string;
+  level: string;
 }
 
-export default function LineGraph({ clientId, businessId, earliestDate, latestDate, allBusinessIds }: LineGraphProps) {
+export default function LineGraph({ clientId, businessId, earliestDate, latestDate, allBusinessIds, level }: LineGraphProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [graphData, setGraphData] = useState<LineGraphData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,12 +66,12 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     [latestDate]
   );
   const formattedStart = useMemo(
-    () => format(new Date(earliestDate), "MMM yyyy"),
-    [earliestDate]
+    () => level === "daily" ? format(new Date(earliestDate), "MMM d") : format(new Date(earliestDate), "MMM yyyy"),
+    [earliestDate, level]
   );
   const formattedEnd = useMemo(
-    () => format(new Date(latestDate), "MMM yyyy"),
-    [latestDate]
+    () => level === "daily" ? format(new Date(latestDate), "MMM d") : format(new Date(latestDate), "MMM yyyy"),
+    [latestDate, level]
   );
 
   // Fetch data from the API route.
@@ -90,7 +89,9 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
           allBusinessIds
         )}&start_date=${encodeURIComponent(
           startDateProcessed
-        )}&end_date=${encodeURIComponent(endDateProcessed)}`;
+        )}&end_date=${encodeURIComponent(
+          endDateProcessed
+        )}&level=${encodeURIComponent(level)}`;
 
         const res = await fetch(url);
         const data: LineGraphData = await res.json();
@@ -126,15 +127,15 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
 
     // Merge all months from all businesses.
     const allMonthsSet = new Set<string>();
-    [graphData.current, ...graphData.similar].forEach((biz) => {
-      biz.monthly_counts.forEach((mc) => allMonthsSet.add(mc.date));
+    graphData.similar.forEach((biz) => {
+      biz.counts.forEach((mc) => allMonthsSet.add(mc.date));
     });
     const sortedMonths = Array.from(allMonthsSet).sort(); // Ascending order
 
     // Build series for each business.
     const buildSeriesForBiz = (biz: BusinessLineData) => {
       const monthMap = new Map<string, number>();
-      biz.monthly_counts.forEach((mc) => monthMap.set(mc.date, mc.count));
+      biz.counts.forEach((mc) => monthMap.set(mc.date, mc.count));
       let cumulative = 0;
       const seriesData = sortedMonths.map((month) => {
         cumulative += monthMap.get(month) || 0;
@@ -151,13 +152,19 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     };
 
     const seriesList = [
-      buildSeriesForBiz(graphData.current),
       ...graphData.similar.map((biz) => buildSeriesForBiz(biz)),
     ];
 
     const option = {
       tooltip: {
         trigger: "axis",
+        confine: true,
+        position: function (point: number[], params: any, dom: any, rect: any, size: any) {
+          if (point[1] < size.contentSize[1] / 2) {
+            return [point[0], point[1] + 10];
+          }
+          return [point[0], point[1] - size.contentSize[1] - 10];
+        }
       },
       legend: {
         bottom: 0,
