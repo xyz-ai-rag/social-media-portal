@@ -1,0 +1,125 @@
+"use client";
+
+import React, { useEffect, useMemo, useState } from "react";
+import { useDateRange } from "@/context/DateRangeContext";
+import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
+import { format } from "date-fns";
+
+interface HashtagItem {
+  tag: string;
+  percentage: number;
+  count: number;
+}
+
+interface HotelPostsTableProps {
+  clientId: string;
+  businessId: string;
+  earliestDate: string;
+  latestDate: string;
+}
+
+export default function HotelPostsTable({
+  clientId,
+  businessId,
+  earliestDate,
+  latestDate,
+}: HotelPostsTableProps) {
+  const [hashtags, setHashtags] = useState<HashtagItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Process dates for API query.
+  const startDateProcessed = useMemo(
+    () => setStartOfDay(earliestDate),
+    [earliestDate]
+  );
+  const endDateProcessed = useMemo(
+    () => setEndOfDay(latestDate),
+    [latestDate]
+  );
+  const formattedStart = useMemo(
+    () => format(new Date(earliestDate), "MMM d yyyy"),
+    [earliestDate]
+  );
+  const formattedEnd = useMemo(
+    () => format(new Date(latestDate), "MMM d yyyy"),
+    [latestDate]
+  );
+  useEffect(() => {
+    let isCurrent = true; // Flag to control whether the request is still valid
+
+    async function fetchHashtagData() {
+      setIsLoading(true); // Set loading state when the request is made
+
+      try {
+        const url = `/api/charts/hashtags?business_id=${businessId}&start_date=${startDateProcessed}&end_date=${endDateProcessed}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        // Only update state if this is the current request
+        if (isCurrent) {
+          setHashtags(data);
+        } else {
+          console.log("Ignored an outdated request.");
+        }
+      } catch (error) {
+        if (isCurrent) {
+          console.error("Error fetching hashtag data:", error);
+        }
+      } finally {
+        if (isCurrent) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    fetchHashtagData();
+
+    // Cleanup function: Mark the previous request as invalid when a new one is made
+    return () => {
+      isCurrent = false;
+    };
+  }, [businessId, startDateProcessed, endDateProcessed]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md flex items-center justify-center h-64">
+        <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md overflow-auto">
+      <h2 className="text-base font-medium text-gray-800 mb-2">Top Hashtags</h2>
+      <div className="text-sm text-gray-600 mb-4">
+        Posts from {formattedStart} to {formattedEnd}
+      </div>
+      {hashtags.length === 0 ? (
+        <div>No hashtags found.</div>
+      ) : (
+        <div>
+          {hashtags.map((hashtag, index) => (
+            <div key={index} className="mb-4">
+              <div className="flex justify-between mb-1">
+                <span className="text-sm font-medium">{hashtag.tag}</span>
+                <span className="text-sm font-medium">
+                  {Math.round(hashtag.percentage)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 relative group">
+                <div
+                  className="bg-blue-500 h-2 rounded-full"
+                  style={{ width: `${hashtag.percentage}%` }}
+                ></div>
+                <div className="absolute bottom-full mb-2 left-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded py-1 px-2 pointer-events-none">
+                  {hashtag.count} posts
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+

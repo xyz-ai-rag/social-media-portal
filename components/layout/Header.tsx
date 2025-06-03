@@ -18,7 +18,8 @@ export default function Header() {
     pathname.includes("/dashboard") ||
     pathname.includes("/posts") ||
     pathname.includes("/competitors") ||
-    pathname.includes("/topic-analysis");
+    pathname.includes("/topic-analysis") ||
+    pathname.includes("/client-reporting");
 
   // Get the current business ID from params
   const currentBusinessId = params.businessId as string;

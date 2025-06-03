@@ -1,0 +1,228 @@
+"use client";
+
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import * as echarts from "echarts/core";
+import { LineChart } from "echarts/charts";
+import {
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent,
+} from "echarts/components";
+import { CanvasRenderer } from "echarts/renderers";
+import { format } from "date-fns";
+
+import { useAuth } from "@/context/AuthContext";
+import { useDateRange } from "@/context/DateRangeContext";
+import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
+
+echarts.use([
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent,
+  LineChart,
+  CanvasRenderer,
+]);
+
+// Define type for a daily count.
+interface DailyCount {
+  date: string; // e.g., '2025-04-01'
+  count: number;
+}
+
+// Each business data returned from the API.
+interface BusinessLineData {
+  business_id: string;
+  business_name: string;
+  daily_counts: DailyCount[];
+}
+
+// The API returns an object with two keys.
+interface LineGraphData {
+  current: BusinessLineData;
+  similar: BusinessLineData[];
+}
+
+interface LineGraphProps {
+  clientId: string;
+  businessId: string; // Selected business id from the URL.
+  earliestDate: string;
+  latestDate: string;
+}
+
+export default function LineGraph({ clientId, businessId, earliestDate, latestDate }: LineGraphProps) {
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [graphData, setGraphData] = useState<LineGraphData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Get global client details from AuthContext.
+  const { clientDetails } = useAuth();
+  console.log("earliestDate", earliestDate);
+  console.log("latestDate", latestDate);
+
+  // Process dates for API query.
+  const startDateProcessed = useMemo(
+    () => setStartOfDay(earliestDate),
+    [earliestDate]
+  );
+  const endDateProcessed = useMemo(
+    () => setEndOfDay(latestDate),
+    [latestDate]
+  );
+  const formattedStart = useMemo(
+    () => format(new Date(earliestDate), "MMM d yyyy"),
+    [earliestDate]
+  );
+  const formattedEnd = useMemo(
+    () => format(new Date(latestDate), "MMM d yyyy"),
+    [latestDate]
+  );
+
+  // Fetch data from the API route.
+  useEffect(() => {
+    let isCurrent = true; // Flag to control whether the request is still valid
+
+    async function fetchLineData() {
+      setIsLoading(true); // Set loading state when the request is made
+
+      try {
+        // Pass the current business id separately and the similar business ids as a comma-separated list.
+        const allBizParam = [clientDetails?.businesses.map((biz) => biz.business_id)].join(",");
+        const url = `/api/client-reporting/line-graph?business_id=${encodeURIComponent(
+          businessId
+        )}&similar_business_ids=${encodeURIComponent(
+          allBizParam
+        )}&start_date=${encodeURIComponent(
+          startDateProcessed
+        )}&end_date=${encodeURIComponent(endDateProcessed)}`;
+
+        const res = await fetch(url);
+        const data: LineGraphData = await res.json();
+
+        // Only update state if this is the current request
+        if (isCurrent) {
+          setGraphData(data);
+        }
+      } catch (err) {
+        if (isCurrent) {
+          console.error("Error fetching line graph data:", err);
+        }
+      } finally {
+        if (isCurrent) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    fetchLineData();
+
+    // Cleanup function: Mark the previous request as invalid when a new one is made
+    return () => {
+      isCurrent = false;
+    };
+  }, [businessId, startDateProcessed, endDateProcessed]);
+
+  // Build and initialize the chart using ECharts.
+  useEffect(() => {
+    if (isLoading || !chartRef.current || !graphData) return;
+
+    const chart = echarts.init(chartRef.current);
+
+    // Merge all dates from the current and similar series.
+    const allDatesSet = new Set<string>();
+    [graphData.current, ...graphData.similar].forEach((biz) => {
+      biz.daily_counts.forEach((dc) => allDatesSet.add(dc.date));
+    });
+    const sortedDates = Array.from(allDatesSet).sort(); // Ascending order
+
+    // Build series for each business.
+    const buildSeriesForBiz = (biz: BusinessLineData) => {
+      const dateMap = new Map<string, number>();
+      biz.daily_counts.forEach((dc) => dateMap.set(dc.date, dc.count));
+      const seriesData = sortedDates.map((date) => dateMap.get(date) || 0);
+      return {
+        name: biz.business_name,
+        type: "line",
+        data: seriesData,
+        smooth: false,
+        showSymbol: false,
+        lineStyle: { width: 2 },
+      };
+    };
+
+    const seriesList = [
+      buildSeriesForBiz(graphData.current),
+      ...graphData.similar.map((biz) => buildSeriesForBiz(biz)),
+    ];
+
+    const option = {
+      tooltip: {
+        trigger: "axis",
+      },
+      legend: {
+        bottom: 0,
+        left: 0,
+        itemWidth: 10,
+        itemHeight: 10,
+        icon: "rect",
+      },
+      grid: {
+        top: "8%",
+        left: "3%",
+        right: "4%",
+        bottom: "15%",
+        containLabel: true,
+      },
+      xAxis: {
+        type: "category",
+        data: sortedDates,
+        axisLabel: {
+          formatter: (value: string) => value.slice(5), // Displays MM-DD
+        },
+      },
+      yAxis: {
+        type: "value",
+        splitLine: { lineStyle: { type: "dashed" } },
+      },
+      series: seriesList,
+    };
+
+    chart.setOption(option);
+    const resizeObserver = new window.ResizeObserver(() => {
+      chart.resize();
+    });
+    if (chartRef.current) {
+      resizeObserver.observe(chartRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+      chart.dispose();
+    };
+  }, [isLoading, graphData]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md h-96 flex items-center justify-center w-full">
+        <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md w-full">
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-base font-medium text-gray-800">
+          Vs Similar Businesses
+        </h2>
+      </div>
+      <div className="text-sm text-gray-600 mb-4">
+        Posts from {formattedStart} to {formattedEnd}
+      </div>
+      <div className="h-72">
+        <div ref={chartRef} style={{ width: "100%", height: "100%" }} />
+      </div>
+    </div>
+  );
+}

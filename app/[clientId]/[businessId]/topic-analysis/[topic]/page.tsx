@@ -2,6 +2,7 @@
 
 import { useParams, useSearchParams } from "next/navigation";
 import TopicPosts from "@/components/topic-analysis/topic-posts/TopicPosts";
+import { DateRangeProvider } from "@/context/DateRangeContext";
 
 export default function PostsPage() {
   const params = useParams();
@@ -14,7 +15,9 @@ export default function PostsPage() {
   const topicType = searchParams.get('topic_type') || '';
   return (
     <div className="space-y-6">
+      <DateRangeProvider>
       <TopicPosts clientId={clientId} businessId={businessId} topic={topic} topicType={topicType}/>
+      </DateRangeProvider>
     </div>
   );
 }

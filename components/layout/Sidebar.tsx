@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   FiChevronLeft,
   FiChevronRight,
@@ -13,6 +13,7 @@ import {
   FiUsers,
   FiAlertCircle,
 } from "react-icons/fi";
+import { TbReportAnalytics } from "react-icons/tb";
 import { IoAnalyticsOutline } from "react-icons/io5";
 
 import { useAuth } from "@/context/AuthContext";
@@ -95,6 +96,8 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const { logout, clientDetails } = useAuth();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentTab = searchParams.get('tab') || 'brand-overview';
 
   // Extract client and business ID from URL for dynamic routing
   const urlParts = pathname.split("/").filter(Boolean);
@@ -144,6 +147,20 @@ export default function Sidebar() {
   const effectiveBusinessId = currentBusinessId || lastBusinessId;
   const hasBusiness = Boolean(effectiveClientId && effectiveBusinessId);
 
+  //  Find current business limitation from clientDetails
+  useEffect(() => {
+    if (clientDetails?.businesses?.length) {
+      const currentBusiness = clientDetails.businesses.find(
+        (biz) => biz.business_id === effectiveBusinessId
+      );
+
+      if (currentBusiness) {
+        // TODO: add limitation to only show 1 business
+        clientDetails.enable_client_reporting;
+      }
+    }
+  }, [clientDetails, effectiveClientId]);
+
   // Save state to localStorage when it changes
   const toggleCollapsed = (): void => {
     const newState = !collapsed;
@@ -184,6 +201,13 @@ export default function Sidebar() {
   const getDashboardUrl = () => {
     if (hasBusiness) {
       return `/${effectiveClientId}/${effectiveBusinessId}/dashboard`;
+    }
+    return "/businesses";
+  };
+
+  const getClientReportingUrl = () => {
+    if (hasBusiness) {
+      return `/${effectiveClientId}/${effectiveBusinessId}/client-reporting`;
     }
     return "/businesses";
   };
@@ -250,6 +274,45 @@ export default function Sidebar() {
           className={`flex-1 ${collapsed ? "" : "overflow-y-auto overflow-x-hidden"
             }`}
         >
+          <div>
+            {/* Reporting submenu */}
+            {isActive("/[clientId]/[businessId]/client-reporting") && !collapsed && (
+              <div className="pl-8 space-y-2 py-2">
+                <Link
+                  href={`/${effectiveClientId}/${effectiveBusinessId}/client-reporting?tab=brand-overview`}
+                  className={`flex items-center p-2 rounded-md text-sm ${
+                    currentTab === 'brand-overview'
+                    ? "text-[#5A67BA] font-bold"
+                    : "text-gray-700/60 hover:bg-[#5A67BA]/10 font-normal"
+                  }`}
+                >
+                  Brand Overview
+                </Link>
+
+                <Link 
+                  href={`/${effectiveClientId}/${effectiveBusinessId}/client-reporting?tab=monthly-reporting`}
+                  className={`flex items-center p-2 rounded-md text-sm ${
+                    currentTab === 'monthly-reporting'
+                    ? "text-[#5A67BA] font-bold"
+                    : "text-gray-700/60 hover:bg-[#5A67BA]/10 font-normal"
+                  }`}
+                >
+                  Monthly Reporting
+                </Link>
+
+                <Link
+                  href={`/${effectiveClientId}/${effectiveBusinessId}/client-reporting?tab=business-reporting`} 
+                  className={`flex items-center p-2 rounded-md text-sm ${
+                    currentTab === 'business-reporting'
+                    ? "text-[#5A67BA] font-bold"
+                    : "text-gray-700/60 hover:bg-[#5A67BA]/10 font-normal"
+                  }`}
+                >
+                  Business Reporting
+                </Link>
+              </div>
+            )}
+          </div>        
           <div className="p-4">
             {!collapsed && (
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 pl-2">
@@ -266,6 +329,18 @@ export default function Sidebar() {
                 collapsed={collapsed}
                 onClick={!hasBusiness ? handleDisabledClick : undefined}
               />
+
+              <MenuItem
+                href={getClientReportingUrl()}
+                icon={<TbReportAnalytics />} 
+                // TODO: change to client reporting
+                label="Client Reporting"
+                isActive={isActive("/[clientId]/[businessId]/client-reporting")}
+                disabled={!hasBusiness && !isSettingsPage}
+                collapsed={collapsed}
+                onClick={!hasBusiness ? handleDisabledClick : undefined}
+              />
+
 
               <MenuItem
                 href={getPostsUrl()}
