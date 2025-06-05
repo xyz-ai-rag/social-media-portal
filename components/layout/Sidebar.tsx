@@ -290,9 +290,9 @@ export default function Sidebar() {
                 </Link>
 
                 <Link 
-                  href={`/${effectiveClientId}/${effectiveBusinessId}/client-reporting?tab=monthly-reporting`}
+                  href={`/${effectiveClientId}/${effectiveBusinessId}/client-reporting?tab=monthly-kpis`}
                   className={`flex items-center p-2 rounded-md text-sm ${
-                    currentTab === 'monthly-reporting'
+                    currentTab === 'monthly-kpis'
                     ? "text-[#5A67BA] font-bold"
                     : "text-gray-700/60 hover:bg-[#5A67BA]/10 font-normal"
                   }`}
@@ -335,7 +335,7 @@ export default function Sidebar() {
                 icon={<TbReportAnalytics />} 
                 // TODO: change to client reporting
                 label="Client Reporting"
-                isActive={isActive("/[clientId]/[businessId]/client-reporting")}
+                isActive={isActive("/[clientId]/[businessId]/client-reporting?tab=brand-overview")}
                 disabled={!hasBusiness && !isSettingsPage}
                 collapsed={collapsed}
                 onClick={!hasBusiness ? handleDisabledClick : undefined}

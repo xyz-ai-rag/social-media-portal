@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { format, subMonths, startOfMonth, endOfMonth, parseISO } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';
 import LineGraph from "@/components/client-reporting/brand-overview/LineGraph";
-import PostsMonthlyTable from '@/components/client-reporting/monthly-reporting/PostsMonthlyTable';
+import PostsMonthlyTable from '@/components/client-reporting/monthly-kpis/PostsMonthlyTable';
 import ComparisonBarChart from './ComparisonBarChart';
 import SMPIProgressCircle from './SMPIProgressCircle';
 

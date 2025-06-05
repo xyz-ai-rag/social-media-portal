@@ -4,7 +4,7 @@ import { DateRangeProvider } from "@/context/DateRangeContext";
 import { useAuth } from "@/context/AuthContext";
 import { useSearchParams } from "next/navigation";
 import BrandOverview from "./brand-overview/BrandOverview";
-import MonthlyReporting from "./monthly-reporting/MonthlyReporting";
+import MonthlyReporting from "./monthly-kpis/MonthlyReporting";
 import BusinessReporting from "./BusinessReporting";
 
 interface ClientReportingProps {
@@ -28,7 +28,7 @@ export default function ClientReporting({ clientId, businessId }: ClientReportin
     //   }, [clientDetails, businessId]);
 
     const searchParams = useSearchParams();
-    const tab = searchParams.get('tab') || 'monthly-reporting';
+    const tab = searchParams.get('tab') || 'business-reporting';
 
     return (
         <DateRangeProvider>
@@ -38,7 +38,7 @@ export default function ClientReporting({ clientId, businessId }: ClientReportin
                     <BrandOverview clientId={clientId} businessId={businessId} />
                 )}
 
-                {tab === 'monthly-reporting' && (
+                {tab === 'monthly-kpis' && (
                     <MonthlyReporting clientId={clientId} businessId={businessId} />
                 )}
 
