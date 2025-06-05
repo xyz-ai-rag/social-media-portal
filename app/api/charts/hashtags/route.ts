@@ -19,16 +19,20 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Parse dates without timezone conversion
-    const startDate = parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date());
-    const endDate = parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+    // Extract date part (YYYY-MM-DD) from the datetime string
+    const startDate = start_date.split(' ')[0];
+    const endDate = end_date.split(' ')[0];
     
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    // Create datetime objects exactly like getBusinessPosts
+    const startDateTime = new Date(`${startDate}T00:00:00.000Z`);
+    const endDateTime = new Date(`${endDate}T23:59:59.999Z`);
+    
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
 
     console.log(`[Hashtags] Query params: business_id=${business_id}, start_date=${start_date}, end_date=${end_date}`);
-    console.log(`[Hashtags] Parsed dates: startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
+    console.log(`[Hashtags] Parsed dates: startDateTime=${startDateTime.toISOString()}, endDateTime=${endDateTime.toISOString()}`);
     
     // Query posts with english_tag_list for the given period
     const rows = await BusinessPostModel.findAll({
@@ -36,7 +40,7 @@ export async function GET(request: NextRequest) {
       where: {
         business_id,
         is_relevant: true,
-        last_update_time: { [Op.between]: [startDate, endDate] }
+        last_update_time: { [Op.between]: [startDateTime, endDateTime] }
       }
     });
     

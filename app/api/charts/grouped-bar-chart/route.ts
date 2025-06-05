@@ -17,17 +17,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Extract date part (YYYY-MM-DD) from the datetime string
+    const startDate = start_date.split(' ')[0];
+    const endDate = end_date.split(' ')[0];
 
-    // Parse dates without timezone conversion
-    const startDate = parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date());
-    const endDate = parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date());
-
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    // Create datetime objects exactly like getBusinessPosts
+    const startDateTime = new Date(`${startDate}T00:00:00.000Z`);
+    const endDateTime = new Date(`${endDate}T23:59:59.999Z`);
+    
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
 
     console.log(`[BarChart] Query params: business_id=${business_id}, start_date=${start_date}, end_date=${end_date}`);
-    console.log(`[BarChart] Parsed dates: startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
+    console.log(`[BarChart] Parsed dates: startDateTime=${startDateTime.toISOString()}, endDateTime=${endDateTime.toISOString()}`);
 
     // Query posts for the given business and date range.
     const posts = await BusinessPostModel.findAll({
@@ -36,7 +39,7 @@ export async function GET(request: NextRequest) {
         business_id,
         is_relevant: true,
         last_update_time: {
-          [Op.between]: [startDate, endDate]
+          [Op.between]: [startDateTime, endDateTime]
         }
       },
       order: [["last_update_time", "ASC"]]
@@ -51,23 +54,12 @@ export async function GET(request: NextRequest) {
     });
     console.log(`[BarChart] Total unique note_ids: ${uniqueNoteIds.size}`);
 
-    // Get min and max dates from the actual data to ensure we cover all posts
-    let minDate = startDate;
-    let maxDate = endDate;
-
-    posts.forEach(post => {
-      const postDate = new Date(post.getDataValue("last_update_time"));
-      if (postDate < minDate) minDate = postDate;
-      if (postDate > maxDate) maxDate = postDate;
-    });
-
     // Initialize daily counts with the entire range that covers all data
     const counts: Record<string, number> = {};
     const dailyKeys: string[] = [];
 
-    // Use startOfDay for the minDate to ensure we start at the beginning of the day
-    // Use endOfDay for the maxDate to ensure we include the entire last day
-    for (let d = startOfDay(minDate); d <= endOfDay(maxDate); d.setDate(d.getDate() + 1)) {
+    // Generate date sequence from startDate to endDate (inclusive)
+    for (let d = new Date(startDate); d <= new Date(endDate); d.setDate(d.getDate() + 1)) {
       const key = format(d, 'yyyy-MM-dd');
       counts[key] = 0;
       dailyKeys.push(key);

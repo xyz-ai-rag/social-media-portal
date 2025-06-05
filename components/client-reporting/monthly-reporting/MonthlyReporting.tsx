@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import LineGraph from "@/components/client-reporting/brand-overview/LineGraph";
 import PostsMonthlyTable from '@/components/client-reporting/monthly-reporting/PostsMonthlyTable';
 import ComparisonBarChart from './ComparisonBarChart';
+import SMPIProgressCircle from './SMPIProgressCircle';
 
 interface MonthlyReportingProps {
   clientId: string;
@@ -11,16 +12,21 @@ interface MonthlyReportingProps {
 }
 
 export default function MonthlyReporting({ clientId, businessId }: MonthlyReportingProps) {
-  const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
+  const [selectedMonth, setSelectedMonth] = useState<string>(format(subMonths(new Date(), 1), 'yyyy-MM'));
   const [earliestDate, setEarliestDate] = useState<string>("2024-06-01");
   const [latestDate, setLatestDate] = useState<string>("2025-06-01");
   const [startDate, setStartDate] = useState<string>(format(subMonths(new Date(), 1), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const { clientDetails } = useAuth();
-  
+
   const allBusinessIds = useMemo(
     () => clientDetails?.businesses.map((biz) => biz.business_id).join(",") || "",
     [clientDetails]
+  );
+
+  const businessName = useMemo(
+    () => clientDetails?.businesses.find((biz) => biz.business_id === businessId)?.business_name || "",
+    [clientDetails, businessId]
   );
 
   // Fetch date range when component mounts
@@ -32,14 +38,14 @@ export default function MonthlyReporting({ clientId, businessId }: MonthlyReport
         if (data.earliest_date && data.latest_date) {
           const earliestDateObj = parseISO(data.earliest_date);
           const latestDateObj = parseISO(data.latest_date);
-          
+
           setEarliestDate(data.earliest_date);
           setLatestDate(data.latest_date);
-          
+
           // Set the selected month to the latest month
           const latestMonth = format(latestDateObj, 'yyyy-MM');
           setSelectedMonth(latestMonth);
-          
+
           // Set the start and end dates for the selected month
           const [year, month] = latestMonth.split('-').map(Number);
           const date = new Date(year, month - 1);
@@ -83,9 +89,10 @@ export default function MonthlyReporting({ clientId, businessId }: MonthlyReport
   return (
     <div className="container mx-auto px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 className="text-[34px] font-bold text-[#5D5FEF]">
-          Monthly Reporting: {format(parseISO(selectedMonth + '-01'), 'MMMM yyyy')}
-        </h1>
+        <div>
+          <h1 className="text-[34px] font-bold text-[#5D5FEF]">Monthly KPIs: {businessName}</h1>
+          <h1 className="text-[24px] font-bold text-[#5D5FEF]">{format(parseISO(selectedMonth + '-01'), 'MMMM yyyy')}</h1>
+        </div>
         <select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
@@ -100,87 +107,94 @@ export default function MonthlyReporting({ clientId, businessId }: MonthlyReport
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+        <div className="md:col-span-1 w-full min-h-[340px] flex items-stretch">
+            {/* TODO: Replace 70 with actual SMPI calculation */}
+            <SMPIProgressCircle value={70} />
+        </div>
         {/* Line chart showing posts per day */}
-        <div className="md:col-span-3 w-full min-h-[340px] flex items-stretch">
-          <LineGraph 
-            clientId={clientId} 
-            businessId={businessId} 
-            earliestDate={startDate} 
-            latestDate={endDate} 
-            allBusinessIds={allBusinessIds} 
+        <div className="md:col-span-2 w-full min-h-[340px] flex items-stretch">
+          <LineGraph
+            clientId={clientId}
+            businessId={businessId}
+            earliestDate={startDate}
+            latestDate={endDate}
+            allBusinessIds={allBusinessIds}
             level="daily"
           />
         </div>
 
-        {/* Hotel posts table */}
-        <div className="md:col-span-3">
-          <PostsMonthlyTable 
-            clientId={clientId} 
-            businessId={businessId} 
+         {/* Hotel posts table */}
+        {/* <div className="md:col-span-3">
+          <PostsMonthlyTable
+            clientId={clientId}
+            businessId={businessId}
             month={selectedMonth}
-            allBusinessIds={allBusinessIds} 
+            allBusinessIds={allBusinessIds}
           />
-        </div>
+        </div>  */}
 
         {/* Platform comparison charts */}
         <div className="md:col-span-1 min-h-64 flex items-stretch">
           <ComparisonBarChart
-            title="XHS Platform Comparison"
-            type="platform"
-            param="XHS"
+            title="Total Posts vs Last Month vs Average"
+            param="Total"
             month={selectedMonth}
-            allBusinessIds={allBusinessIds}
+            businessId={businessId}
           />
         </div>
 
         <div className="md:col-span-1 min-h-64 flex items-stretch">
           <ComparisonBarChart
-            title="DY Platform Comparison"
-            type="platform"
-            param="DY"
+            title="Total Criticism vs Last Month vs Average"
+            param="Criticism"
             month={selectedMonth}
-            allBusinessIds={allBusinessIds}
+            businessId={businessId}
           />
         </div>
 
         <div className="md:col-span-1 min-h-64 flex items-stretch">
           <ComparisonBarChart
-            title="WB Platform Comparison"
-            type="platform"
-            param="WB"
+            title="Neutral Posts vs Last Month vs Average"
+            param="Neutral"
             month={selectedMonth}
-            allBusinessIds={allBusinessIds}
-          />
-        </div>
-
-        {/* Post type comparison charts */}
-        <div className="md:col-span-1 min-h-64 flex items-stretch">
-          <ComparisonBarChart
-            title="Commercial Posts Comparison"
-            type="postType"
-            param="commercial"
-            month={selectedMonth}
-            allBusinessIds={allBusinessIds}
+            businessId={businessId}
           />
         </div>
 
         <div className="md:col-span-1 min-h-64 flex items-stretch">
           <ComparisonBarChart
-            title="Organic Posts Comparison"
-            type="postType"
-            param="organic"
+            title="Highly Positive Posts vs Last Month vs Average"
+            param="Highly Positive"
             month={selectedMonth}
-            allBusinessIds={allBusinessIds}
+            businessId={businessId}
           />
         </div>
 
         <div className="md:col-span-1 min-h-64 flex items-stretch">
           <ComparisonBarChart
-            title="Own Posts Comparison"
-            type="postType"
-            param="own"
+            title="Positive Posts vs Last Month vs Average"
+            param="Positive"
             month={selectedMonth}
-            allBusinessIds={allBusinessIds}
+            businessId={businessId}
+          />
+        </div>
+        <div className="md:col-span-1 min-h-64 flex items-stretch"></div>
+
+        <div className="md:col-span-1 min-h-64 flex items-stretch">
+          <ComparisonBarChart
+            title="Highly Negative Posts vs Last Month vs Average"
+            param="Highly Negative"
+            month={selectedMonth}
+            businessId={businessId}
+          />
+        </div>
+
+        <div className="md:col-span-1 min-h-64 flex items-stretch">
+          <ComparisonBarChart
+            title="Negative Posts vs Last Month vs Average"
+            param="Negative"
+            month={selectedMonth}
+            businessId={businessId}
           />
         </div>
       </div>

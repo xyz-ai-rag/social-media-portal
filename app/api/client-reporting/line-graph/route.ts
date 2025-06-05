@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Op } from 'sequelize';
+import { col, fn, Op, literal } from 'sequelize';
 import { BusinessPostModel, BusinessModel } from '@/feature/sqlORM/modelorm';
 import { format, parse } from 'date-fns';
 
@@ -37,50 +37,41 @@ export async function GET(request: NextRequest) {
     // Helper function: fetch monthly counts for a given business.
     async function fetchMonthlyCounts(bizId: string) {
       const rows = await BusinessPostModel.findAll({
-        attributes: ['last_update_time'],
+        attributes: [
+          [fn('to_char', col('last_update_time'), 'YYYY-MM'), 'month'],
+          [fn('COUNT', literal('DISTINCT note_id')), 'count']
+        ],
         where: {
           business_id: bizId,
           is_relevant: true,
           last_update_time: { [Op.between]: [startDate, endDate] }
         },
-        order: [['last_update_time', 'ASC']]
+        group: [fn('to_char', col('last_update_time'), 'YYYY-MM')],
+        order: [[fn('to_char', col('last_update_time'), 'YYYY-MM'), 'ASC']]
       });
-      
-      const monthMap: Record<string, number> = {};
-      // Count posts per month.
-      rows.forEach(row => {
-        const created = row.getDataValue("last_update_time");
-        // Use system timezone
-        const localDate = new Date(created);
-        const monthStr = format(localDate, 'yyyy-MM');
-        monthMap[monthStr] = (monthMap[monthStr] || 0) + 1;
-      });
-      // Build a sorted array of monthly counts.
-      const months = Object.keys(monthMap).sort();
-      const monthly_counts = months.map(month => ({ date: month, count: monthMap[month] }));
-      return monthly_counts;
+
+      return rows.map(row => ({
+        date: String(row.get('month')),
+        count: parseInt(String(row.get('count')))
+      }));
     }
 
     // Helper function: fetch daily counts for a given business.
     async function fetchDailyCounts(bizId: string) {
       const rows = await BusinessPostModel.findAll({
-        attributes: ['last_update_time'],
-        where: { business_id: bizId, is_relevant: true, last_update_time: { [Op.between]: [startDate, endDate] }
-      },
-      order: [['last_update_time', 'ASC']]
+        attributes: [
+          [fn('to_char', col('last_update_time'), 'MM-dd'), 'day'],
+          [fn('COUNT', literal('DISTINCT note_id')), 'count']
+        ],
+        where: { business_id: bizId, is_relevant: true, last_update_time: { [Op.between]: [startDate, endDate] } },
+        group: [fn('to_char', col('last_update_time'), 'MM-dd')],
+        order: [[fn('to_char', col('last_update_time'), 'MM-dd'), 'ASC']]
       });
-      
-      const dayMap: Record<string, number> = {};
-      rows.forEach(row => {
-        const created = row.getDataValue("last_update_time");
-        // Use system timezone
-        const localDate = new Date(created);
-        const dayStr = format(localDate, 'MM-dd');
-        dayMap[dayStr] = (dayMap[dayStr] || 0) + 1;
-      });
-      const days = Object.keys(dayMap).sort();
-      const daily_counts = days.map(day => ({ date: day, count: dayMap[day] }));
-      return daily_counts;
+
+      return rows.map(row => ({
+        date: row.get('day'),
+        count: parseInt(row.get('count') as string)
+      }));
     }
 
     // Helper function: fetch the business name from the business table.

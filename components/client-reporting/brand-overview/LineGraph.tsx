@@ -220,7 +220,7 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     <div className="bg-white p-6 rounded-lg shadow-md w-full">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-base font-medium text-gray-800">
-          Total Posts
+          {level === "daily" ? "Monthly Posts" : "Total Posts"}
         </h2>
       </div>
       <div className="text-sm text-gray-600 mb-4">

@@ -18,12 +18,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Parse dates and ensure start_date is always at 00:00:00 and end_date is at 23:59:59
-    let startDate = parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date());
-    let endDate = parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date());
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 59, 59, 999);
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    // Extract date part (YYYY-MM-DD) from the datetime string
+    const startDate = start_date.split(' ')[0];
+    const endDate = end_date.split(' ')[0];
+
+    // Create datetime objects exactly like getBusinessPosts
+    const startDateTime = new Date(`${startDate}T00:00:00.000Z`);
+    const endDateTime = new Date(`${endDate}T23:59:59.999Z`);
+    
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
 
@@ -60,7 +63,7 @@ export async function GET(request: NextRequest) {
           where: {
             business_id: bizId,
             is_relevant: true,
-            last_update_time: { [Op.between]: [startDate, endDate] }
+            last_update_time: { [Op.between]: [startDateTime, endDateTime] }
           }
         });
         const counts: Record<string, number> = { Rednote: 0, Weibo: 0, Douyin: 0 };

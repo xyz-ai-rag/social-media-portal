@@ -1,71 +1,46 @@
 import { BusinessPostModel } from "@/feature/sqlORM/modelorm";
 import { NextRequest, NextResponse } from "next/server";
-import { Op } from "sequelize";
-import { parse, format, endOfMonth, startOfMonth } from "date-fns";
-import { setEndOfDay } from "@/utils/timeUtils";
-import { setStartOfDay } from "@/utils/timeUtils";
+import {fn, col, literal, Op } from "sequelize";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const month = searchParams.get("month");
-    const type = searchParams.get("type");
+    const businessId = searchParams.get("businessId");
     const param = searchParams.get("param");
-
-    if (!month || !type) {
+    if (!businessId || !param) {
       return NextResponse.json(
-        { error: "Missing required parameters: month, type" },
+        { error: "Missing required parameters: businessId, param" },
         { status: 400 }
       );
     }
 
-    const date = parse(month, 'yyyy-MM', new Date());
-    if (isNaN(date.getTime())) {
-      return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
-    }
-
-    const startDate = setStartOfDay(format(startOfMonth(date), 'yyyy-MM-dd'));
-    const endDate = setEndOfDay(format(endOfMonth(date), 'yyyy-MM-dd'));
-
     let whereClause: any = {
       is_relevant: true,
-      last_update_time: { [Op.between]: [startDate, endDate] }
+      business_id: businessId,
     };
 
-    // Add type-specific conditions
-    switch (type) {
-      case 'platform':
-        if (!param) {
-          return NextResponse.json({ error: "Platform parameter required" }, { status: 400 });
-        }
-        whereClause.platform = param.toLowerCase();
-        break;
-
-      case 'postType':
-        if (!param) {
-          return NextResponse.json({ error: "Post type parameter required" }, { status: 400 });
-        }
-        whereClause.post_category = param.toLowerCase() + ' post';
-        break;
-
-      case 'business':
-        if (!param) {
-          return NextResponse.json({ error: "Business ID parameter required" }, { status: 400 });
-        }
-        whereClause.business_id = param;
-        break;
-
-      default:
-        return NextResponse.json({ error: "Invalid type parameter" }, { status: 400 });
+    if (param === 'Criticism') {
+        whereClause.has_negative_or_criticism = true;
+    }else if(param !== "Total"){
+      whereClause.english_sentiment = param;
     }
 
-    const count = await BusinessPostModel.count({
+    const posts = await BusinessPostModel.findAll({
       where: whereClause,
-      distinct: true,
-      col: 'note_id'
+      attributes: [
+        [fn('to_char', col('last_update_time'), 'YYYY-MM'), 'month'],
+        [fn('COUNT', literal('DISTINCT note_id')), 'count']
+      ],
+      group: [fn('to_char', col('last_update_time'), 'YYYY-MM')],
+      order: [[fn('to_char', col('last_update_time'), 'YYYY-MM'), 'ASC']]
     });
 
-    return NextResponse.json({ count });
+    const result: Record<string, { count: number }> = {};
+    posts.forEach((row: any) => {
+      result[row.get('month')] = { count: parseInt(row.get('count')) };
+    });
+
+    return NextResponse.json(result);
   } catch (error: any) {
     console.error(`[PostsCount] Error:`, error);
     return NextResponse.json({ error: error.message }, { status: 500 });
