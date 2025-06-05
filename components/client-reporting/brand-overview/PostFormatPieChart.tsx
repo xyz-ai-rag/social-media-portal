@@ -14,10 +14,6 @@ import { format } from "date-fns";
 
 // Import helper functions from timeUtils
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
-// Import date range context
-import { useDateRange } from "@/context/DateRangeContext";
-import { constructVercelURL } from "@/utils/generateURL";
-import { useAuth } from "@/context/AuthContext";
 
 echarts.use([
   TitleComponent,
@@ -135,7 +131,7 @@ export default function PostFormatPieChart({ clientId, businessId, earliestDate,
     const option = {
       tooltip: {
         trigger: "item",
-        formatter: "{b}: {c}% ({d}%)"
+        formatter: (params: any) => `${params.name}: ${params.data.count}`
       },
       series: [
         {
@@ -205,7 +201,7 @@ export default function PostFormatPieChart({ clientId, businessId, earliestDate,
                     }}
                   />
                   <span className="text-sm font-medium text-gray-800">{stat.type}</span>
-                  <span className="ml-1 text-sm text-gray-600">({stat.count} posts)</span>
+                  <span className="ml-1 text-sm text-gray-600">({((stat.count/contentTypeData.totalCount)*100).toFixed(0)}%)</span>
                 </div>
               ))}
             </div>

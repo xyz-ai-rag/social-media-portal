@@ -186,7 +186,7 @@ const NegativeFeedbackLineGraph: React.FC<NegativeFeedbackLineGraphProps> = ({
           <>
             <div className="mb-2">
               <h2 className="text-base font-medium text-gray-800">
-                Negative Feedback Trend
+              Negative Feedback/Criticism Trend
               </h2>
             </div>
             <div className="text-sm text-gray-600 mb-4">

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
-import { useAuth } from "@/context/AuthContext";
 import { setStartOfDay } from "@/utils/timeUtils";
 import { setEndOfDay } from "@/utils/timeUtils";
 
@@ -103,7 +102,7 @@ export default function HotelPostsTable({
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md overflow-auto">
-      <h2 className="text-base font-medium text-gray-800 mb-2">Hotel Total Posts</h2>
+      <h2 className="text-base font-medium text-gray-800 mb-2">Total Posts Breakdown</h2>
       <div className="text-sm text-gray-600 mb-4">
         Posts from {formattedStart} to {formattedEnd}
       </div>
@@ -121,7 +120,7 @@ export default function HotelPostsTable({
               <div className="flex justify-between mb-1">
                 <span className="text-sm font-medium">{row.name}</span>
                 <span className="text-sm font-medium">
-                  {Math.round(row.total / grandTotal * 100)}%
+                  {row.total}
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 relative group">

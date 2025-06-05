@@ -297,7 +297,7 @@ export default function Sidebar() {
                     : "text-gray-700/60 hover:bg-[#5A67BA]/10 font-normal"
                   }`}
                 >
-                  Monthly Reporting
+                  Monthly KPIs
                 </Link>
 
                 <Link
