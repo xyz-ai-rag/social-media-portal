@@ -9,7 +9,6 @@ import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "../SharedFilter";
 import PostPreviewCard from "../PostPreviewCard";
 import { useDateRange } from "@/context/DateRangeContext";
-import DateRangePicker from "@/components/dashboard/DateRangePicker";
 
 interface BusinessPostsProps {
   clientId: string;

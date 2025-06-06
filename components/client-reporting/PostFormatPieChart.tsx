@@ -30,6 +30,7 @@ interface ContentTypeProps {
   earliestDate: string;
   latestDate: string;
   allBusinessIds: string;
+  level: string;
 }
 
 interface ContentTypeStat {
@@ -43,7 +44,7 @@ interface ContentTypeData {
   totalCount: number;
 }
 
-export default function PostFormatPieChart({ clientId, businessId, earliestDate, latestDate, allBusinessIds }: ContentTypeProps) {
+export default function PostFormatPieChart({ clientId, businessId, earliestDate, latestDate, allBusinessIds, level }: ContentTypeProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [contentTypeData, setContentTypeData] = useState<ContentTypeData>({
     contentTypeStats: [],
@@ -61,12 +62,12 @@ export default function PostFormatPieChart({ clientId, businessId, earliestDate,
     [latestDate]
   );
   const formattedStart = useMemo(
-    () => format(new Date(earliestDate), "MMM yyyy"),
-    [earliestDate]
+    () => level === "monthly" ? format(new Date(earliestDate), "MMM yyyy") : format(new Date(earliestDate), "MMM d yyyy"),
+    [earliestDate, level]
   );
   const formattedEnd = useMemo(
-    () => format(new Date(latestDate), "MMM yyyy"),
-    [latestDate]
+    () => level === "monthly" ? format(new Date(latestDate), "MMM yyyy") : format(new Date(latestDate), "MMM d yyyy"),
+    [latestDate, level]
   );
 
   // Fetch content type data

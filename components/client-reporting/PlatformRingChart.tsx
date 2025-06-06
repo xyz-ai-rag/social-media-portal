@@ -36,6 +36,7 @@ interface PlatformRingChartProps {
   earliestDate: string;
   latestDate: string;
   allBusinessIds: string;
+  level: string;
 }
 
 export default function PlatformRingChart({
@@ -44,6 +45,7 @@ export default function PlatformRingChart({
   earliestDate,
   latestDate,
   allBusinessIds,
+  level,
 }: PlatformRingChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartData, setChartData] = useState<PieDataItem[]>([]);
@@ -59,12 +61,12 @@ const endDateProcessed = useMemo(
   [latestDate]
 );
 const formattedStart = useMemo(
-  () => format(new Date(earliestDate), "MMM yyyy"),
-  [earliestDate]
+  () => level === "monthly" ? format(new Date(earliestDate), "MMM yyyy") : format(new Date(earliestDate), "MMM d yyyy"),
+  [earliestDate, level]
 );
 const formattedEnd = useMemo(
-  () => format(new Date(latestDate), "MMM yyyy"),
-  [latestDate]
+  () => level === "monthly" ? format(new Date(latestDate), "MMM yyyy") : format(new Date(latestDate), "MMM d yyyy"),
+  [latestDate, level]
 );
 
   // Fetch Pie data from the API route.

@@ -29,21 +29,23 @@ interface PieDataItem {
   percentage?: number; // Add percentage field
 }
 
-interface PlatformRingChartProps {
+interface PostTypeRingChartProps {
   clientId: string;
   businessId: string;
   earliestDate: string;
   latestDate: string;
   allBusinessIds: string;
+  level: string;
 }
 
-export default function PlatformRingChart({
+export default function PostTypeRingChart({
   clientId,
   businessId,
   earliestDate,
   latestDate,
   allBusinessIds,
-}: PlatformRingChartProps) {
+  level,
+}: PostTypeRingChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartData, setChartData] = useState<PieDataItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,12 +61,12 @@ export default function PlatformRingChart({
     [latestDate]
   );
   const formattedStart = useMemo(
-    () => format(new Date(earliestDate), "MMM d yyyy"),
-    [earliestDate]
+    () => level === "monthly" ? format(new Date(earliestDate), "MMM yyyy") : format(new Date(earliestDate), "MMM d yyyy"),
+    [earliestDate, level]
   );
   const formattedEnd = useMemo(
-    () => format(new Date(latestDate), "MMM d yyyy"),
-    [latestDate]
+    () => level === "monthly" ? format(new Date(latestDate), "MMM yyyy") : format(new Date(latestDate), "MMM d yyyy"),
+    [latestDate, level]
   );
 
   // Fetch Pie data from the API route.

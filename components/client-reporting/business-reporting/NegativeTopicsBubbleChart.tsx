@@ -4,7 +4,7 @@ import * as d3 from "d3";
 import { convertTopicsToTree, Topic, Tree } from "@/utils/topicTree";
 import { setEndOfDay, setStartOfDay } from "@/utils/timeUtils";
 import { format } from "date-fns";
-interface NegativeFeedbackBubbleChartProps {
+interface NegativeTopicsBubbleChartProps {
   businessId: string;
   clientId: string;
   earliestDate: string;
@@ -21,12 +21,8 @@ interface TooltipData {
   r: number;
 }
 
-const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
+const NegativeTopicsBubbleChart: FC<NegativeTopicsBubbleChartProps> = ({
   businessId,
-  clientId,
-  earliestDate,
-  latestDate,
-  allBusinessIds,
 }) => {
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [hoveredCircle, setHoveredCircle] = useState<string | null>(null);
@@ -37,36 +33,15 @@ const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
   const [total, setTotal] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   // Process dates for API query.
-  const startDateProcessed = useMemo(
-    () => setStartOfDay(earliestDate),
-    [earliestDate]
-  );
-  const endDateProcessed = useMemo(
-    () => setEndOfDay(latestDate),
-    [latestDate]
-  );
-  const formattedStart = useMemo(
-    () => format(new Date(earliestDate), "MMM yyyy"),
-    [earliestDate]
-  );
-  const formattedEnd = useMemo(
-    () => format(new Date(latestDate), "MMM yyyy"),
-    [latestDate]
-  );
+ 
   // Fetch topic data - just add request tracking
   useEffect(() => {
     const fetchData = async () => {
       try {
         if (!businessId) return;
 
-        const url = `/api/client-reporting/negative-feedback?business_id=${encodeURIComponent(
+        const url = `/api/client-reporting/negative-topics?business_id=${encodeURIComponent(
           businessId
-        )}&start_date=${encodeURIComponent(
-          startDateProcessed
-        )}&end_date=${encodeURIComponent(
-          endDateProcessed
-        )}&all_business_ids=${encodeURIComponent(
-          allBusinessIds
         )}`;
 
         const res = await fetch(url);
@@ -90,7 +65,7 @@ const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
     return () => {
       requestTracker.current.clear();
     };
-  }, [businessId, startDateProcessed, endDateProcessed, allBusinessIds]);
+  }, [businessId]);
 
 
 
@@ -149,12 +124,10 @@ const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
         <>
           <div className="mb-2">
             <h2 className="text-base font-medium text-gray-800">              
-              Negative Feedback/Criticism Breakdown
+                Criticism Feedback
             </h2>
           </div>
-          <div className="text-sm text-gray-600 mb-4">
-              Posts from {formattedStart} to {formattedEnd}
-            </div>
+        
           <div className="flex items-center justify-center w-full h-full">
             <svg width={width} height={height} className="">
               {root
@@ -250,4 +223,4 @@ const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
   );
 };
 
-export default NegativeFeedbackBubbleChart;
+export default NegativeTopicsBubbleChart;

@@ -182,7 +182,7 @@ export default function GroupedBarChart({
   }, [isLoading, chartData]);
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md h-full">
+    <div className="bg-white p-6 rounded-lg shadow-md h-full w-full">
       {/* Title */}
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-base font-medium text-gray-800">Posts Per Day</h2>

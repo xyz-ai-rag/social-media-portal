@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import LineGraph from "@/components/client-reporting/brand-overview/LineGraph";
 
-import PlatformRingChart from '@/components/client-reporting/brand-overview/PlatformRingChart';
-import PostFormatPieChart from '@/components/client-reporting/brand-overview/PostFormatPieChart';
-import PostTypeChart from '@/components/client-reporting/brand-overview/PostCategoryChart';
+import PlatformRingChart from '@/components/client-reporting/PlatformRingChart';
+import PostFormatPieChart from '@/components/client-reporting/PostFormatPieChart';
+import PostTypeChart from '@/components/client-reporting/PostTypeRingChart';
 import HotelPostsTable from '@/components/client-reporting/brand-overview/HotelPostsTable';
 import NegativeFeedbackBubbleChart from '@/components/client-reporting/brand-overview/NegativeFeedbackBubbleChart';
 import NegativeFeedbackLineGraph from '@/components/client-reporting/brand-overview/NegativeFeedbackLineGraph';
@@ -17,7 +17,7 @@ interface BrandOverviewProps {
 export default function BrandOverview({ clientId, businessId }: BrandOverviewProps) {
 
   const [earliestDate, setEarliestDate] = useState<string>("2024-06-01");
-  const [latestDate, setLatestDate] = useState<string>("2025-06-01"); 
+  const [latestDate, setLatestDate] = useState<string>("2025-06-01");
   const { clientDetails } = useAuth();
   const allBusinessIds = useMemo(
     () => clientDetails?.businesses.map((biz) => biz.business_id).join(",") || "",
@@ -28,7 +28,7 @@ export default function BrandOverview({ clientId, businessId }: BrandOverviewPro
   useEffect(() => {
     const fetchDateRange = async () => {
       if (!businessId) return;
-      
+
       try {
         const response = await fetch(
           `/api/charts/dateRange?business_id=${businessId}`
@@ -58,18 +58,36 @@ export default function BrandOverview({ clientId, businessId }: BrandOverviewPro
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
         {/* line 1*/}
         <div className="md:col-span-3 w-full min-h-[340px] flex items-stretch">
-          <LineGraph clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds} level={"monthly"}/>
+          <LineGraph clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds} level={"monthly"} />
         </div>
 
         {/* line 2*/}
         <div className="md:col-span-1 min-h-64 flex items-stretch">
-          <PlatformRingChart clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds} />
+          <PlatformRingChart
+            clientId={clientId}
+            businessId={businessId}
+            earliestDate={earliestDate}
+            latestDate={latestDate}
+            allBusinessIds={allBusinessIds}
+            level={"monthly"} />
         </div>
         <div className="md:col-span-1 min-h-64 flex items-stretch">
-          <PostFormatPieChart clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds} />
+          <PostFormatPieChart
+            clientId={clientId}
+            businessId={businessId}
+            earliestDate={earliestDate}
+            latestDate={latestDate}
+            allBusinessIds={allBusinessIds}
+            level={"monthly"} />
         </div>
         <div className="md:col-span-1 min-h-64 flex items-stretch">
-          <PostTypeChart clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds} />
+          <PostTypeChart
+            clientId={clientId}
+            businessId={businessId}
+            earliestDate={earliestDate}
+            latestDate={latestDate}
+            allBusinessIds={allBusinessIds}
+            level={"monthly"} />
         </div>
 
         {/* line 3*/}
@@ -83,7 +101,7 @@ export default function BrandOverview({ clientId, businessId }: BrandOverviewPro
 
         {/* line 4*/}
         <div className="md:col-span-3">
-          <NegativeFeedbackLineGraph clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds}/>
+          <NegativeFeedbackLineGraph clientId={clientId} businessId={businessId} earliestDate={earliestDate} latestDate={latestDate} allBusinessIds={allBusinessIds} />
         </div>
       </div>
     </div>

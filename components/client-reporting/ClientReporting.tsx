@@ -4,8 +4,8 @@ import { DateRangeProvider } from "@/context/DateRangeContext";
 import { useAuth } from "@/context/AuthContext";
 import { useSearchParams } from "next/navigation";
 import BrandOverview from "./brand-overview/BrandOverview";
-import MonthlyReporting from "./monthly-kpis/MonthlyReporting";
-import BusinessReporting from "./BusinessReporting";
+import MonthlyReporting from "./monthly-kpis/MonthlyKPIS";
+import BusinessReporting from "./business-reporting/BusinessReporting";
 
 interface ClientReportingProps {
     clientId: string;
@@ -31,21 +31,21 @@ export default function ClientReporting({ clientId, businessId }: ClientReportin
     const tab = searchParams.get('tab') || 'business-reporting';
 
     return (
-        <DateRangeProvider>
-            <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4">
 
-                {tab === 'brand-overview' && (
-                    <BrandOverview clientId={clientId} businessId={businessId} />
-                )}
+            {tab === 'brand-overview' && (
+                <BrandOverview clientId={clientId} businessId={businessId} />
+            )}
 
-                {tab === 'monthly-kpis' && (
-                    <MonthlyReporting clientId={clientId} businessId={businessId} />
-                )}
+            {tab === 'monthly-kpis' && (
+                <MonthlyReporting clientId={clientId} businessId={businessId} />
+            )}
 
-                {tab === 'business-reporting' && (
+            {tab === 'business-reporting' && (
+                <DateRangeProvider>
                     <BusinessReporting clientId={clientId} businessId={businessId} />
-                )}
-            </div>
-        </DateRangeProvider>
+                </DateRangeProvider>
+            )}
+        </div>
     );
 }
