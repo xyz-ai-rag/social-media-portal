@@ -136,11 +136,7 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     const buildSeriesForBiz = (biz: BusinessLineData) => {
       const monthMap = new Map<string, number>();
       biz.counts.forEach((mc) => monthMap.set(mc.date, mc.count));
-      let cumulative = 0;
-      const seriesData = sortedMonths.map((month) => {
-        cumulative += monthMap.get(month) || 0;
-        return cumulative;
-      });
+      const seriesData = sortedMonths.map((month) => monthMap.get(month) || 0);
       return {
         name: biz.business_name,
         type: "line",
@@ -210,7 +206,7 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
 
   if (isLoading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-md h-96 flex items-center justify-center w-full">
+      <div className="bg-white p-6 rounded-lg shadow-md flex items-center justify-center w-full">
         <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
       </div>
     );

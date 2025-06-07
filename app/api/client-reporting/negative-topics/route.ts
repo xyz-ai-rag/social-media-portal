@@ -1,7 +1,6 @@
 import { BusinessPostModel, BusinessModel } from "@/feature/sqlORM/modelorm";
 import { NextRequest, NextResponse } from "next/server";
 import { Op } from "sequelize";
-import { parse } from "date-fns";
 
 export async function GET(request: NextRequest) {
   try {
@@ -39,7 +38,6 @@ export async function GET(request: NextRequest) {
       },
       raw: true,
     });
-    console.log("posts11", posts);
 
     const topicStats = new Map<string, Set<string>>();
 

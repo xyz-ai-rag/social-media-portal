@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { col, fn, Op, literal } from 'sequelize';
 import { BusinessPostModel, BusinessModel } from '@/feature/sqlORM/modelorm';
-import { format, parse } from 'date-fns';
+import { format, parse, addDays } from 'date-fns';
 
 export async function GET(request: NextRequest) {
   try {
@@ -44,7 +44,6 @@ export async function GET(request: NextRequest) {
         where: {
           business_id: bizId,
           is_relevant: true,
-          last_update_time: { [Op.between]: [startDate, endDate] }
         },
         group: [fn('to_char', col('last_update_time'), 'YYYY-MM')],
         order: [[fn('to_char', col('last_update_time'), 'YYYY-MM'), 'ASC']]
@@ -57,21 +56,56 @@ export async function GET(request: NextRequest) {
     }
 
     // Helper function: fetch daily counts for a given business.
-    async function fetchDailyCounts(bizId: string) {
+    async function fetchDailyCountsWithFullDates(bizId: string) {
       const rows = await BusinessPostModel.findAll({
         attributes: [
-          [fn('to_char', col('last_update_time'), 'MM-dd'), 'day'],
+          [fn('to_char', col('last_update_time'), 'yyyy-MM-dd'), 'day'],
           [fn('COUNT', literal('DISTINCT note_id')), 'count']
         ],
-        where: { business_id: bizId, is_relevant: true, last_update_time: { [Op.between]: [startDate, endDate] } },
-        group: [fn('to_char', col('last_update_time'), 'MM-dd')],
-        order: [[fn('to_char', col('last_update_time'), 'MM-dd'), 'ASC']]
+        where: {
+          business_id: bizId,
+          is_relevant: true,
+          last_update_time: { [Op.lte]: endDate } // 
+        },
+        group: [fn('to_char', col('last_update_time'), 'yyyy-MM-dd')],
+        order: [[fn('to_char', col('last_update_time'), 'yyyy-MM-dd'), 'ASC']]
       });
 
-      return rows.map(row => ({
-        date: row.get('day'),
-        count: parseInt(row.get('count') as string)
+      let minDate = startDate;
+      if (rows.length > 0) {
+        const allRowDates = rows.map(row => row.get('day') as string);
+        minDate = new Date(Math.min(...allRowDates.map(d => new Date(d).getTime())));
+        if (minDate > startDate) minDate = startDate; 
+      }
+
+      const allDates: string[] = [];
+      let d = new Date(minDate);
+      const end = new Date(endDate);
+      while (d <= end) {
+        allDates.push(format(new Date(d), 'yyyy-MM-dd'));
+        d = addDays(d, 1);
+      }
+
+      const dateToCount = Object.fromEntries(
+        rows.map(row => [row.get('day') as string, parseInt(row.get('count') as string)])
+      );
+
+      const dailyCounts = allDates.map(date => ({
+        date,
+        count: dateToCount[date] || 0
       }));
+
+      let cumulative = 0;
+      const cumulativeCounts = dailyCounts.map(item => {
+        cumulative += item.count;
+        return {
+          date: item.date,
+          count: cumulative
+        };
+      });
+
+      // 7. 只返回 startDate ~ endDate 之间的
+      return cumulativeCounts.filter(item => new Date(item.date) >= startDate && new Date(item.date) <= endDate);
     }
 
     // Helper function: fetch the business name from the business table.
@@ -91,7 +125,7 @@ export async function GET(request: NextRequest) {
     const similarData = await Promise.all(allBusinessIdsArray.map(async (bizId) => {
       let counts;
       if (level === "daily") {
-        counts = await fetchDailyCounts(bizId);
+        counts = await fetchDailyCountsWithFullDates(bizId);
       }else{
         counts = await fetchMonthlyCounts(bizId);
       }

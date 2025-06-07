@@ -39,9 +39,9 @@ export interface BusinessPostInstance extends Model {
   english_tag_list: string;
   hashtag_topic_category: string;
   english_desc_literal: string;
-  relevance_percent: number;
-  has_negative_or_critical_feedback: boolean;
-  negative_feedback: string;
+  relevance_percentage: number;
+  has_negative_or_criticism: boolean;
+  negative_feedback_summary: string;
   is_wrong_relevancy: boolean;
   is_good_summary: boolean;
   is_good_negative_feedback: boolean;
