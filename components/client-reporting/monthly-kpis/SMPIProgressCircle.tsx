@@ -166,51 +166,60 @@ export default function SMPIProgressCircle({ selectedMonth, lastMonthStr, monthl
                             <table className="text-xs w-full">
                                 <thead>
                                     <tr>
-                                        <th className="text-left font-semibold">Metric</th>
-                                        <th className="text-center font-semibold">Monthly Avg</th>
-                                        <th className="text-center font-semibold">This Month</th>
+                                        <th className="text-left font-semibold px-4">Metric</th>
+                                        <th className="text-center font-semibold px-4">Avg</th>
+                                        <th className="text-center font-semibold px-4">{format(parseISO(lastMonthStr + '-01'), 'MMM yyyy')}</th>
+                                        <th className="text-center font-semibold px-4">{format(parseISO(selectedMonth + '-01'), 'MMM yyyy')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr className="border-t">
-                                        <td className="pr-2 py-1">Total Mentions (M)</td>
-                                        <td className="text-right py-1">{currentInputs.avg_M ?? 0}</td>
-                                        <td className="text-right py-1">{currentInputs.M ?? 0}</td>
+                                        <td className="pr-4 py-1">Total Mentions (M)</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.avg_M.toFixed(1) ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{lastInputs.avg_M.toFixed(1) ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.M.toFixed(1) ?? 0}</td>
                                     </tr>
                                     <tr className="bg-gray-50">
-                                        <td className="pr-2 py-1">Highly Positive (HP)</td>
-                                        <td className="text-right py-1">{currentInputs.avg_HP ?? 0}</td>
-                                        <td className="text-right py-1">{currentInputs.HP ?? 0}</td>
+                                        <td className="pr-4 py-1">Highly Positive (HP)</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.avg_HP.toFixed(1) ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{lastInputs.avg_HP.toFixed(1) ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.HP.toFixed(1) ?? 0}</td>
                                     </tr>
                                     <tr>
-                                        <td className="pr-2 py-1">Positive (P)</td>
-                                        <td className="text-right py-1">{currentInputs.avg_P ?? 0}</td>
-                                        <td className="text-right py-1">{currentInputs.P ?? 0}</td>
+                                        <td className="pr-4 py-1">Positive (P)</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.avg_P.toFixed(1) ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{lastInputs.avg_P.toFixed(1) ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.P.toFixed(1) ?? 0}</td>
                                     </tr>
                                     <tr className="bg-gray-50">
-                                        <td className="pr-2 py-1">Neutral (N)</td>
-                                        <td className="text-right py-1">{(totalData?.neutral / totalData?.countMonths || 0).toFixed(1)}</td>
-                                        <td className="text-right py-1">{currentMonthData?.sentiments?.neutral ?? 0}</td>
+                                        <td className="pr-4 py-1">Neutral (N)</td>
+                                        <td className="text-right py-1 px-4">{(totalData?.neutral / totalData?.countMonths || 0).toFixed(1)}</td>
+                                        <td className="text-right py-1 px-4">{(lastMonthData?.neutral ?? 0)}</td>
+                                        <td className="text-right py-1 px-4">{(currentMonthData?.neutral ?? 0)}</td>
                                     </tr>
                                     <tr>
-                                        <td className="pr-2 py-1">Negative (Neg)</td>
-                                        <td className="text-right py-1">{currentInputs.avg_Neg ?? 0}</td>
-                                        <td className="text-right py-1">{currentInputs.Neg ?? 0}</td>
+                                        <td className="pr-4 py-1">Negative (Neg)</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.avg_Neg.toFixed(1) ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{lastInputs.avg_Neg.toFixed(1) ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.Neg.toFixed(1) ?? 0}</td>
                                     </tr>
                                     <tr className="bg-gray-50">
-                                        <td className="pr-2 py-1">Highly Negative (HN)</td>
-                                        <td className="text-right py-1">{currentInputs.avg_HN ?? 0}</td>
-                                        <td className="text-right py-1">{currentInputs.HN ?? 0}</td>
+                                        <td className="pr-4 py-1">Highly Negative (HN)</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.avg_HN.toFixed(1) ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{lastInputs.avg_HN.toFixed(1) ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.HN.toFixed(1) ?? 0}</td>
                                     </tr>
                                     <tr>
-                                        <td className="pr-2 py-1">Critical Feedback (Crit)</td>
-                                        <td className="text-right py-1">{currentInputs.avg_Crit ?? 0}</td>
-                                        <td className="text-right py-1">{currentInputs.Crit ?? 0}</td>
+                                        <td className="pr-4 py-1">Critical Feedback (Crit)</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.avg_Crit.toFixed(1) ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{lastInputs.avg_Crit.toFixed(1) ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.Crit.toFixed(1) ?? 0}</td>
                                     </tr>
                                     <tr className="border-t-2">
-                                        <td className="pr-2 py-1 font-bold">SMPI</td>
-                                        <td className="text-right py-1 font-bold">{"N/A"}</td>
-                                        <td className="text-right py-1 font-bold">{Math.round(currentSMPI)}</td>
+                                        <td className="pr-4 py-1 font-bold">SMPI</td>
+                                        <td className="text-right py-1 px-4 font-bold">{""}</td>
+                                        <td className="text-right py-1 px-4 font-bold">{Math.round(lastSMPI)}</td>
+                                        <td className="text-right py-1 px-4 font-bold">{Math.round(currentSMPI)}</td>
                                     </tr>
                                 </tbody>
                             </table>

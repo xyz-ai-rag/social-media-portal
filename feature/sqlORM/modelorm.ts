@@ -170,6 +170,10 @@ export const ClientModel = sequelizeDbConnection.define<ClientInstance>(
       type: DataTypes.ARRAY(DataTypes.INTEGER),
       allowNull: true,
     },
+    enable_client_reporting: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     tableName: "clients",
@@ -193,6 +197,16 @@ export const ClientUsersModel =
       registered_email: {
         type: DataTypes.TEXT,
         allowNull: false,
+      },
+      can_view_client_reporting: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      can_view_business_reporting: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
       },
     },
     {

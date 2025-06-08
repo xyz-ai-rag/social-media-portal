@@ -146,6 +146,7 @@ export default function Sidebar() {
   const effectiveClientId = currentClientId || lastClientId;
   const effectiveBusinessId = currentBusinessId || lastBusinessId;
   const hasBusiness = Boolean(effectiveClientId && effectiveBusinessId);
+  const canViewBusinessReporting = clientDetails?.can_view_business_reporting;
 
   //  Find current business limitation from clientDetails
   useEffect(() => {
@@ -155,11 +156,67 @@ export default function Sidebar() {
       );
 
       if (currentBusiness) {
-        // TODO: add limitation to only show 1 business
-        clientDetails.enable_client_reporting;
+        // Get user permissions from clientDetails
+        const canViewClientReporting = clientDetails.can_view_client_reporting;
+        const canViewBusinessReporting = clientDetails.can_view_business_reporting;
+        const reportingLevel = clientDetails.enable_client_reporting;
+
+        // Set menu visibility based on permissions and reporting level
+        if (!canViewClientReporting && !canViewBusinessReporting) {
+          // User has no permissions
+          setShowClientReporting(false);
+          setShowAllPosts(false);
+          setShowTopicAnalysis(false);
+          setShowCompetitors(false);
+        } else if (canViewClientReporting && !canViewBusinessReporting) {
+          // User can only view client reporting
+          setShowClientReporting(true);
+          setShowAllPosts(false);
+          setShowTopicAnalysis(false);
+          setShowCompetitors(false);
+        } else if (!canViewClientReporting && canViewBusinessReporting) {
+          // User can only view business reporting
+          setShowClientReporting(false);
+          setShowAllPosts(true);
+          setShowTopicAnalysis(true);
+          setShowCompetitors(true);
+        } else {
+          // User has both permissions, check reporting level
+          if (!reportingLevel) {
+            // Hide all analysis tabs if enable_client_reporting is empty/null
+            setShowClientReporting(false);
+            setShowAllPosts(true);
+            setShowTopicAnalysis(true);
+            setShowCompetitors(true);
+          } else if (reportingLevel === 'client_only') {
+            // Only show client reporting
+            setShowClientReporting(true);
+            setShowAllPosts(false);
+            setShowTopicAnalysis(false);
+            setShowCompetitors(false);
+          } else if (reportingLevel === 'client_business') {
+            // Show all tabs
+            setShowClientReporting(true);
+            setShowAllPosts(true);
+            setShowTopicAnalysis(true);
+            setShowCompetitors(true);
+          } else if (reportingLevel === 'client_competitors') {
+            // Show client reporting and competitors
+            setShowClientReporting(true);
+            setShowAllPosts(false);
+            setShowTopicAnalysis(false);
+            setShowCompetitors(true);
+          }
+        }
       }
     }
-  }, [clientDetails, effectiveClientId]);
+  }, [clientDetails, effectiveBusinessId]);
+
+  // Add state for menu visibility
+  const [showClientReporting, setShowClientReporting] = useState(true);
+  const [showAllPosts, setShowAllPosts] = useState(true);
+  const [showTopicAnalysis, setShowTopicAnalysis] = useState(true);
+  const [showCompetitors, setShowCompetitors] = useState(true);
 
   // Save state to localStorage when it changes
   const toggleCollapsed = (): void => {
@@ -276,7 +333,7 @@ export default function Sidebar() {
         >
           <div>
             {/* Reporting submenu */}
-            {isActive("/[clientId]/[businessId]/client-reporting") && !collapsed && (
+            {isActive("/[clientId]/[businessId]/client-reporting") && !collapsed && showClientReporting && (
               <div className="pl-8 space-y-2 py-2">
                 <Link
                   href={`/${effectiveClientId}/${effectiveBusinessId}/client-reporting?tab=brand-overview`}
@@ -320,7 +377,7 @@ export default function Sidebar() {
               </div>
             )}
             <nav className="space-y-2">
-              <MenuItem
+              {canViewBusinessReporting && <MenuItem
                 href={getDashboardUrl()}
                 icon={<FiGrid />}
                 label="Dashboard"
@@ -328,48 +385,55 @@ export default function Sidebar() {
                 disabled={!hasBusiness && !isSettingsPage}
                 collapsed={collapsed}
                 onClick={!hasBusiness ? handleDisabledClick : undefined}
-              />
+              />}
 
-              <MenuItem
-                href={getClientReportingUrl()}
-                icon={<TbReportAnalytics />} 
-                // TODO: change to client reporting
-                label="Client Reporting"
-                isActive={isActive("/[clientId]/[businessId]/client-reporting?tab=brand-overview")}
-                disabled={!hasBusiness && !isSettingsPage}
-                collapsed={collapsed}
-                onClick={!hasBusiness ? handleDisabledClick : undefined}
-              />
+              {showClientReporting && (
+                <MenuItem
+                  href={getClientReportingUrl()}
+                  icon={<TbReportAnalytics />} 
+                  label="Client Reporting"
+                  isActive={isActive("/[clientId]/[businessId]/client-reporting?tab=brand-overview")}
+                  disabled={!hasBusiness && !isSettingsPage}
+                  collapsed={collapsed}
+                  onClick={!hasBusiness ? handleDisabledClick : undefined}
+                />
+              )}
 
+              {showAllPosts && (
+                <MenuItem
+                  href={getPostsUrl()}
+                  icon={<FiList />}
+                  label="All Posts"
+                  isActive={isActive("/[clientId]/[businessId]/posts")}
+                  disabled={!hasBusiness && !isSettingsPage}
+                  collapsed={collapsed}
+                  onClick={!hasBusiness ? handleDisabledClick : undefined}
+                />
+              )}
 
-              <MenuItem
-                href={getPostsUrl()}
-                icon={<FiList />}
-                label="All Posts"
-                isActive={isActive("/[clientId]/[businessId]/posts")}
-                disabled={!hasBusiness && !isSettingsPage}
-                collapsed={collapsed}
-                onClick={!hasBusiness ? handleDisabledClick : undefined}
-              />
-              <MenuItem
-                href={getAnalyticsUrl()}
-                icon={<IoAnalyticsOutline />}
-                label="Analysis"
-                isActive={isActive("/[clientId]/[businessId]/topic-analysis")}
-                disabled={!hasBusiness && !isSettingsPage}
-                collapsed={collapsed}
-                onClick={!hasBusiness ? handleDisabledClick : undefined}
-              />
+              {showTopicAnalysis && (
+                <MenuItem
+                  href={getAnalyticsUrl()}
+                  icon={<IoAnalyticsOutline />}
+                  label="Analysis"
+                  isActive={isActive("/[clientId]/[businessId]/topic-analysis")}
+                  disabled={!hasBusiness && !isSettingsPage}
+                  collapsed={collapsed}
+                  onClick={!hasBusiness ? handleDisabledClick : undefined}
+                />
+              )}
 
-              <MenuItem
-                href={getCompetitorsUrl()}
-                icon={<FiUsers />}
-                label="Competitors"
-                isActive={isActive("/[clientId]/[businessId]/competitors")}
-                disabled={!hasBusiness && !isSettingsPage}
-                collapsed={collapsed}
-                onClick={!hasBusiness ? handleDisabledClick : undefined}
-              />
+              {showCompetitors && (
+                <MenuItem
+                  href={getCompetitorsUrl()}
+                  icon={<FiUsers />}
+                  label="Competitors"
+                  isActive={isActive("/[clientId]/[businessId]/competitors")}
+                  disabled={!hasBusiness && !isSettingsPage}
+                  collapsed={collapsed}
+                  onClick={!hasBusiness ? handleDisabledClick : undefined}
+                />
+              )}
             </nav>
           </div>
         </div>

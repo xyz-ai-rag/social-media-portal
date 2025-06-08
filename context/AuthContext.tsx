@@ -36,6 +36,8 @@ interface ClientDetails {
   registered_email: string;
   businesses: Business[];
   enable_client_reporting: string;
+  can_view_client_reporting: boolean;
+  can_view_business_reporting: boolean;
 }
 
 interface AuthContextType {

@@ -74,12 +74,15 @@ export interface ClientInstance extends Model {
   email_trigger_time?: string; // Optional (can be null)
   report_days?: number[]; // Optional (array of integers)
   registered_email: string;
+  enable_client_reporting: string;
 }
 
 export interface ClientUsersInstance extends Model {
   id: string; // UUID
   client_id: string;
   registered_email: string;
+  can_view_client_reporting: boolean;
+  can_view_business_reporting: boolean;
 }
 
 export interface ActiveSessionsInstance extends Model {
