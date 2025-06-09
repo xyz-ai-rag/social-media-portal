@@ -161,7 +161,7 @@ const formattedEnd = useMemo(
       tooltip: {
         trigger: "item",
         formatter:
-          "<div style='width:140px; height:89px'><span style='font-size:12px; color:white'>{b}</span> <br/><span style='font-size:12px; color:white; opacity:50%'>This week</span> <br/><br/> <span style='color:white; font-size:16px'>{c} posts</span></div>",
+          "<div style='width:140px; height:50px'><span style='font-size:12px; color:white'>{b}</span> <br/> <span style='color:white; font-size:16px'>{c} posts</span></div>",
         backgroundColor: "#37375C",
         borderColor: "#ccc",
         borderWidth: 1,

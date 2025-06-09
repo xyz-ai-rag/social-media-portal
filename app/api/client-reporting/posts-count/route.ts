@@ -1,6 +1,6 @@
 import { BusinessPostModel } from "@/feature/sqlORM/modelorm";
 import { NextRequest, NextResponse } from "next/server";
-import { fn, col, literal } from "sequelize";
+import { fn, col, literal, Op } from "sequelize";
 import { format } from 'date-fns';
 
 export async function GET(request: NextRequest) {
@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
       where: {
         business_id: businessId,
         is_relevant: true,
+        english_sentiment: {
+          [Op.not]: null 
+        }
       },
       group: [fn('to_char', col('last_update_time'), 'YYYY-MM'), 'english_sentiment'],
       order: [[fn('to_char', col('last_update_time'), 'YYYY-MM'), 'ASC']]
@@ -67,7 +70,8 @@ export async function GET(request: NextRequest) {
     });
     const sentimentTotals: Record<string, number> = {};
     const SENTIMENTS = ['Positive', 'Highly Positive', 'Negative', 'Highly Negative', 'Neutral'];
-    function toSnakeCase(str: string) {
+    function toSnakeCase(str: string | null) {
+      if (!str) return '';
       return str.toLowerCase().replace(/\s+/g, '_');
     }
     for (const sentiment of SENTIMENTS) {

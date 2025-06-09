@@ -1,7 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { col, fn, Op, literal } from 'sequelize';
 import { BusinessPostModel, BusinessModel } from '@/feature/sqlORM/modelorm';
-import { format, parse, addDays } from 'date-fns';
+import { format, parse, addDays, addMonths } from 'date-fns';
+/**
+ * Line Graph API Route
+ * 
+ * This API endpoint provides data for rendering a line graph showing post counts over time.
+ * Response Format:
+ * {
+ *   similar: [
+ *     {
+ *       business_id: string,
+ *       business_name: string,
+ *       counts: [
+ *         {
+ *           date: string, // Format: YYYY-MM
+ *           count: number // Number of posts from start of month to date
+ *         }
+ *       ]
+ *     }
+ *   ]
+ * }
+ */
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,7 +51,7 @@ export async function GET(request: NextRequest) {
     console.log(`[LineGraph] Parsed dates: startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
 
     const allBusinessIdsArray = allBusinessIds
-      ? allBusinessIds.split(',').map(id => id.trim())
+      ? [...new Set([currentBusinessId, ...allBusinessIds.split(',').map(id => id.trim())])]
       : [currentBusinessId];
 
     // Helper function: fetch monthly counts for a given business.
@@ -44,15 +64,38 @@ export async function GET(request: NextRequest) {
         where: {
           business_id: bizId,
           is_relevant: true,
+          last_update_time: { [Op.lte]: endDate }
         },
         group: [fn('to_char', col('last_update_time'), 'YYYY-MM')],
         order: [[fn('to_char', col('last_update_time'), 'YYYY-MM'), 'ASC']]
       });
 
-      return rows.map(row => ({
-        date: String(row.get('month')),
-        count: parseInt(String(row.get('count')))
+      // Generate all months between start and end date
+      const allDates: string[] = [];
+      let d = new Date(startDate);
+      const end = new Date(endDate);
+      // Set end date to the last day of the month to ensure we include the last month
+      end.setDate(1);
+      end.setMonth(end.getMonth() + 1);
+      end.setDate(0);
+      
+      while (d <= end) {
+        allDates.push(format(new Date(d), 'yyyy-MM'));
+        d = addMonths(d, 1);
+      }
+
+      // Create a map of date to count
+      const dateToCount = Object.fromEntries(
+        rows.map(row => [row.get('month') as string, parseInt(row.get('count') as string)])
+      );
+
+      // Generate counts for all months, using 0 for months with no data
+      const monthlyCounts = allDates.map(date => ({
+        date,
+        count: dateToCount[date] || 0
       }));
+
+      return monthlyCounts;
     }
 
     // Helper function: fetch daily counts for a given business.
@@ -95,17 +138,8 @@ export async function GET(request: NextRequest) {
         count: dateToCount[date] || 0
       }));
 
-      let cumulative = 0;
-      const cumulativeCounts = dailyCounts.map(item => {
-        cumulative += item.count;
-        return {
-          date: item.date,
-          count: cumulative
-        };
-      });
-
-      // 7. 只返回 startDate ~ endDate 之间的
-      return cumulativeCounts.filter(item => new Date(item.date) >= startDate && new Date(item.date) <= endDate);
+      //  only return data between startDate and endDate
+      return dailyCounts.filter(item => new Date(item.date) >= startDate && new Date(item.date) <= endDate);
     }
 
     // Helper function: fetch the business name from the business table.

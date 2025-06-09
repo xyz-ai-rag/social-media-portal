@@ -111,13 +111,13 @@ const NegativeTopicsBubbleChart: FC<NegativeTopicsBubbleChartProps> = ({
 
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md relative overflow-auto w-full">
+    <div className="bg-white p-6 rounded-lg shadow-md relative w-full">
       {isLoading ? (
         <div className="h-64 flex items-center justify-center">
           <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
         </div>
       ) : total === 0 ? (
-        <div className="h-64  flex items-center justify-center">
+        <div className="h-64 flex items-center justify-center">
           <p className="text-gray-500">No criticism topics available</p>
         </div>
       ) : (
@@ -129,7 +129,7 @@ const NegativeTopicsBubbleChart: FC<NegativeTopicsBubbleChartProps> = ({
           </div>
         
           <div className="flex items-center justify-center w-full h-full">
-            <svg width={width} height={height} className="">
+            <svg width={width} height={height} className="max-w-full h-auto">
               {root
                 .descendants()
                 .slice(1)

@@ -94,11 +94,35 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
         )}&level=${encodeURIComponent(level)}`;
 
         const res = await fetch(url);
-        const data: LineGraphData = await res.json();
+        const data = await res.json();
+
+        // Process all businesses
+        const graphData: LineGraphData = {
+          similar: []
+        };
+
+        data.similar.forEach((business: { business_id: string; business_name: string; counts: MonthlyCount[] }) => {
+          let cumulative = 0;
+          const cumulativeCounts = business.counts.map((dc: MonthlyCount) => {
+            cumulative += dc.count;
+            return {
+              date: dc.date,
+              count: cumulative
+            };
+          });
+
+          const processedBusiness: BusinessLineData = {
+            business_id: business.business_id,
+            business_name: business.business_name,
+            counts: cumulativeCounts
+          };
+
+          graphData.similar.push(processedBusiness);
+        });
 
         // Only update state if this is the current request
         if (isCurrent) {
-          setGraphData(data);
+          setGraphData(graphData);
         }
       } catch (err) {
         if (isCurrent) {

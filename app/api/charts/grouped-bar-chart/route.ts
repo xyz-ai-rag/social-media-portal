@@ -59,10 +59,13 @@ export async function GET(request: NextRequest) {
     const dailyKeys: string[] = [];
 
     // Generate date sequence from startDate to endDate (inclusive)
-    for (let d = new Date(startDate); d <= new Date(endDate); d.setDate(d.getDate() + 1)) {
+    let d = new Date(`${startDate}T00:00:00.000Z`);
+    const end = new Date(`${endDate}T00:00:00.000Z`);
+    while (d <= end) {
       const key = format(d, 'yyyy-MM-dd');
       counts[key] = 0;
       dailyKeys.push(key);
+      d = new Date(d.getTime() + 24 * 60 * 60 * 1000);
     }
 
     // Count posts per day

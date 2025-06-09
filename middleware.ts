@@ -10,6 +10,7 @@ export const config = {
     '/:clientId/:businessId/topic-analysis',
     '/:clientId/:businessId/topic-analysis/:topic',
     '/:clientId/:businessId/client-reporting',
+    '/:clientId/:businessId/client-reporting/:tab',
     '/businesses',
   ],
 }

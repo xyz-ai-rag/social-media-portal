@@ -60,7 +60,7 @@ export const getSMPILabel = (smpi: number): string => {
  * Gets the color based on SMPI value
  */
 export const getSMPIColor = (smpi: number): string => {
-    if (smpi >= 70) return "#4CAF50"; // green
-    if (smpi >= 50) return "#2196F3"; // blue
-    return "#F44336"; // red
+    if (smpi >= 70) return "#81C784"; // even deeper green
+    if (smpi >= 50) return "#2196F3"; // blue  
+    return "#E57373"; // even deeper red
 }; 

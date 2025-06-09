@@ -94,11 +94,14 @@ export default function HotelPostsTable({
 
   if (isLoading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-md flex items-center justify-center h-64">
-        <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
+      <div className="bg-white p-6 rounded-lg shadow-md overflow-auto">
+        <div className="h-64 flex items-center justify-center">
+          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
+        </div>
       </div>
     );
   }
+
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md overflow-auto">
@@ -114,7 +117,6 @@ export default function HotelPostsTable({
             <div
               key={index}
               className="mb-4 cursor-pointer hover:bg-blue-50 rounded transition"
-              onClick={() => window.location.href = `/c/${clientId}/${row.business_id}/client-reporting/${row.business_id}`}
               title="View details"
             >
               <div className="flex justify-between mb-1">
