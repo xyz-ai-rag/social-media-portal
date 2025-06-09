@@ -236,7 +236,18 @@ export default function Sidebar() {
       const dynamicPath = path
         .replace("[clientId]", currentClientId)
         .replace("[businessId]", currentBusinessId);
-      return pathname.includes(dynamicPath);
+      
+      // Special handling for client-reporting path
+      if (dynamicPath.includes("client-reporting")) {
+        // If the path includes a tab parameter, check for exact match
+        if (path.includes("?")) {
+          return pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '') === dynamicPath;
+        }
+        // If no tab parameter, only match the base path
+        return pathname === dynamicPath.split('?')[0];
+      }
+      
+      return pathname === dynamicPath;
     }
     return pathname === path;
   };
@@ -256,37 +267,23 @@ export default function Sidebar() {
 
   // Build destination URLs based on effective IDs
   const getDashboardUrl = () => {
-    if (hasBusiness) {
-      return `/${effectiveClientId}/${effectiveBusinessId}/dashboard`;
-    }
-    return "/businesses";
+    return `/${effectiveClientId}/${effectiveBusinessId}/dashboard`;
   };
 
   const getClientReportingUrl = () => {
-    if (hasBusiness) {
-      return `/${effectiveClientId}/${effectiveBusinessId}/client-reporting`;
-    }
-    return "/businesses";
+    return `/${effectiveClientId}/${effectiveBusinessId}/client-reporting?tab=brand-overview`;
   };
 
   const getPostsUrl = () => {
-    if (hasBusiness) {
-      return `/${effectiveClientId}/${effectiveBusinessId}/posts`;
-    }
-    return "/businesses";
+    return `/${effectiveClientId}/${effectiveBusinessId}/posts`;
   };
 
   const getCompetitorsUrl = () => {
-    if (hasBusiness) {
-      return `/${effectiveClientId}/${effectiveBusinessId}/competitors`;
-    }
-    return "/businesses";
+    return `/${effectiveClientId}/${effectiveBusinessId}/competitors`;
   };
+
   const getAnalyticsUrl = () => {
-    if (hasBusiness) {
-      return `/${effectiveClientId}/${effectiveBusinessId}/topic-analysis`;
-    }
-    return "/businesses";
+    return `/${effectiveClientId}/${effectiveBusinessId}/topic-analysis`;
   };
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -392,7 +389,7 @@ export default function Sidebar() {
                   href={getClientReportingUrl()}
                   icon={<TbReportAnalytics />} 
                   label="Client Reporting"
-                  isActive={isActive("/[clientId]/[businessId]/client-reporting?tab=brand-overview")}
+                  isActive={isActive("/[clientId]/[businessId]/client-reporting")}
                   disabled={!hasBusiness && !isSettingsPage}
                   collapsed={collapsed}
                   onClick={!hasBusiness ? handleDisabledClick : undefined}
