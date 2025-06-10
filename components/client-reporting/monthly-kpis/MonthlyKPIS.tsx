@@ -90,7 +90,7 @@ export default function MonthlyReporting({ clientId, businessId }: MonthlyReport
     const options = [];
     const now = new Date();
     const thisMonthStr = format(now, 'yyyy-MM');
-    let currentDate = parseISO(thisMonthStr + '-01'); // 从本月1号开始
+    let currentDate = parseISO(thisMonthStr + '-01');
     const startDateObj = parseISO(earliestDate);
 
     while (currentDate >= startDateObj) {
