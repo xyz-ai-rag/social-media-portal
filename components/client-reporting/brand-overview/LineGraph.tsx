@@ -181,7 +181,7 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     ];
 
     const option = {
-      color: colorPalette, // 动态色环配色
+      color: colorPalette,
       tooltip: {
         trigger: "axis",
         confine: true,

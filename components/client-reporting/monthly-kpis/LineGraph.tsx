@@ -133,7 +133,7 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     const sortedMonths = Array.from(allMonthsSet).sort(); // Ascending order
 
     function generateColorPalette(n: number) {
-      return Array.from({ length: n }, (_, i) => `hsl(${(i * 360) / n}, 65%, 50%)`);
+      return Array.from({ length: n }, (_, i) => `hsl(${(i * 360) / n}, 60%, 60%)`);
     }
     const colorPalette = generateColorPalette(graphData.similar.length);
 
