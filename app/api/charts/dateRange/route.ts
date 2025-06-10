@@ -8,59 +8,49 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const business_id = searchParams.get("business_id");
 
-    if (!business_id) {
-      return NextResponse.json(
-        { error: "Missing required parameter: business_id" },
-        { status: 400 }
-      );
-    }
+    // Build where clause based on whether business_id is provided
+    const whereClause = business_id 
+      ? { business_id, is_relevant: true }
+      : { is_relevant: true };
 
-    // Get the earliest post date from the database for the specific business
+    // Get the earliest post date from the database
     const earliestPost = await BusinessPostModel.findOne({
       attributes: ['last_update_time'],
-      where: {
-        business_id,
-        is_relevant: true
-      },
+      where: whereClause,
       order: [['last_update_time', 'ASC']]
     });
 
     const latestPost = await BusinessPostModel.findOne({
       attributes: ['last_update_time'],
-      where: {
-        business_id,
-        is_relevant: true
-      },  
+      where: whereClause,
       order: [['last_update_time', 'DESC']]
     });
 
-    if (!earliestPost) {
-      // If no posts found, return a default date (1 year ago)
+    // If no posts found, return default dates
+    if (!earliestPost || !latestPost) {
       const oneYearAgo = new Date();
       oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-      return NextResponse.json({
-        earliest_date: format(oneYearAgo, 'yyyy-MM-dd')
-      });
-    }
-    if (!latestPost) {
-      // If no posts found, return a default date (1 year ago)
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
+      
       return NextResponse.json({
-        earliest_date: format(yesterday, 'yyyy-MM-dd')
+        earliest_date: format(oneYearAgo, 'yyyy-MM-dd'),
+        latest_date: format(yesterday, 'yyyy-MM-dd')
       });
     }
+
     // Format the date as YYYY-MM-DD
     const earliestDate = format(new Date(earliestPost.last_update_time), 'yyyy-MM-dd');
     const latestDate = format(new Date(latestPost.last_update_time), 'yyyy-MM-dd');
+    
     return NextResponse.json({
       earliest_date: earliestDate,
       latest_date: latestDate
     });
   } catch (error) {
-    console.error('Error fetching earliest date:', error);
+    console.error('Error fetching date range:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch earliest date' },
+      { error: 'Failed to fetch date range' },
       { status: 500 }
     );
   }

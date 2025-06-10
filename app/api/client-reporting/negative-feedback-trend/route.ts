@@ -1,19 +1,20 @@
 import { BusinessPostModel, BusinessModel } from "@/feature/sqlORM/modelorm";
 import { NextRequest, NextResponse } from "next/server";
 import { Op, fn, col } from "sequelize";
-import { parse, format } from "date-fns";
+import { parse, format, eachMonthOfInterval } from "date-fns";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const business_id = searchParams.get("business_id");
     const all_business_ids = searchParams.get("all_business_ids");
     const start_date = searchParams.get("start_date");
     const end_date = searchParams.get("end_date");
 
-    if (!all_business_ids || !start_date || !end_date) {
+    if (!business_id || !start_date || !end_date) {
       return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
     }
-    const businessIds = all_business_ids.split(',').map(id => id.trim()).filter(Boolean);
+    const businessIds = all_business_ids ? all_business_ids.split(',').map((id: string) => id.trim()).filter(Boolean) : [business_id];
 
     const posts = await BusinessPostModel.findAll({
       attributes: [
@@ -47,11 +48,19 @@ export async function GET(request: NextRequest) {
     });
     const businessNameMap = new Map(businesses.map((b: any) => [b.business_id, b.business_name]));
 
+    const allMonths = eachMonthOfInterval({
+      start: parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date()),
+      end: parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date())
+    }).map(d => format(d, 'yyyy-MM'));
+
     const series = Object.entries(businessMonthMap)
       .map(([businessId, monthData]) => ({
         businessId,
         businessName: businessNameMap.get(businessId) || '',
-        data: Object.entries(monthData).map(([month, count]) => ({ month, count }))
+        data: allMonths.map(month => ({
+          month,
+          count: monthData[month] || 0
+        }))
       }))
       .filter(item => item.data.reduce((sum, d) => sum + d.count, 0) > 1);
 

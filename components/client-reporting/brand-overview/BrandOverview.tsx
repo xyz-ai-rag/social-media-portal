@@ -31,7 +31,7 @@ export default function BrandOverview({ clientId, businessId }: BrandOverviewPro
 
       try {
         const response = await fetch(
-          `/api/charts/dateRange?business_id=${businessId}`
+          `/api/charts/dateRange`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch date range");
@@ -47,7 +47,7 @@ export default function BrandOverview({ clientId, businessId }: BrandOverviewPro
     };
 
     fetchDateRange();
-  }, [businessId]);
+  } );
   return (
     <div className="container mx-auto px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">

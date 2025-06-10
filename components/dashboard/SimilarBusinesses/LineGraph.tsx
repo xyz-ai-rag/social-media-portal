@@ -107,55 +107,11 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
         )}&end_date=${encodeURIComponent(endDateProcessed)}`;
 
         const res = await fetch(url);
-        const data = await res.json();
-        
-        // Calculate cumulative counts for each business
-        const lineGraphData: LineGraphData = {
-          current: {
-            business_id: "",
-            business_name: "",
-            daily_counts: []
-          },
-          similar: []
-        };
-
-        // Process all businesses
-        data.similar.forEach((business: { business_id: string; business_name: string; daily_counts: DailyCount[] }) => {
-          let cumulative = 0;
-          const cumulativeCounts = business.daily_counts.map((dc: DailyCount) => {
-            cumulative += dc.count;
-            return {
-              date: dc.date,
-              count: cumulative
-            };
-          });
-
-          const processedBusiness: BusinessLineData = {
-            business_id: business.business_id,
-            business_name: business.business_name,
-            daily_counts: cumulativeCounts
-          };
-
-          lineGraphData.similar.push(processedBusiness);
-        });
-
-        // Process current business data
-        let currentCumulative = 0;
-        lineGraphData.current = {
-          business_id: data.current.business_id,
-          business_name: data.current.business_name,
-          daily_counts: data.current.daily_counts.map((dc: DailyCount) => {
-            currentCumulative += dc.count;
-            return {
-              date: dc.date,
-              count: currentCumulative
-            };
-          })
-        };
+        const data: LineGraphData = await res.json();
 
         // Only update state if this is the current request
         if (isCurrent) {
-          setGraphData(lineGraphData);
+          setGraphData(data);
         }
       } catch (err) {
         if (isCurrent) {
@@ -185,14 +141,14 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
     // Merge all dates from the current and similar series.
     const allDatesSet = new Set<string>();
     [graphData.current, ...graphData.similar].forEach((biz) => {
-      biz?.daily_counts.forEach((dc) => allDatesSet.add(dc.date));
+      biz.daily_counts.forEach((dc) => allDatesSet.add(dc.date));
     });
     const sortedDates = Array.from(allDatesSet).sort(); // Ascending order
 
     // Build series for each business.
     const buildSeriesForBiz = (biz: BusinessLineData) => {
       const dateMap = new Map<string, number>();
-      biz.daily_counts.forEach((dc: DailyCount) => dateMap.set(dc.date, dc.count));
+      biz.daily_counts.forEach((dc) => dateMap.set(dc.date, dc.count));
       const seriesData = sortedDates.map((date) => dateMap.get(date) || 0);
       return {
         name: biz.business_name,

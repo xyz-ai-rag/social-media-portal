@@ -103,7 +103,6 @@ export async function GET(request: NextRequest) {
       monthly[month].criticism = count;
     });
 
-    // 补全所有月份，确保从最早有记录的月到当前月都存在
     const allMonthsSet = new Set<string>();
     monthlySentimentRows.forEach((row: any) => allMonthsSet.add(row.get('month')));
     monthlyTotalRows.forEach((row: any) => allMonthsSet.add(row.get('month')));
