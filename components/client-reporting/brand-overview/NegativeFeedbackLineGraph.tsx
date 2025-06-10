@@ -105,6 +105,7 @@ const NegativeFeedbackLineGraph: React.FC<NegativeFeedbackLineGraphProps> = ({
     const chart = echarts.init(chartRef.current);
 
     const option = {
+      color: Array.from({ length: cumulativeSeriesData.length }, (_, i) => `hsl(${(i * 360) / cumulativeSeriesData.length}, 70%, 50%)`),
       tooltip: {
         trigger: "axis",
         formatter: (params: any) => {

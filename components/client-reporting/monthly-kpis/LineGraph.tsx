@@ -12,8 +12,6 @@ import {
 import { CanvasRenderer } from "echarts/renderers";
 import { format } from "date-fns";
 
-import { useAuth } from "@/context/AuthContext";
-import { useDateRange } from "@/context/DateRangeContext";
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
 
 echarts.use([
@@ -25,9 +23,9 @@ echarts.use([
   CanvasRenderer,
 ]);
 
-// Define type for a daily count.
-interface DailyCount {
-  date: string; // e.g., '2025-04-01'
+// Define type for a monthly count.
+interface MonthlyCount {
+  date: string; // e.g., '2025-04'
   count: number;
 }
 
@@ -35,58 +33,46 @@ interface DailyCount {
 interface BusinessLineData {
   business_id: string;
   business_name: string;
-  daily_counts: DailyCount[];
+  counts: MonthlyCount[];
 }
 
 // The API returns an object with two keys.
 interface LineGraphData {
-  current: BusinessLineData;
   similar: BusinessLineData[];
 }
 
 interface LineGraphProps {
   clientId: string;
   businessId: string; // Selected business id from the URL.
+  earliestDate: string;
+  latestDate: string;
+  allBusinessIds: string;
+  level: string;
 }
 
-export default function LineGraph({ clientId, businessId }: LineGraphProps) {
+export default function LineGraph({ clientId, businessId, earliestDate, latestDate, allBusinessIds, level }: LineGraphProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [graphData, setGraphData] = useState<LineGraphData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Get global client details from AuthContext.
-  const { clientDetails } = useAuth();
-  // Get date range from DateRangeContext.
-  const { dateRange } = useDateRange();
 
   // Process dates for API query.
   const startDateProcessed = useMemo(
-    () => setStartOfDay(dateRange.startDate),
-    [dateRange.startDate]
+    () => setStartOfDay(earliestDate),
+    [earliestDate]
   );
   const endDateProcessed = useMemo(
-    () => setEndOfDay(dateRange.endDate),
-    [dateRange.endDate]
+    () => setEndOfDay(latestDate),
+    [latestDate]
   );
   const formattedStart = useMemo(
-    () => format(new Date(dateRange.startDate), "MMM d yyyy"),
-    [dateRange.startDate]
+    () => level === "daily" ? format(new Date(earliestDate), "MMM d") : format(new Date(earliestDate), "MMM yyyy"),
+    [earliestDate, level]
   );
   const formattedEnd = useMemo(
-    () => format(new Date(dateRange.endDate), "MMM d yyyy"),
-    [dateRange.endDate]
+    () => level === "daily" ? format(new Date(latestDate), "MMM d") : format(new Date(latestDate), "MMM yyyy"),
+    [latestDate, level]
   );
-  // Derive the similar business ids from clientDetails:
-  const { similar_businesses } = useMemo(() => {
-    if (!clientDetails || !clientDetails.businesses)
-      return { similar_businesses: [] as string[] };
-    // Find the currently selected business in clientDetails using businessId.
-    const currentBiz = clientDetails.businesses.find(
-      (biz) => biz.business_id === businessId
-    );
-    // If found, use its similar_businesses array; else, return empty.
-    return { similar_businesses: currentBiz?.similar_businesses || [] };
-  }, [clientDetails, businessId]);
 
   // Fetch data from the API route.
   useEffect(() => {
@@ -97,14 +83,15 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
 
       try {
         // Pass the current business id separately and the similar business ids as a comma-separated list.
-        const similarBizParam = similar_businesses.join(",");
-        const url = `/api/charts/line-graph?business_id=${encodeURIComponent(
+        const url = `/api/client-reporting/line-graph?business_id=${encodeURIComponent(
           businessId
-        )}&similar_business_ids=${encodeURIComponent(
-          similarBizParam
+        )}&all_business_ids=${encodeURIComponent(
+          allBusinessIds
         )}&start_date=${encodeURIComponent(
           startDateProcessed
-        )}&end_date=${encodeURIComponent(endDateProcessed)}`;
+        )}&end_date=${encodeURIComponent(
+          endDateProcessed
+        )}&level=${encodeURIComponent(level)}`;
 
         const res = await fetch(url);
         const data: LineGraphData = await res.json();
@@ -130,7 +117,7 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
     return () => {
       isCurrent = false;
     };
-  }, [businessId, similar_businesses, startDateProcessed, endDateProcessed]);
+  }, [businessId, startDateProcessed, endDateProcessed, allBusinessIds]);
 
   // Build and initialize the chart using ECharts.
   useEffect(() => {
@@ -138,23 +125,23 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
 
     const chart = echarts.init(chartRef.current);
 
-    // Merge all dates from the current and similar series.
-    const allDatesSet = new Set<string>();
-    [graphData.current, ...graphData.similar].forEach((biz) => {
-      biz.daily_counts.forEach((dc) => allDatesSet.add(dc.date));
+    // Merge all months from all businesses.
+    const allMonthsSet = new Set<string>();
+    graphData.similar.forEach((biz) => {
+      biz.counts.forEach((mc) => allMonthsSet.add(mc.date));
     });
-    const sortedDates = Array.from(allDatesSet).sort(); // Ascending order
+    const sortedMonths = Array.from(allMonthsSet).sort(); // Ascending order
 
     function generateColorPalette(n: number) {
       return Array.from({ length: n }, (_, i) => `hsl(${(i * 360) / n}, 70%, 50%)`);
     }
-    const colorPalette = generateColorPalette(1 + graphData.similar.length);
+    const colorPalette = generateColorPalette(graphData.similar.length);
 
     // Build series for each business.
     const buildSeriesForBiz = (biz: BusinessLineData) => {
-      const dateMap = new Map<string, number>();
-      biz.daily_counts.forEach((dc) => dateMap.set(dc.date, dc.count));
-      const seriesData = sortedDates.map((date) => dateMap.get(date) || 0);
+      const monthMap = new Map<string, number>();
+      biz.counts.forEach((mc) => monthMap.set(mc.date, mc.count));
+      const seriesData = sortedMonths.map((month) => monthMap.get(month) || 0);
       return {
         name: biz.business_name,
         type: "line",
@@ -166,7 +153,6 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
     };
 
     const seriesList = [
-      buildSeriesForBiz(graphData.current),
       ...graphData.similar.map((biz) => buildSeriesForBiz(biz)),
     ];
 
@@ -174,6 +160,13 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
       color: colorPalette, // 动态色环配色
       tooltip: {
         trigger: "axis",
+        confine: true,
+        position: function (point: number[], params: any, dom: any, rect: any, size: any) {
+          if (point[1] < size.contentSize[1] / 2) {
+            return [point[0], point[1] + 10];
+          }
+          return [point[0], point[1] - size.contentSize[1] - 10];
+        }
       },
       legend: {
         bottom: 0,
@@ -186,14 +179,14 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
         top: "8%",
         left: "3%",
         right: "4%",
-        bottom: "15%",
+        bottom: "20%",
         containLabel: true,
       },
       xAxis: {
         type: "category",
-        data: sortedDates,
+        data: sortedMonths,
         axisLabel: {
-          formatter: (value: string) => value.slice(5), // Displays MM-DD
+          formatter: (value: string) => value, //  YYYY-MM
         },
       },
       yAxis: {
@@ -219,23 +212,23 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
 
   if (isLoading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-md h-64 flex items-center justify-center">
+      <div className="bg-white p-6 rounded-lg shadow-md flex items-center justify-center w-full">
         <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md h-full">
+    <div className="bg-white p-6 rounded-lg shadow-md w-full">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-base font-medium text-gray-800">
-          Vs Similar Businesses
+          {level === "daily" ? "Monthly Posts" : "Total Posts"}
         </h2>
       </div>
       <div className="text-sm text-gray-600 mb-4">
         Posts from {formattedStart} to {formattedEnd}
       </div>
-      <div className="h-72">
+      <div className="h-80">
         <div ref={chartRef} style={{ width: "100%", height: "100%" }} />
       </div>
     </div>

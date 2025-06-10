@@ -156,6 +156,11 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     });
     const sortedMonths = Array.from(allMonthsSet).sort(); // Ascending order
 
+    function generateColorPalette(n: number) {
+      return Array.from({ length: n }, (_, i) => `hsl(${(i * 360) / n}, 70%, 50%)`);
+    }
+    const colorPalette = generateColorPalette(graphData.similar.length);
+
     // Build series for each business.
     const buildSeriesForBiz = (biz: BusinessLineData) => {
       const monthMap = new Map<string, number>();
@@ -176,6 +181,7 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     ];
 
     const option = {
+      color: colorPalette, // 动态色环配色
       tooltip: {
         trigger: "axis",
         confine: true,
