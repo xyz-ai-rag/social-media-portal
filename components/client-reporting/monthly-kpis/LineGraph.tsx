@@ -94,35 +94,11 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
         )}&level=${encodeURIComponent(level)}`;
 
         const res = await fetch(url);
-        const data = await res.json();
-
-        // Process all businesses
-        const graphData: LineGraphData = {
-          similar: []
-        };
-
-        data.similar.forEach((business: { business_id: string; business_name: string; counts: MonthlyCount[] }) => {
-          let cumulative = 0;
-          const cumulativeCounts = business.counts.map((dc: MonthlyCount) => {
-            cumulative += dc.count;
-            return {
-              date: dc.date,
-              count: cumulative
-            };
-          });
-
-          const processedBusiness: BusinessLineData = {
-            business_id: business.business_id,
-            business_name: business.business_name,
-            counts: cumulativeCounts
-          };
-
-          graphData.similar.push(processedBusiness);
-        });
+        const data: LineGraphData = await res.json();
 
         // Only update state if this is the current request
         if (isCurrent) {
-          setGraphData(graphData);
+          setGraphData(data);
         }
       } catch (err) {
         if (isCurrent) {
@@ -157,7 +133,7 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     const sortedMonths = Array.from(allMonthsSet).sort(); // Ascending order
 
     function generateColorPalette(n: number) {
-      return Array.from({ length: n }, (_, i) => `hsl(${(i * 360) / n}, 60%, 60%)`);
+      return Array.from({ length: n }, (_, i) => `hsl(${(i * 360) / n}, 65%, 50%)`);
     }
     const colorPalette = generateColorPalette(graphData.similar.length);
 
