@@ -32,6 +32,7 @@ const CirclePacking: FC<CirclePackingProps> = ({
 }) => {
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [hoveredCircle, setHoveredCircle] = useState<string | null>(null);
+  const router = useRouter();
   
   // Filter topics by minimum count and limit the number of topics
   const filteredData = useMemo(() => {
@@ -71,7 +72,6 @@ const CirclePacking: FC<CirclePackingProps> = ({
   const root = packGenerator(hierarchy);
   const color = d3.scaleOrdinal(d3.schemeCategory10);
 
-  const router = useRouter();
   function handleCircleClick(data: any): void {
     router.push(`/${clientId}/${businessId}/topic-analysis/${encodeURIComponent(data.name)}?topic_type=${encodeURIComponent(topicType)}`);
   }

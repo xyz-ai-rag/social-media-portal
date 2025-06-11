@@ -1,8 +1,9 @@
 "use client";
+export const dynamic = 'force-dynamic';
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   FiChevronLeft,
   FiChevronRight,
@@ -13,6 +14,7 @@ import {
   FiUsers,
   FiAlertCircle,
 } from "react-icons/fi";
+import { TbReportAnalytics } from "react-icons/tb";
 import { IoAnalyticsOutline } from "react-icons/io5";
 
 import { useAuth } from "@/context/AuthContext";
@@ -95,6 +97,8 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const { logout, clientDetails } = useAuth();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentTab = searchParams.get('tab') || 'brand-overview';
 
   // Extract client and business ID from URL for dynamic routing
   const urlParts = pathname.split("/").filter(Boolean);
@@ -143,6 +147,77 @@ export default function Sidebar() {
   const effectiveClientId = currentClientId || lastClientId;
   const effectiveBusinessId = currentBusinessId || lastBusinessId;
   const hasBusiness = Boolean(effectiveClientId && effectiveBusinessId);
+  const canViewBusinessReporting = clientDetails?.can_view_business_reporting;
+
+  //  Find current business limitation from clientDetails
+  useEffect(() => {
+    if (clientDetails?.businesses?.length) {
+      const currentBusiness = clientDetails.businesses.find(
+        (biz) => biz.business_id === effectiveBusinessId
+      );
+
+      if (currentBusiness) {
+        // Get user permissions from clientDetails
+        const canViewClientReporting = clientDetails.can_view_client_reporting;
+        const canViewBusinessReporting = clientDetails.can_view_business_reporting;
+        const reportingLevel = clientDetails.enable_client_reporting;
+
+        // Set menu visibility based on permissions and reporting level
+        if (!canViewClientReporting && !canViewBusinessReporting) {
+          // User has no permissions
+          setShowClientReporting(false);
+          setShowAllPosts(false);
+          setShowTopicAnalysis(false);
+          setShowCompetitors(false);
+        } else if (canViewClientReporting && !canViewBusinessReporting) {
+          // User can only view client reporting
+          setShowClientReporting(true);
+          setShowAllPosts(false);
+          setShowTopicAnalysis(false);
+          setShowCompetitors(false);
+        } else if (!canViewClientReporting && canViewBusinessReporting) {
+          // User can only view business reporting
+          setShowClientReporting(false);
+          setShowAllPosts(true);
+          setShowTopicAnalysis(true);
+          setShowCompetitors(true);
+        } else {
+          // User has both permissions, check reporting level
+          if (!reportingLevel) {
+            // Hide all analysis tabs if enable_client_reporting is empty/null
+            setShowClientReporting(false);
+            setShowAllPosts(true);
+            setShowTopicAnalysis(true);
+            setShowCompetitors(true);
+          } else if (reportingLevel === 'client_only') {
+            // Only show client reporting
+            setShowClientReporting(true);
+            setShowAllPosts(false);
+            setShowTopicAnalysis(false);
+            setShowCompetitors(false);
+          } else if (reportingLevel === 'client_business') {
+            // Show all tabs
+            setShowClientReporting(true);
+            setShowAllPosts(true);
+            setShowTopicAnalysis(true);
+            setShowCompetitors(true);
+          } else if (reportingLevel === 'client_competitors') {
+            // Show client reporting and competitors
+            setShowClientReporting(true);
+            setShowAllPosts(false);
+            setShowTopicAnalysis(false);
+            setShowCompetitors(true);
+          }
+        }
+      }
+    }
+  }, [clientDetails, effectiveBusinessId]);
+
+  // Add state for menu visibility
+  const [showClientReporting, setShowClientReporting] = useState(true);
+  const [showAllPosts, setShowAllPosts] = useState(true);
+  const [showTopicAnalysis, setShowTopicAnalysis] = useState(true);
+  const [showCompetitors, setShowCompetitors] = useState(true);
 
   // Save state to localStorage when it changes
   const toggleCollapsed = (): void => {
@@ -162,7 +237,18 @@ export default function Sidebar() {
       const dynamicPath = path
         .replace("[clientId]", currentClientId)
         .replace("[businessId]", currentBusinessId);
-      return pathname.includes(dynamicPath);
+      
+      // Special handling for client-reporting path
+      if (dynamicPath.includes("client-reporting")) {
+        // If the path includes a tab parameter, check for exact match
+        if (path.includes("?")) {
+          return pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '') === dynamicPath;
+        }
+        // If no tab parameter, only match the base path
+        return pathname === dynamicPath.split('?')[0];
+      }
+      
+      return pathname === dynamicPath;
     }
     return pathname === path;
   };
@@ -182,30 +268,23 @@ export default function Sidebar() {
 
   // Build destination URLs based on effective IDs
   const getDashboardUrl = () => {
-    if (hasBusiness) {
-      return `/${effectiveClientId}/${effectiveBusinessId}/dashboard`;
-    }
-    return "/businesses";
+    return `/${effectiveClientId}/${effectiveBusinessId}/dashboard`;
+  };
+
+  const getClientReportingUrl = () => {
+    return `/${effectiveClientId}/${effectiveBusinessId}/client-reporting?tab=brand-overview`;
   };
 
   const getPostsUrl = () => {
-    if (hasBusiness) {
-      return `/${effectiveClientId}/${effectiveBusinessId}/posts`;
-    }
-    return "/businesses";
+    return `/${effectiveClientId}/${effectiveBusinessId}/posts`;
   };
 
   const getCompetitorsUrl = () => {
-    if (hasBusiness) {
-      return `/${effectiveClientId}/${effectiveBusinessId}/competitors`;
-    }
-    return "/businesses";
+    return `/${effectiveClientId}/${effectiveBusinessId}/competitors`;
   };
+
   const getAnalyticsUrl = () => {
-    if (hasBusiness) {
-      return `/${effectiveClientId}/${effectiveBusinessId}/topic-analysis`;
-    }
-    return "/businesses";
+    return `/${effectiveClientId}/${effectiveBusinessId}/topic-analysis`;
   };
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -250,6 +329,45 @@ export default function Sidebar() {
           className={`flex-1 ${collapsed ? "" : "overflow-y-auto overflow-x-hidden"
             }`}
         >
+          <div>
+            {/* Reporting submenu */}
+            {isActive("/[clientId]/[businessId]/client-reporting") && !collapsed && showClientReporting && (
+              <div className="pl-8 space-y-2 py-2">
+                <Link
+                  href={`/${effectiveClientId}/${effectiveBusinessId}/client-reporting?tab=brand-overview`}
+                  className={`flex items-center p-2 rounded-md text-sm ${
+                    currentTab === 'brand-overview'
+                    ? "text-[#5A67BA] font-bold"
+                    : "text-gray-700/60 hover:bg-[#5A67BA]/10 font-normal"
+                  }`}
+                >
+                  Brand Overview
+                </Link>
+
+                <Link 
+                  href={`/${effectiveClientId}/${effectiveBusinessId}/client-reporting?tab=monthly-kpis`}
+                  className={`flex items-center p-2 rounded-md text-sm ${
+                    currentTab === 'monthly-kpis'
+                    ? "text-[#5A67BA] font-bold"
+                    : "text-gray-700/60 hover:bg-[#5A67BA]/10 font-normal"
+                  }`}
+                >
+                  Monthly KPIs
+                </Link>
+
+                <Link
+                  href={`/${effectiveClientId}/${effectiveBusinessId}/client-reporting?tab=business-reporting`} 
+                  className={`flex items-center p-2 rounded-md text-sm ${
+                    currentTab === 'business-reporting'
+                    ? "text-[#5A67BA] font-bold"
+                    : "text-gray-700/60 hover:bg-[#5A67BA]/10 font-normal"
+                  }`}
+                >
+                  Business Reporting
+                </Link>
+              </div>
+            )}
+          </div>        
           <div className="p-4">
             {!collapsed && (
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 pl-2">
@@ -257,7 +375,7 @@ export default function Sidebar() {
               </div>
             )}
             <nav className="space-y-2">
-              <MenuItem
+              {canViewBusinessReporting && <MenuItem
                 href={getDashboardUrl()}
                 icon={<FiGrid />}
                 label="Dashboard"
@@ -265,36 +383,55 @@ export default function Sidebar() {
                 disabled={!hasBusiness && !isSettingsPage}
                 collapsed={collapsed}
                 onClick={!hasBusiness ? handleDisabledClick : undefined}
-              />
+              />}
 
-              <MenuItem
-                href={getPostsUrl()}
-                icon={<FiList />}
-                label="All Posts"
-                isActive={isActive("/[clientId]/[businessId]/posts")}
-                disabled={!hasBusiness && !isSettingsPage}
-                collapsed={collapsed}
-                onClick={!hasBusiness ? handleDisabledClick : undefined}
-              />
-              <MenuItem
-                href={getAnalyticsUrl()}
-                icon={<IoAnalyticsOutline />}
-                label="Analysis"
-                isActive={isActive("/[clientId]/[businessId]/topic-analysis")}
-                disabled={!hasBusiness && !isSettingsPage}
-                collapsed={collapsed}
-                onClick={!hasBusiness ? handleDisabledClick : undefined}
-              />
+              {showClientReporting && (
+                <MenuItem
+                  href={getClientReportingUrl()}
+                  icon={<TbReportAnalytics />} 
+                  label="Client Reporting"
+                  isActive={isActive("/[clientId]/[businessId]/client-reporting")}
+                  disabled={!hasBusiness && !isSettingsPage}
+                  collapsed={collapsed}
+                  onClick={!hasBusiness ? handleDisabledClick : undefined}
+                />
+              )}
 
-              <MenuItem
-                href={getCompetitorsUrl()}
-                icon={<FiUsers />}
-                label="Competitors"
-                isActive={isActive("/[clientId]/[businessId]/competitors")}
-                disabled={!hasBusiness && !isSettingsPage}
-                collapsed={collapsed}
-                onClick={!hasBusiness ? handleDisabledClick : undefined}
-              />
+              {showAllPosts && (
+                <MenuItem
+                  href={getPostsUrl()}
+                  icon={<FiList />}
+                  label="All Posts"
+                  isActive={isActive("/[clientId]/[businessId]/posts")}
+                  disabled={!hasBusiness && !isSettingsPage}
+                  collapsed={collapsed}
+                  onClick={!hasBusiness ? handleDisabledClick : undefined}
+                />
+              )}
+
+              {showTopicAnalysis && (
+                <MenuItem
+                  href={getAnalyticsUrl()}
+                  icon={<IoAnalyticsOutline />}
+                  label="Analysis"
+                  isActive={isActive("/[clientId]/[businessId]/topic-analysis")}
+                  disabled={!hasBusiness && !isSettingsPage}
+                  collapsed={collapsed}
+                  onClick={!hasBusiness ? handleDisabledClick : undefined}
+                />
+              )}
+
+              {showCompetitors && (
+                <MenuItem
+                  href={getCompetitorsUrl()}
+                  icon={<FiUsers />}
+                  label="Competitors"
+                  isActive={isActive("/[clientId]/[businessId]/competitors")}
+                  disabled={!hasBusiness && !isSettingsPage}
+                  collapsed={collapsed}
+                  onClick={!hasBusiness ? handleDisabledClick : undefined}
+                />
+              )}
             </nav>
           </div>
         </div>
