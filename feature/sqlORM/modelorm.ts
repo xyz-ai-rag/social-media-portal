@@ -68,12 +68,12 @@ export const BusinessPostModel =
       english_tag_list: { type: DataTypes.TEXT, allowNull: true },
       hashtag_topic_category: { type: DataTypes.TEXT, allowNull: true },
       english_desc_literal: { type: DataTypes.TEXT, allowNull: true },
-      relevance_percent: { type: DataTypes.INTEGER, allowNull: true },
-      has_negative_or_critical_feedback: {
+      relevance_percentage: { type: DataTypes.INTEGER, allowNull: true },
+      has_negative_or_criticism: {
         type: DataTypes.BOOLEAN,
         allowNull: true,
       },
-      negative_feedback: { type: DataTypes.TEXT, allowNull: true },
+      negative_feedback_summary: { type: DataTypes.TEXT, allowNull: true },
       is_wrong_relevancy: { type: DataTypes.BOOLEAN, allowNull: true },
       is_good_summary: { type: DataTypes.BOOLEAN, allowNull: true },
       is_good_negative_feedback: { type: DataTypes.BOOLEAN, allowNull: true },
@@ -170,6 +170,10 @@ export const ClientModel = sequelizeDbConnection.define<ClientInstance>(
       type: DataTypes.ARRAY(DataTypes.INTEGER),
       allowNull: true,
     },
+    enable_client_reporting: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     tableName: "clients",
@@ -193,6 +197,16 @@ export const ClientUsersModel =
       registered_email: {
         type: DataTypes.TEXT,
         allowNull: false,
+      },
+      can_view_client_reporting: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      can_view_business_reporting: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
       },
     },
     {

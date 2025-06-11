@@ -75,17 +75,18 @@ export default function PieChartComponent({
 
         const res = await fetch(url);
         const data = await res.json();
+        const platformData = data.platformData;
 
         // Only update state if this is the current request
         if (isCurrent) {
           let total = 0;
-          if (Array.isArray(data)) {
-            total = data.reduce((sum, item) => sum + item.value, 0);
+          if (Array.isArray(platformData)) {
+            total = platformData.reduce((sum, item) => sum + item.value, 0);
           }
 
           // If the API already returns an array, then map each item to add a color (if missing)
-          if (Array.isArray(data)) {
-            const mappedData: PieDataItem[] = data.map((item: any) => ({
+          if (Array.isArray(platformData)) {
+            const mappedData: PieDataItem[] = platformData.map((item: any) => ({
               ...item,
               color:
                 item.color ||

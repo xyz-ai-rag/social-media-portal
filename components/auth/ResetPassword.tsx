@@ -241,13 +241,11 @@ export default function ResetPasswordPage() {
   function disableAuthListeners() {
     try {
       // Try to access _supabaseClient and its listeners
-      // @ts-ignore - Accessing internal property
+      // @ts-expect-error - Accessing internal property
       const client = supabase._supabaseClient;
       if (client && client.auth && client.auth.onAuthStateChange) {
-        // @ts-ignore - Accessing internal property
         const listeners = client.auth.listenersCount;
         // console.log("Temporarily disabling auth listeners");
-        // @ts-ignore - Accessing internal property
         client.auth.listenersCount = 0;
         return listeners;
       }
@@ -261,11 +259,10 @@ export default function ResetPasswordPage() {
   function restoreAuthListeners(prevListeners: any) {
     try {
       if (prevListeners !== null) {
-        // @ts-ignore - Accessing internal property
+        // @ts-expect-error - Accessing internal property
         const client = supabase._supabaseClient;
         if (client && client.auth) {
         //   console.log("Restoring auth listeners");
-          // @ts-ignore - Accessing internal property
           client.auth.listenersCount = prevListeners;
         }
       }

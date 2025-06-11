@@ -18,7 +18,8 @@ export default function Header() {
     pathname.includes("/dashboard") ||
     pathname.includes("/posts") ||
     pathname.includes("/competitors") ||
-    pathname.includes("/topic-analysis");
+    pathname.includes("/topic-analysis") ||
+    pathname.includes("/client-reporting");
 
   // Get the current business ID from params
   const currentBusinessId = params.businessId as string;
@@ -39,10 +40,19 @@ export default function Header() {
       // If there are more segments (like /clientId/businessId/pageType/subpage), we preserve them
       const currentPagePath = pathSegments.slice(3).join("/");
 
+      // Get the current tab parameter
+      const searchParams = new URLSearchParams(window.location.search);
+      const tab = searchParams.get('tab');
+
       // Build the new URL with the same page type but new business ID
-      const newPath = `/${clientDetails.id}/${businessId}/${
+      let newPath = `/${clientDetails.id}/${businessId}/${
         currentPagePath || "dashboard"
       }`;
+
+      // Add tab parameter if it exists
+      if (tab) {
+        newPath += `?tab=${tab}`;
+      }
 
       router.push(newPath);
       setIsDropdownOpen(false);
