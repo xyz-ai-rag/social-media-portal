@@ -13,7 +13,7 @@ export default function ClientReportingPage() {
 
   return (
     <div className="">
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense>
         <ClientReporting clientId={clientId} businessId={businessId} />
       </Suspense>
     </div>

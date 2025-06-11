@@ -17,7 +17,7 @@ export default function PostsPage() {
   const topicType = searchParams.get('topic_type') || '';
   return (
     <div className="space-y-6">
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense>
         <DateRangeProvider>
           <TopicPosts clientId={clientId} businessId={businessId} topic={topic} topicType={topicType} />
         </DateRangeProvider>

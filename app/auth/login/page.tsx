@@ -19,7 +19,7 @@ export default function LoginPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense>
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent"></div>
         </Suspense>
       </div>

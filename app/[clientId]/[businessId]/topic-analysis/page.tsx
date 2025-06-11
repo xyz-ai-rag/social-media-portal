@@ -9,7 +9,7 @@ export default function TopicAnalysisPage() {
   const businessId = params.businessId as string;
   return (
     <div className="space-y-6">
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense>
         <TopicAnalysis clientId={clientId} businessId={businessId} />
       </Suspense>
     </div>
