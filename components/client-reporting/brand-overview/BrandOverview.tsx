@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useState, useMemo } from 'react';
 import LineGraph from "@/components/client-reporting/brand-overview/LineGraph";
 

@@ -141,7 +141,7 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     return () => {
       isCurrent = false;
     };
-  }, [businessId, startDateProcessed, endDateProcessed, allBusinessIds]);
+  }, [businessId, startDateProcessed, endDateProcessed, allBusinessIds, level]);
 
   // Build and initialize the chart using ECharts.
   useEffect(() => {

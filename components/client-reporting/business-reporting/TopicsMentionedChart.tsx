@@ -1,3 +1,4 @@
+"use client"
 import { constructVercelURL } from "@/utils/generateURL";
 import React, { useEffect, useState } from "react";
 import { Radar } from "react-chartjs-2";

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import * as echarts from "echarts/core";
 import { PieChart } from "echarts/charts";

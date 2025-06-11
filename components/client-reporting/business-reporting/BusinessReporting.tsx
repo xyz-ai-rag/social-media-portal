@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { format, subMonths, parseISO } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';

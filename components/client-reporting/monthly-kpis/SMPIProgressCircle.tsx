@@ -1,3 +1,4 @@
+"use client"
 import React, { useEffect, useRef, useState } from "react";
 import { calculateSMPI, getSMPILabel, getSMPIColor } from "@/utils/smpi";
 import { format, parseISO } from "date-fns";

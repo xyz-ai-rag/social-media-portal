@@ -68,12 +68,12 @@ export async function GET(request: NextRequest) {
         });
         const counts: Record<string, number> = { Rednote: 0, Weibo: 0, Douyin: 0 };
         const uniqueNoteIds = new Set<string>();
-        let loggedUnknownPlatforms = new Set();
+        const loggedUnknownPlatforms = new Set<string>();
         rows.forEach(row => {
           const noteId = row.getDataValue("note_id");
           uniqueNoteIds.add(noteId);
-          let platformCode = (row.getDataValue("platform") || "").toLowerCase();
-          let normalizedPlatform = platformCodeMapping[platformCode] || platformCode;
+          const platformCode = (row.getDataValue("platform") || "").toLowerCase();
+          const normalizedPlatform = platformCodeMapping[platformCode] || platformCode;
           let displayPlatform = platformDisplayMapping[normalizedPlatform];
           if (!displayPlatform) {
             if (!loggedUnknownPlatforms.has(platformCode)) {

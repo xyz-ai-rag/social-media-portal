@@ -42,7 +42,7 @@ export default function Home() {
         <div className="max-w-md">
           <h2 className="text-xl font-semibold mb-4">No Businesses Found</h2>
           <p className="mb-6">
-            Your account is authenticated, but we couldn't find any associated
+            Your account is authenticated, but we couldn&apos;t find any associated
             business data. This might happen if your account was recently
             created.
           </p>

@@ -108,13 +108,13 @@ export async function GET(request: NextRequest) {
     monthlyTotalRows.forEach((row: any) => allMonthsSet.add(row.get('month')));
     monthlyCriticismRows.forEach((row: any) => allMonthsSet.add(row.get('month')));
     const allMonthsArr = Array.from(allMonthsSet).sort();
-    let earliestMonth = allMonthsArr[0];
+    const earliestMonth = allMonthsArr[0];
     const now = new Date();
     const thisMonth = format(now, 'yyyy-MM');
 
     function* monthRange(start: string, end: string) {
       let [sy, sm] = start.split('-').map(Number);
-      let [ey, em] = end.split('-').map(Number);
+      const [ey, em] = end.split('-').map(Number);
       while (sy < ey || (sy === ey && sm <= em)) {
         yield `${sy.toString().padStart(4, '0')}-${sm.toString().padStart(2, '0')}`;
         sm++;

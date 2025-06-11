@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let where: any = {
+    const where: any = {
       business_id: businessId,
       topic_type: topicType,
     }
