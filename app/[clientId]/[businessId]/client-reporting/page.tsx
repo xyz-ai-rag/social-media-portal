@@ -1,8 +1,8 @@
 "use client";
 
 import ClientReporting from "@/components/client-reporting/ClientReporting";
-import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import { useParams } from "next/navigation";
+import { Suspense } from "react";
 
 export default function ClientReportingPage() {
   const params = useParams();
@@ -13,7 +13,9 @@ export default function ClientReportingPage() {
 
   return (
     <div className="">
-      <ClientReporting clientId={clientId} businessId={businessId} />
+      <Suspense fallback={<div>Loading...</div>}>
+        <ClientReporting clientId={clientId} businessId={businessId} />
+      </Suspense>
     </div>
   );
 }

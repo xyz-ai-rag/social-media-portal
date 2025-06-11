@@ -35,12 +35,6 @@ const SharedPostModal = ({
   hasNext = true,
   isNavigating = false, // NEW: Default to false
 }: BasePostModalProps) => {
-  // Handle case where rowData might be empty or undefined
-  if (!rowData) return null;
-
-  // Use platform name as default header if none provided
-  const title = headerTitle || rowData.platform || "Post Details";
-
   // Ref for the modal content
   const modalContentRef = useRef<HTMLDivElement>(null);
 
@@ -66,6 +60,12 @@ const SharedPostModal = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen, onClose]);
+
+  // Handle case where rowData might be empty or undefined
+  if (!rowData) return null;
+
+  // Use platform name as default header if none provided
+  const title = headerTitle || rowData.platform || "Post Details";
 
   return (
     <>

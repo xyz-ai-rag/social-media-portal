@@ -1,7 +1,8 @@
 "use client";
-import React, { useState, useEffect } from "react";
+export const dynamic = 'force-dynamic';
+
+import React from "react";
 import { DateRangeProvider } from "@/context/DateRangeContext";
-import { useAuth } from "@/context/AuthContext";
 import { useSearchParams } from "next/navigation";
 import BrandOverview from "./brand-overview/BrandOverview";
 import MonthlyReporting from "./monthly-kpis/MonthlyKPIS";

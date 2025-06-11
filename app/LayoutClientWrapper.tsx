@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import Footer from "@/components/layout/Footer"; // Import the Footer component
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, Suspense } from "react";
 
 export default function LayoutClientWrapper({
   children,
@@ -56,6 +56,8 @@ export default function LayoutClientWrapper({
 
   // Main app layout for non-auth pages
   return (
+    <Suspense fallback={<div>Loading...</div>}>
+
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar /> {/* Left Sidebar */}
       <div
@@ -65,8 +67,9 @@ export default function LayoutClientWrapper({
       >
         <Header /> {/* Top Header */}
         <main className="p-6 bg-white flex-1">{children}</main>
-        <Footer /> {/* Added Footer */}
+          <Footer /> {/* Added Footer */}
+        </div>
       </div>
-    </div>
+    </Suspense>
   );
 }
