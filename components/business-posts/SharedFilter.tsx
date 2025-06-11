@@ -401,7 +401,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
           )}
           {appliedFilters.search && (
             <Badge color="info" className="text-xs">
-              Search: "{appliedFilters.search}"
+              Search: &quot;{appliedFilters.search}&quot;
             </Badge>
           )}
           {(appliedFilters.platform ||

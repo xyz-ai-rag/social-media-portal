@@ -77,16 +77,6 @@ export default function SMPIProgressCircle({ selectedMonth, lastMonthStr, monthl
         setTooltipPos({ x, y });
     };
 
-    if (!currentMonthData) {
-        return (
-            <div className="bg-white p-6 rounded-lg shadow-md w-full">
-                <div className="text-center p-8 text-gray-500">
-                    <p className="mb-2">No SMPI data</p>
-                </div>
-            </div>
-        );
-    }
-
     // Show/hide tooltip on mouse enter/leave of the container
     useEffect(() => {
         const handleMouseEnter = () => {
@@ -102,6 +92,16 @@ export default function SMPIProgressCircle({ selectedMonth, lastMonthStr, monthl
             containerRef.current?.removeEventListener('mouseleave', handleMouseLeave);
         };
     }, []);
+
+    if (!currentMonthData) {
+        return (
+            <div className="bg-white p-6 rounded-lg shadow-md w-full">
+                <div className="text-center p-8 text-gray-500">
+                    <p className="mb-2">No SMPI data</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-white p-6 rounded-lg shadow-md w-full h-full flex flex-col justify-center" ref={containerRef}>
