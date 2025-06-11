@@ -16,17 +16,28 @@ export async function GET(request: NextRequest) {
     }
     const businessIds = all_business_ids ? all_business_ids.split(',').map((id: string) => id.trim()).filter(Boolean) : [business_id];
 
+    // Extract date part (YYYY-MM-DD) from the datetime string
+    const startDate = start_date.split(' ')[0];
+    const endDate = end_date.split(' ')[0];
+
+    // Create datetime objects with UTC time
+    const startDateTime = new Date(`${startDate}T00:00:00.000Z`);
+    const endDateTime = new Date(`${endDate}T23:59:59.999Z`);
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+      return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
+    }
+
     const posts = await BusinessPostModel.findAll({
       attributes: [
         'business_id',
-        [fn('DATE_TRUNC', 'month', col('last_update_time')), 'month'],
-        [fn('COUNT', col('note_id')), 'count']
+        [fn('to_char', col('last_update_time'), 'YYYY-MM'), 'month'],
+        [fn('count', '*'), 'count']
       ],
       where: {
         business_id: { [Op.in]: businessIds },
         is_relevant: true,
-        has_negative_or_criticism: true,
-        last_update_time: { [Op.between]: [parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date()), parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date())] }
+        last_update_time: { [Op.between]: [startDateTime, endDateTime] },
+        has_negative_or_criticism: true
       },
       group: ['business_id', 'month'],
       raw: true

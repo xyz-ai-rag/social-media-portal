@@ -39,16 +39,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Parse dates without timezone conversion
-    const startDate = parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date());
-    const endDate = parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date());
-    
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    // Extract date part (YYYY-MM-DD) from the datetime string
+    const startDate = start_date.split(' ')[0];
+    const endDate = end_date.split(' ')[0];
+
+    // Create datetime objects with UTC time
+    const startDateTime = new Date(`${startDate}T00:00:00.000Z`);
+    const endDateTime = new Date(`${endDate}T23:59:59.999Z`);
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
 
-    console.log(`[LineGraph] Query params: business_id=${currentBusinessId}, start_date=${start_date}, end_date=${end_date}`);
-    console.log(`[LineGraph] Parsed dates: startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
+    console.log(`[LineGraph] Parsed dates: startDateTime=${startDateTime.toISOString()}, endDateTime=${endDateTime.toISOString()}`);
 
     const allBusinessIdsArray = allBusinessIds
       ? [...new Set([currentBusinessId, ...allBusinessIds.split(',').map(id => id.trim())])]
@@ -64,7 +66,7 @@ export async function GET(request: NextRequest) {
         where: {
           business_id: bizId,
           is_relevant: true,
-          last_update_time: { [Op.lte]: endDate }
+          last_update_time: { [Op.lte]: endDateTime }
         },
         group: [fn('to_char', col('last_update_time'), 'YYYY-MM')],
         order: [[fn('to_char', col('last_update_time'), 'YYYY-MM'), 'ASC']]
@@ -72,8 +74,8 @@ export async function GET(request: NextRequest) {
 
       // Generate all months between start and end date
       const allDates: string[] = [];
-      let d = new Date(startDate);
-      const end = new Date(endDate);
+      let d = new Date(startDateTime);
+      const end = new Date(endDateTime);
       // Set end date to the last day of the month to ensure we include the last month
       end.setDate(1);
       end.setMonth(end.getMonth() + 1);
@@ -108,22 +110,22 @@ export async function GET(request: NextRequest) {
         where: {
           business_id: bizId,
           is_relevant: true,
-          last_update_time: { [Op.lte]: endDate } // 
+          last_update_time: { [Op.lte]: endDateTime } // 
         },
         group: [fn('to_char', col('last_update_time'), 'yyyy-MM-dd')],
         order: [[fn('to_char', col('last_update_time'), 'yyyy-MM-dd'), 'ASC']]
       });
 
-      let minDate = startDate;
+      let minDate = startDateTime;
       if (rows.length > 0) {
         const allRowDates = rows.map(row => row.get('day') as string);
         minDate = new Date(Math.min(...allRowDates.map(d => new Date(d).getTime())));
-        if (minDate > startDate) minDate = startDate; 
+        if (minDate > startDateTime) minDate = startDateTime; 
       }
 
       const allDates: string[] = [];
       let d = new Date(minDate);
-      const end = new Date(endDate);
+      const end = new Date(endDateTime);
       while (d <= end) {
         allDates.push(format(new Date(d), 'yyyy-MM-dd'));
         d = addDays(d, 1);
@@ -138,8 +140,8 @@ export async function GET(request: NextRequest) {
         count: dateToCount[date] || 0
       }));
 
-      //  only return data between startDate and endDate
-      return dailyCounts.filter(item => new Date(item.date) >= startDate && new Date(item.date) <= endDate);
+      //  only return data between startDateTime and endDateTime
+      return dailyCounts.filter(item => new Date(item.date) >= startDateTime && new Date(item.date) <= endDateTime);
     }
 
     // Helper function: fetch the business name from the business table.
