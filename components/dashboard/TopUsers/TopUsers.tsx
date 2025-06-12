@@ -8,13 +8,14 @@ import {
   TooltipComponent,
   GridComponent,
   DatasetComponent,
-  LegendComponent
+  LegendComponent,
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import { useDateRange } from "@/context/DateRangeContext";
 import { constructVercelURL } from "@/utils/generateURL";
 import { format } from "date-fns";
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
+import { useTranslation } from "react-i18next";
 
 // Register the required components
 echarts.use([
@@ -24,7 +25,7 @@ echarts.use([
   DatasetComponent,
   BarChart,
   CanvasRenderer,
-  LegendComponent
+  LegendComponent,
 ]);
 
 interface TopUsersProps {
@@ -43,7 +44,10 @@ export default function TopUsers({ clientId, businessId }: TopUsersProps) {
   const { dateRange } = useDateRange();
   const [topUsers, setTopUsers] = useState<UserPostCount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
+  // change language setting
+  const { t } = useTranslation();
+
   // Format the raw date strings for display
   const formattedStart = useMemo(
     () => format(new Date(dateRange.startDate), "MMM d yyyy"),
@@ -83,16 +87,19 @@ export default function TopUsers({ clientId, businessId }: TopUsersProps) {
         }
 
         const data = await response.json();
-        
+
         // Calculate total posts to determine percentages
-        const totalPosts = data.reduce((sum: number, user: UserPostCount) => sum + user.postCount, 0);
-        
+        const totalPosts = data.reduce(
+          (sum: number, user: UserPostCount) => sum + user.postCount,
+          0
+        );
+
         // Add percentage to each user
         const usersWithPercentage = data.map((user: UserPostCount) => ({
           ...user,
-          percentage: Math.round((user.postCount / totalPosts) * 100)
+          percentage: Math.round((user.postCount / totalPosts) * 100),
         }));
-        
+
         setTopUsers(usersWithPercentage);
       } catch (error) {
         console.error("Error fetching top users data:", error);
@@ -110,97 +117,97 @@ export default function TopUsers({ clientId, businessId }: TopUsersProps) {
 
     // Sort users by post count (descending order for display)
     const sortedUsers = [...topUsers].sort((a, b) => b.postCount - a.postCount);
-    
+
     const chart = echarts.init(chartRef.current);
-    
+
     // Generate gradient colors for bars
     const colorStops = [
-      { offset: 0, color: '#2196F3' },    // Start color
-      { offset: 1, color: '#64B5F6' }     // End color
+      { offset: 0, color: "#2196F3" }, // Start color
+      { offset: 1, color: "#64B5F6" }, // End color
     ];
 
     const option = {
       tooltip: {
-        trigger: 'axis',
+        trigger: "axis",
         axisPointer: {
-          type: 'shadow'
+          type: "shadow",
         },
-        formatter: function(params: any) {
+        formatter: function (params: any) {
           const data = params[0];
           return `${data.name}: ${data.data.value} posts`;
-        }
+        },
       },
       grid: {
-        left: '3%',
-        right: '14%',
-        bottom: '3%',
-        top: '3%',
-        containLabel: true
+        left: "3%",
+        right: "14%",
+        bottom: "3%",
+        top: "3%",
+        containLabel: true,
       },
       xAxis: {
-        type: 'value',
+        type: "value",
         axisLabel: {
-          show: false  // Hide x-axis labels
+          show: false, // Hide x-axis labels
         },
         splitLine: {
           lineStyle: {
-            type: 'dashed',
-            color: '#eee'
-          }
+            type: "dashed",
+            color: "#eee",
+          },
         },
         axisLine: {
-          show: false
+          show: false,
         },
         axisTick: {
-          show: false
-        }
+          show: false,
+        },
       },
       yAxis: {
-        type: 'category',
-        inverse: true,  // This is the key change - invert the y-axis to show highest at top
-        data: sortedUsers.map(user => user.nickname),
+        type: "category",
+        inverse: true, // This is the key change - invert the y-axis to show highest at top
+        data: sortedUsers.map((user) => user.nickname),
         axisLine: {
-          show: false
+          show: false,
         },
         axisTick: {
-          show: false
-        }
+          show: false,
+        },
       },
       series: [
         {
-          name: 'Posts',
-          type: 'bar',
-          data: sortedUsers.map(user => ({
+          name: "Posts",
+          type: "bar",
+          data: sortedUsers.map((user) => ({
             value: user.postCount,
             nickname: user.nickname,
-            percentage: user.percentage
+            percentage: user.percentage,
           })),
-          barWidth: '50%',
+          barWidth: "50%",
           label: {
             show: true,
-            position: 'right',
-            formatter: function(params: any) {
+            position: "right",
+            formatter: function (params: any) {
               return params.data.value + " posts";
             },
             fontSize: 12,
-            color: '#666'
+            color: "#666",
           },
           itemStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 1, 0, colorStops),
-            borderRadius: [0, 4, 4, 0]  // Rounded corners on right side
-          }
-        }
-      ]
+            borderRadius: [0, 4, 4, 0], // Rounded corners on right side
+          },
+        },
+      ],
     };
 
     chart.setOption(option);
-    
+
     // Handle window resize
     const handleResize = () => chart.resize();
-    window.addEventListener('resize', handleResize);
-    
+    window.addEventListener("resize", handleResize);
+
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       chart.dispose();
     };
   }, [isLoading, topUsers]);
@@ -208,7 +215,9 @@ export default function TopUsers({ clientId, businessId }: TopUsersProps) {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md h-full">
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-base font-medium text-gray-800">Top Users</h2>
+        <h2 className="text-base font-medium text-gray-800">
+          {t("dashboard.topuser")}
+        </h2>
         <div className="text-sm text-gray-600">
           Top users with multiple posts
         </div>
@@ -228,7 +237,7 @@ export default function TopUsers({ clientId, businessId }: TopUsersProps) {
         </div>
       ) : (
         <div className="h-64 mt-2">
-          <div ref={chartRef} style={{ width: '100%', height: '100%' }} />
+          <div ref={chartRef} style={{ width: "100%", height: "100%" }} />
         </div>
       )}
     </div>

@@ -10,6 +10,7 @@ import { PostData } from "../SharedFilter";
 import PostPreviewCard from "../PostPreviewCard";
 import { useDateRange } from "@/context/DateRangeContext";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import { useTranslation } from "react-i18next";
 
 interface BusinessPostsProps {
   clientId: string;
@@ -57,6 +58,9 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
   const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
   const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
   const [adjacentPagesLoading, setAdjacentPagesLoading] = useState(false);
+
+  // change language setting
+  const { t } = useTranslation();
 
   // Calculate yesterday's date for date limits
   const yesterday = useMemo(() => {
@@ -423,7 +427,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       {/* Head */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">
-          {`Posts for ${businessName || "Business"}`}
+          {t("post.post", { name: businessName || "Business" })}
         </h1>
       </div>
       {/* Filters */}

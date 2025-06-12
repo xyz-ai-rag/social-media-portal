@@ -1,27 +1,28 @@
-"use client"
+"use client";
 import { FC, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { constructVercelURL } from "@/utils/generateURL";
-import CirclePacking from './CirclePacking';
-import TabSection from './TabSection';
-import BarChart from './BarChart';
+import CirclePacking from "./CirclePacking";
+import TabSection from "./TabSection";
+import BarChart from "./BarChart";
 import { useSearchParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 
 interface AnalysisProps {
   clientId: string;
   businessId: string;
 }
 
-const TopicAnalysis: FC<AnalysisProps> = ({
-  clientId,
-  businessId,
-}) => {
+const TopicAnalysis: FC<AnalysisProps> = ({ clientId, businessId }) => {
   // Get auth context to access similar businesses
   const { clientDetails } = useAuth();
   const searchParams = useSearchParams();
-  
+
   // Add a ref to track API requests
   const requestTracker = useRef(new Set());
+
+  // change language setting
+  const { t } = useTranslation();
 
   // business name state
   const [businessName, setBusinessName] = useState<string>("");
@@ -77,7 +78,9 @@ const TopicAnalysis: FC<AnalysisProps> = ({
   };
 
   // Add state for active tab
-  const [activeTab, setActiveTab] = useState(getActiveTab(searchParams.get("topic_type")) || 0);
+  const [activeTab, setActiveTab] = useState(
+    getActiveTab(searchParams.get("topic_type")) || 0
+  );
   useEffect(() => {
     setActiveTab(getActiveTab(searchParams.get("topic_type")) || 0);
   }, [searchParams]);
@@ -99,19 +102,19 @@ const TopicAnalysis: FC<AnalysisProps> = ({
     const fetchData = async () => {
       try {
         if (!clientDetails || !businessId) return;
-        
+
         // Create a cache key based on the current request parameters
         const requestKey = `${businessId}_${getTopicType(activeTab)}`;
-        
+
         // Skip duplicate requests in the same render cycle
         if (requestTracker.current.has(requestKey)) {
-          console.log('Skipping duplicate request:', requestKey);
+          console.log("Skipping duplicate request:", requestKey);
           return;
         }
-        
+
         // Add to request tracker
         requestTracker.current.add(requestKey);
-        
+
         setIsLoading(true);
 
         // Fetch competitor details using the batch API
@@ -134,8 +137,6 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         const data = await response.json();
         setTopics(data.topics);
         setTotal(data.total);
-        
-
       } catch (error) {
         console.error("Error fetching topics:", error);
         // Don't set an error message for users to see
@@ -145,7 +146,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
     };
 
     fetchData();
-    
+
     // Clear request tracker when component unmounts
     return () => {
       requestTracker.current.clear();
@@ -158,16 +159,12 @@ const TopicAnalysis: FC<AnalysisProps> = ({
 
   return (
     <div className="container mx-auto px-4">
-
       <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-4">
-        {`Analysis for ${businessName || "Business"}`}
+        {t("analysis.analysis", { name: businessName || "Business" })}
       </h1>
 
       {/* Tab Section */}
-      <TabSection
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-      />
+      <TabSection activeTab={activeTab} setActiveTab={setActiveTab} />
       {/* Charts */}
       <div className="flex justify-center items-center min-h-[400px] w-full min-w-0">
         {isLoading ? (
@@ -193,10 +190,10 @@ const TopicAnalysis: FC<AnalysisProps> = ({
               maxTopics={topicLimit}
               topicType={getTopicType(activeTab)}
             />
-            <BarChart 
-              topics={topics} 
-              businessId={businessId} 
-              clientId={clientId} 
+            <BarChart
+              topics={topics}
+              businessId={businessId}
+              clientId={clientId}
               minCount={minCount}
               maxTopics={topicLimit}
               topicType={getTopicType(activeTab)}
@@ -208,4 +205,4 @@ const TopicAnalysis: FC<AnalysisProps> = ({
   );
 };
 
-export default TopicAnalysis; 
+export default TopicAnalysis;

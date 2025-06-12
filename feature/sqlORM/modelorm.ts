@@ -131,6 +131,10 @@ export const BusinessModel = sequelizeDbConnection.define<BusinessInstance>(
       type: DataTypes.DATE,
       allowNull: false,
     },
+    additional_languages: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
+      allowNull: true,
+    },
   },
   {
     tableName: "business",

@@ -5,6 +5,8 @@ import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import Footer from "@/components/layout/Footer"; // Import the Footer component
 import { ReactNode, useState, useEffect } from "react";
+import { I18nextProvider } from "react-i18next";
+import i18n from "@/i18n";
 
 export default function LayoutClientWrapper({
   children,
@@ -57,16 +59,18 @@ export default function LayoutClientWrapper({
   // Main app layout for non-auth pages
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar /> {/* Left Sidebar */}
-      <div
-        className={`${
-          sidebarCollapsed ? "ml-20" : "ml-60"
-        } transition-all duration-300 flex-1 flex flex-col`}
-      >
-        <Header /> {/* Top Header */}
-        <main className="p-6 bg-white flex-1">{children}</main>
-        <Footer /> {/* Added Footer */}
-      </div>
+      <I18nextProvider i18n={i18n}>
+        <Sidebar /> {/* Left Sidebar */}
+        <div
+          className={`${
+            sidebarCollapsed ? "ml-20" : "ml-60"
+          } transition-all duration-300 flex-1 flex flex-col`}
+        >
+          <Header /> {/* Top Header */}
+          <main className="p-6 bg-white flex-1">{children}</main>
+          <Footer /> {/* Added Footer */}
+        </div>
+      </I18nextProvider>
     </div>
   );
 }

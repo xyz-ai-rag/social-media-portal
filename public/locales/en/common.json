@@ -1,0 +1,96 @@
+{
+  "sidebar": {
+    "menu": "MENU",
+    "dashboard": "Dashboard",
+    "post": "All Post",
+    "analysis": "Analysis",
+    "competitors": "Competitors",
+    "others": "OTHERS",
+    "setting": "Setting",
+    "logout": "Logout",
+    "changebusiness": "Change Business"
+  },
+  "setting": {
+    "settings": "Setting",
+    "language": "Change Languages: ",
+    "languageType": {
+      "english": "English",
+      "japanese": "Japanese",
+      "korean": "한국인",
+      "french": "法语",
+      "chinese": "中文",
+      "german": "Deutsch",
+      "spanish": "española",
+      "italian": "italiana",
+      "portuguese": "português",
+      "russian": "русский",
+      "arabic": "عربي",
+      "hindi": "हिंदी"
+    }
+  },
+  "dashboard": {
+    "dashboard": "Dashboard",
+    "barchart": "Post Per Day",
+    "piechart": "Platform Distribution",
+    "hashtag": "Top Hashtags",
+    "linegraph": "Vs Similar Businesses",
+    "topcity": "Top Posting Locations",
+    "contenttype": "Content Type",
+    "topuser": "Top Users"
+  },
+  "post": {
+    "post": "Posts For {{name}}",
+    "platform": "Platform",
+    "sentiment": "Sentiment",
+    "relevance": "Relevance Score",
+    "feedback": "Feedback",
+    "posttype": "Post Type",
+    "search": "Search",
+    "sentimentdata": {
+      "positive": "Positive",
+      "negative": "Negative",
+      "neutral": "Neutral"
+    },
+    "criticismdata": {
+      "criticism": "Has negative feedback",
+      "positive": "No negative feedback"
+    },
+    "posttypedata": {
+      "organic": "Organic Post",
+      "commercial": "Commercial Post",
+      "own": "Own Post"
+    }
+  },
+  "daterange": {
+    "yesterday": "Yesterday",
+    "last7days": "Last 7 days",
+    "last30days": "Last 30 days",
+    "last60days": "Last 60 days",
+    "last90days": "Last 90 days",
+    "last120days": "Last 120 days",
+    "thismonth": "This month",
+    "lastmonth": "Last month",
+    "everything": "Everything",
+    "custom": "Custom range"
+  },
+  "table": {
+    "date": "Date",
+    "platform": "Platform",
+    "user": "User",
+    "post": "Post",
+    "originalLanguage": "Original Language",
+    "relevanceScore": "Relevance Score"
+  },
+  "competitor": {
+    "competitor": "Select Competitor",
+    "overview": "Overview",
+    "competitorpost": "Competitor Posts"
+  },
+  "analysis": {
+    "overview": "Overview",
+    "populartopic": "Popular Topics",
+    "criticalfeedback": "Critical Feedback",
+    "similar": "Competitors & Similar Business",
+    "analysis": "Analysis for {{name}}"
+  }
+}

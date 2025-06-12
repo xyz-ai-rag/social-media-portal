@@ -5,6 +5,7 @@ import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { setStartOfDay, setEndOfDay } from "../../utils/timeUtils";
 import { useDateRange } from "@/context/DateRangeContext";
 import DatePicker from "../business-posts/DatePicker";
+import { useTranslation } from "react-i18next";
 
 interface DateRangePickerProps {
   page: string;
@@ -24,9 +25,12 @@ export default function DateRangePicker({
 }: DateRangePickerProps) {
   // Add client-side only marker
   const [isClient, setIsClient] = useState(false);
-  
+
   // Try to use context if available
   const dateRangeContext = useDateRange();
+
+  // change language setting
+  const { t } = useTranslation();
 
   const [selectedPreset, setSelectedPreset] = useState("last30Days");
   const [showCustomDates, setShowCustomDates] = useState(false);
@@ -34,7 +38,7 @@ export default function DateRangePicker({
   // Calculate date limits - use yesterday as the maximum selectable date
   const [yesterday, setYesterday] = useState("");
   const [thirtyDaysAgo, setThirtyDaysAgo] = useState("");
-  
+
   // Initialize with empty states for custom dates
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
@@ -48,39 +52,38 @@ export default function DateRangePicker({
     const yesterdayDate = subDays(new Date(), 1);
     const yesterdayStr = format(yesterdayDate, "yyyy-MM-dd");
     setYesterday(yesterdayStr);
-    
+
     const thirtyDaysAgoDate = subDays(new Date(), 30);
     const thirtyDaysAgoStr = format(thirtyDaysAgoDate, "yyyy-MM-dd");
     setThirtyDaysAgo(thirtyDaysAgoStr);
-    
+
     // Load preferences from sessionStorage
     const savedSelected = localStorage.getItem(`${page}_select`);
     if (savedSelected) {
       setSelectedPreset(JSON.parse(savedSelected));
       setShowCustomDates(JSON.parse(savedSelected) === "custom");
     }
-    
+
     const savedStartDate = localStorage.getItem(`${page}_start_date`);
     if (savedStartDate) {
       setCustomStartDate(JSON.parse(savedStartDate));
     } else {
       setCustomStartDate(thirtyDaysAgoStr);
     }
-    
+
     const savedEndDate = localStorage.getItem(`${page}_end_date`);
     if (savedEndDate) {
       setCustomEndDate(JSON.parse(savedEndDate));
     } else {
       setCustomEndDate(yesterdayStr);
     }
-
   }, []);
 
   // Fetch date range when component mounts
   useEffect(() => {
     const fetchDateRange = async () => {
       if (!businessId) return;
-      
+
       try {
         const response = await fetch(
           `/api/charts/dateRange?business_id=${businessId}`
@@ -102,8 +105,9 @@ export default function DateRangePicker({
   }, [businessId]);
 
   const getDatePreset = (preset: string) => {
-    if (!isClient) return { start: "", end: "", label: "", aggregation: "daily" as const };
-    
+    if (!isClient)
+      return { start: "", end: "", label: "", aggregation: "daily" as const };
+
     switch (preset) {
       case "yesterday": {
         const yesterdayDate = subDays(new Date(), 1);
@@ -162,7 +166,8 @@ export default function DateRangePicker({
           label: "Last 90 days",
           aggregation: "daily" as const,
         };
-      }case "last120Days": {
+      }
+      case "last120Days": {
         const yesterdayDate = subDays(new Date(), 1);
         const start = subDays(yesterdayDate, 119); // 30 days ending with yesterday
         const startStr = format(start, "yyyy-MM-dd");
@@ -183,7 +188,9 @@ export default function DateRangePicker({
         if (startStr && endStr) {
           const start = new Date(startStr);
           const end = new Date(endStr);
-          const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+          const diffDays = Math.ceil(
+            (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+          );
 
           if (diffDays <= 2) {
             aggregation = "hourly";
@@ -218,7 +225,11 @@ export default function DateRangePicker({
       }
       case "lastMonth": {
         const today = new Date();
-        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const lastMonth = new Date(
+          today.getFullYear(),
+          today.getMonth() - 1,
+          1
+        );
         const lastMonthStart = startOfMonth(lastMonth);
         const lastMonthEnd = endOfMonth(lastMonth);
         const startStr = format(lastMonthStart, "yyyy-MM-dd");
@@ -237,7 +248,9 @@ export default function DateRangePicker({
         if (customStartDate && customEndDate) {
           const start = new Date(customStartDate);
           const end = new Date(customEndDate);
-          const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+          const diffDays = Math.ceil(
+            (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+          );
 
           if (diffDays <= 2) {
             aggregation = "hourly";
@@ -270,9 +283,12 @@ export default function DateRangePicker({
   // Save custom dates to sessionStorage
   useEffect(() => {
     if (!isClient) return;
-    
+
     if (customStartDate) {
-      localStorage.setItem(`${page}_start_date`, JSON.stringify(customStartDate));
+      localStorage.setItem(
+        `${page}_start_date`,
+        JSON.stringify(customStartDate)
+      );
     }
     if (customEndDate) {
       localStorage.setItem(`${page}_end_date`, JSON.stringify(customEndDate));
@@ -282,11 +298,17 @@ export default function DateRangePicker({
   // Update date range when earliestDate changes
   useEffect(() => {
     if (!isClient || !earliestDate) return;
-    if(!latestDate){return}
-    
+    if (!latestDate) {
+      return;
+    }
+
     if (selectedPreset === "everything") {
       if (dateRangeContext) {
-        dateRangeContext.updateDateRange("everything", earliestDate, latestDate);
+        dateRangeContext.updateDateRange(
+          "everything",
+          earliestDate,
+          latestDate
+        );
       }
     }
   }, [earliestDate, selectedPreset, dateRangeContext, isClient, latestDate]);
@@ -294,9 +316,9 @@ export default function DateRangePicker({
   // Update date range when preset changes
   useEffect(() => {
     if (!isClient) return;
-    
+
     localStorage.setItem(`${page}_select`, JSON.stringify(selectedPreset));
-    
+
     if (selectedPreset === "custom") {
       setShowCustomDates(true);
       if (customStartDate && customEndDate) {
@@ -322,20 +344,27 @@ export default function DateRangePicker({
         onDateRangeChange(start, end, label, aggregation);
       }
     }
-  }, [selectedPreset, customStartDate, customEndDate, onDateRangeChange, dateRangeContext, isClient]);
+  }, [
+    selectedPreset,
+    customStartDate,
+    customEndDate,
+    onDateRangeChange,
+    dateRangeContext,
+    isClient,
+  ]);
 
   // Prepare the date preset options
   const datePresetOptions = [
-    { key: "yesterday", label: "Yesterday" },
-    { key: "last7Days", label: "Last 7 days" },
-    { key: "last30Days", label: "Last 30 days" },
-    { key: "last60Days", label: "Last 60 days" },
-    { key: "last90Days", label: "Last 90 days" },
-    { key: "last120Days", label: "Last 120 days" },
-    { key: "thisMonth", label: "This month" },
-    { key: "lastMonth", label: "Last month" },
-    { key: "everything", label: "Everything" },
-    { key: "custom", label: "Custom range" },
+    { key: "yesterday", label: t("daterange.yesterday") },
+{ key: "last7Days", label: t("daterange.last7days") },
+{ key: "last30Days", label: t("daterange.last30days") },
+{ key: "last60Days", label: t("daterange.last60days") },
+{ key: "last90Days", label: t("daterange.last90days") },
+{ key: "last120Days", label: t("daterange.last120days") },
+{ key: "thisMonth", label: t("daterange.thismonth") },
+{ key: "lastMonth", label: t("daterange.lastmonth") },
+{ key: "everything", label: t("daterange.everything") },
+{ key: "custom", label: t("daterange.custom") }
   ];
 
   return (

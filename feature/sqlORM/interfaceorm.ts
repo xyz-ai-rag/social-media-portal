@@ -54,6 +54,7 @@ export interface BusinessPostInstance extends Model {
 }
 
 export interface BusinessInstance extends Model {
+  additional_languages: string[];
   business_id: string; // UUID
   business_name: string;
   search_keywords: string[]; // Array of text

@@ -3,8 +3,9 @@
 import { FC, useState, useEffect } from "react";
 import { Table, Spinner, Select, Tooltip } from "flowbite-react";
 import { PostData } from "./SharedFilter";
-import { FaThumbsUp, FaThumbsDown, FaMinus } from "react-icons/fa"
-import { TbMessageExclamation } from "react-icons/tb"
+import { FaThumbsUp, FaThumbsDown, FaMinus } from "react-icons/fa";
+import { TbMessageExclamation } from "react-icons/tb";
+import { useTranslation } from "react-i18next";
 
 interface PaginationProps {
   currentPage: number;
@@ -37,6 +38,9 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
   const currentPage = pagination?.currentPage || 1;
   const totalPages = pagination?.totalPages || 1;
 
+  // change language setting
+  const { t } = useTranslation();
+
   // Handle sort order change
   const handleSortOrderChange = (order: string) => {
     if (onSortOrderChange) {
@@ -63,7 +67,7 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
           <Table hoverable className="w-full">
             <Table.Head>
               <Table.HeadCell className="w-32">
-                Date
+                {t("table.date")}
                 <div className="pl-2 flex flex-col">
                   {isClient && (
                     <>
@@ -101,22 +105,22 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
               </Table.HeadCell>
 
               <Table.HeadCell className="w-24 text-center">
-                Platform
-              </Table.HeadCell>
-              <Table.HeadCell className="w-32 text-center">User</Table.HeadCell>
-              <Table.HeadCell className="w-auto">
-                Post
+                {t("table.platform")}
               </Table.HeadCell>
               <Table.HeadCell className="w-32 text-center">
-                Original Language
+                {t("table.user")}
+              </Table.HeadCell>
+              <Table.HeadCell className="w-auto">
+                {t("table.post")}
+              </Table.HeadCell>
+              <Table.HeadCell className="w-32 text-center">
+                {t("table.originalLanguage")}
               </Table.HeadCell>
               <Table.HeadCell className="w-28 text-center">
-                Relevance Score
+                {t("table.relevanceScore")}
               </Table.HeadCell>
-              <Table.HeadCell className="w-12 text-center">
-              </Table.HeadCell>
-              <Table.HeadCell className="w-12 text-center">
-              </Table.HeadCell>
+              <Table.HeadCell className="w-12 text-center"></Table.HeadCell>
+              <Table.HeadCell className="w-12 text-center"></Table.HeadCell>
               <Table.HeadCell className="w-12 text-center"></Table.HeadCell>
             </Table.Head>
 
@@ -184,16 +188,25 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                       {item.relvance}
                     </Table.Cell>
                     <Table.Cell className="text-center align-middle">
-                      <Tooltip content={
-                        item.postCategory === "organic post" ? "Organic Post" :
-                        item.postCategory === "commercial post" ? "Commercial Post" :
-                        item.postCategory === "own post" ? "Own Post" :
-                        "Null"
-                      } placement="top">
-                          {item.postCategory === "organic post" ? "O" :
-                           item.postCategory === "commercial post" ? "C" :
-                           item.postCategory === "own post" ? "W" :
-                           ""}
+                      <Tooltip
+                        content={
+                          item.postCategory === "organic post"
+                            ? "Organic Post"
+                            : item.postCategory === "commercial post"
+                            ? "Commercial Post"
+                            : item.postCategory === "own post"
+                            ? "Own Post"
+                            : "Null"
+                        }
+                        placement="top"
+                      >
+                        {item.postCategory === "organic post"
+                          ? "O"
+                          : item.postCategory === "commercial post"
+                          ? "C"
+                          : item.postCategory === "own post"
+                          ? "W"
+                          : ""}
                       </Tooltip>
                     </Table.Cell>
                     <Table.Cell className="text-center align-middle">
@@ -201,7 +214,7 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                         {item.sentiment === "Positive" ? (
                           <FaThumbsUp />
                         ) : item.sentiment === "Negative" ? (
-                          <FaThumbsDown className="text-pink-300"/>
+                          <FaThumbsDown className="text-pink-300" />
                         ) : (
                           <FaMinus />
                         )}
@@ -209,9 +222,15 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                     </Table.Cell>
                     <Table.Cell className="text-center align-middle whitespace-nowrap">
                       {item.hasCriticism && (
-                        <Tooltip content="Has negative feedback" placement="top">
+                        <Tooltip
+                          content="Has negative feedback"
+                          placement="top"
+                        >
                           <span className="flex justify-center items-center cursor-pointer">
-                            <TbMessageExclamation className="text-pink-300" size={18} />
+                            <TbMessageExclamation
+                              className="text-pink-300"
+                              size={18}
+                            />
                           </span>
                         </Tooltip>
                       )}
@@ -233,10 +252,11 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
             <button
               disabled={currentPage <= 1 || isLoading}
               onClick={() => handlePageChange(currentPage - 1)}
-              className={`bg-transparent text-white p-2 ${currentPage <= 1 || isLoading
-                ? "opacity-50 cursor-not-allowed"
-                : ""
-                }`}
+              className={`bg-transparent text-white p-2 ${
+                currentPage <= 1 || isLoading
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
             >
               <svg
                 width="18"
@@ -261,10 +281,11 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
             <button
               disabled={currentPage >= totalPages || isLoading}
               onClick={() => handlePageChange(currentPage + 1)}
-              className={`bg-transparent text-white p-2 ${currentPage >= totalPages || isLoading
-                ? "opacity-50 cursor-not-allowed"
-                : ""
-                }`}
+              className={`bg-transparent text-white p-2 ${
+                currentPage >= totalPages || isLoading
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
             >
               <svg
                 width="18"

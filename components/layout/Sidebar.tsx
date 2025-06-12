@@ -16,6 +16,7 @@ import {
 import { IoAnalyticsOutline } from "react-icons/io5";
 
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 type MenuItemProps = {
   href: string;
@@ -40,8 +41,9 @@ const MenuItem: React.FC<MenuItemProps> = ({
   if (disabled) {
     return (
       <div
-        className={`flex items-center p-2 rounded-md cursor-not-allowed ${collapsed ? "justify-center" : ""
-          } text-gray-400`}
+        className={`flex items-center p-2 rounded-md cursor-not-allowed ${
+          collapsed ? "justify-center" : ""
+        } text-gray-400`}
         onClick={onClick}
       >
         <span className="flex items-center relative group">
@@ -67,11 +69,13 @@ const MenuItem: React.FC<MenuItemProps> = ({
   return (
     <Link
       href={href}
-      className={`flex items-center p-2 rounded-md ${collapsed ? "justify-center" : ""
-        } ${isActive
+      className={`flex items-center p-2 rounded-md ${
+        collapsed ? "justify-center" : ""
+      } ${
+        isActive
           ? "bg-[#5A67BA]/10 text-[#5A67BA]"
           : "text-gray-700/60 hover:bg-[#5A67BA]/10"
-        }`}
+      }`}
     >
       <span className="flex items-center relative group">
         <span className="inline-flex items-center justify-center w-6 h-6">
@@ -106,9 +110,13 @@ export default function Sidebar() {
   const isSettingsPage = pathname === "/settings";
 
   // Check if a business is selected or retrieve from localStorage
-  const [hasSelectedBusiness, setHasSelectedBusiness] = useState<boolean>(false);
+  const [hasSelectedBusiness, setHasSelectedBusiness] =
+    useState<boolean>(false);
   const [lastClientId, setLastClientId] = useState<string | null>(null);
   const [lastBusinessId, setLastBusinessId] = useState<string | null>(null);
+
+  // change language setting
+  const { t } = useTranslation();
 
   // Initialize states from localStorage on component mount
   useEffect(() => {
@@ -130,14 +138,24 @@ export default function Sidebar() {
   // Save current business selection to localStorage when navigating
   useEffect(() => {
     // Only update if we're on a business-specific page
-    if (currentClientId && currentBusinessId && !isBusinessSelectionPage && !isSettingsPage) {
+    if (
+      currentClientId &&
+      currentBusinessId &&
+      !isBusinessSelectionPage &&
+      !isSettingsPage
+    ) {
       localStorage.setItem("lastClientId", currentClientId);
       localStorage.setItem("lastBusinessId", currentBusinessId);
       setLastClientId(currentClientId);
       setLastBusinessId(currentBusinessId);
       setHasSelectedBusiness(true);
     }
-  }, [currentClientId, currentBusinessId, isBusinessSelectionPage, isSettingsPage]);
+  }, [
+    currentClientId,
+    currentBusinessId,
+    isBusinessSelectionPage,
+    isSettingsPage,
+  ]);
 
   // Determine if we have a business selected (either current or from history)
   const effectiveClientId = currentClientId || lastClientId;
@@ -176,8 +194,8 @@ export default function Sidebar() {
   // Get current business name
   const currentBusiness = hasBusiness
     ? clientDetails?.businesses?.find(
-      (biz) => biz.business_id === effectiveBusinessId
-    )
+        (biz) => biz.business_id === effectiveBusinessId
+      )
     : null;
 
   // Build destination URLs based on effective IDs
@@ -222,8 +240,9 @@ export default function Sidebar() {
   return (
     <>
       <aside
-        className={`bg-[#F1F2F7] border-r border-gray-200 fixed top-0 bottom-0 left-0 flex flex-col ${collapsed ? "w-20 overflow-visible" : "w-60"
-          } transition-all duration-300 z-10`}
+        className={`bg-[#F1F2F7] border-r border-gray-200 fixed top-0 bottom-0 left-0 flex flex-col ${
+          collapsed ? "w-20 overflow-visible" : "w-60"
+        } transition-all duration-300 z-10`}
       >
         {/* Top:  Logo */}
         <div className="h-20 border-b border-gray-200 flex items-center">
@@ -244,23 +263,23 @@ export default function Sidebar() {
           )}
         </div>
 
-
         {/* Middle: Menu Section with scrolling */}
         <div
-          className={`flex-1 ${collapsed ? "" : "overflow-y-auto overflow-x-hidden"
-            }`}
+          className={`flex-1 ${
+            collapsed ? "" : "overflow-y-auto overflow-x-hidden"
+          }`}
         >
           <div className="p-4">
             {!collapsed && (
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 pl-2">
-                MENU
+                {t("sidebar.menu")}
               </div>
             )}
             <nav className="space-y-2">
               <MenuItem
                 href={getDashboardUrl()}
                 icon={<FiGrid />}
-                label="Dashboard"
+                label={t("sidebar.dashboard")}
                 isActive={isActive("/[clientId]/[businessId]/dashboard")}
                 disabled={!hasBusiness && !isSettingsPage}
                 collapsed={collapsed}
@@ -270,7 +289,7 @@ export default function Sidebar() {
               <MenuItem
                 href={getPostsUrl()}
                 icon={<FiList />}
-                label="All Posts"
+                label={t("sidebar.post")}
                 isActive={isActive("/[clientId]/[businessId]/posts")}
                 disabled={!hasBusiness && !isSettingsPage}
                 collapsed={collapsed}
@@ -279,7 +298,7 @@ export default function Sidebar() {
               <MenuItem
                 href={getAnalyticsUrl()}
                 icon={<IoAnalyticsOutline />}
-                label="Analysis"
+                label={t("sidebar.analysis")}
                 isActive={isActive("/[clientId]/[businessId]/topic-analysis")}
                 disabled={!hasBusiness && !isSettingsPage}
                 collapsed={collapsed}
@@ -289,7 +308,7 @@ export default function Sidebar() {
               <MenuItem
                 href={getCompetitorsUrl()}
                 icon={<FiUsers />}
-                label="Competitors"
+                label={t("sidebar.competitors")}
                 isActive={isActive("/[clientId]/[businessId]/competitors")}
                 disabled={!hasBusiness && !isSettingsPage}
                 collapsed={collapsed}
@@ -303,33 +322,36 @@ export default function Sidebar() {
         <div className="border-t border-gray-200 p-4">
           {!collapsed && (
             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 pl-2">
-              OTHERS
+              {t("sidebar.others")}
             </div>
           )}
           <nav className="space-y-2">
             <MenuItem
               href="/settings"
               icon={<FiSettings />}
-              label="Settings"
+              label={t("sidebar.setting")}
               isActive={isActive("/settings")}
               collapsed={collapsed}
             />
 
             <div
               onClick={handleLogout}
-              className={`flex items-center cursor-pointer p-2 rounded-md ${collapsed ? "justify-center" : ""
-                } text-gray-700/60 hover:bg-[#5A67BA]/10`}
+              className={`flex items-center cursor-pointer p-2 rounded-md ${
+                collapsed ? "justify-center" : ""
+              } text-gray-700/60 hover:bg-[#5A67BA]/10`}
             >
               <span className="flex items-center relative group">
                 <span className="inline-flex items-center justify-center w-6 h-6">
                   <FiLogOut />
                 </span>
                 {!collapsed && (
-                  <span className="ml-3 text-sm font-medium">Logout</span>
+                  <span className="ml-3 text-sm font-medium">
+                    {t("sidebar.logout")}
+                  </span>
                 )}
                 {collapsed && (
                   <div className="absolute left-full ml-2 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover:block z-50 w-max">
-                    Logout
+                    {t("sidebar.logout")}
                   </div>
                 )}
               </span>
@@ -344,7 +366,7 @@ export default function Sidebar() {
               href="/businesses"
               className="flex items-center justify-between text-gray-800/60 hover:bg-[#5A67BA]/10 p-2 rounded-md text-sm font-medium"
             >
-              <span>Change Business</span>
+              <span>{t("sidebar.changebusiness")}</span>
               <FiChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -356,7 +378,7 @@ export default function Sidebar() {
             <Link href="/businesses" className="relative group">
               <FiChevronRight className="text-blue-600" />
               <div className="absolute left-full ml-2 whitespace-nowrap bg-[#5A67BA]/10 text-white text-xs rounded py-1 px-2 hidden group-hover:block z-50 w-max">
-                Change Business
+                {t("sidebar.changebusiness")}
               </div>
             </Link>
           </div>
@@ -380,9 +402,7 @@ export default function Sidebar() {
       {showLogoutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md text-center">
-            <h3 className="mb-5 text-lg font-normal text-gray-700">
-              Logout?
-            </h3>
+            <h3 className="mb-5 text-lg font-normal text-gray-700">Logout?</h3>
             <p className="text-sm text-gray-500 mb-7">
               Are you sure you want to logout?
             </p>

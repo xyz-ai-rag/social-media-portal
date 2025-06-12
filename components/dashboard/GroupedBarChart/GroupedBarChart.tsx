@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
 // Import your DateRange context hook and a utility function if needed.
 import { useDateRange } from "@/context/DateRangeContext";
+import { useTranslation } from "react-i18next";
 
 echarts.use([
   TitleComponent,
@@ -44,6 +45,9 @@ export default function GroupedBarChart({
 
   // Get date range from context.
   const { dateRange } = useDateRange();
+
+  // change language setting
+  const { t } = useTranslation();
 
   // Format the raw date strings for display.
   const formattedStart = useMemo(
@@ -185,7 +189,9 @@ export default function GroupedBarChart({
     <div className="bg-white p-6 rounded-lg shadow-md h-full">
       {/* Title */}
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-base font-medium text-gray-800">Posts Per Day</h2>
+        <h2 className="text-base font-medium text-gray-800">
+          {t("dashboard.barchart")}
+        </h2>
       </div>
       {/* Subheading: show date range */}
       <div className="text-sm text-gray-600 mb-4">

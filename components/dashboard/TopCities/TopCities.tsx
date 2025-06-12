@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDateRange } from "@/context/DateRangeContext";
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
+import { useTranslation } from "react-i18next";
 
 interface CityData {
   city: string;
@@ -23,6 +24,9 @@ const TopCitiesChart = ({ clientId, businessId }: TopCitiesChartProps) => {
 
   // Get the date range from context
   const { dateRange } = useDateRange();
+
+  // change language setting
+  const { t } = useTranslation();
 
   // Process the start and end dates using helper functions
   const startDateProcessed = setStartOfDay(dateRange.startDate);
@@ -116,7 +120,9 @@ const TopCitiesChart = ({ clientId, businessId }: TopCitiesChartProps) => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md h-full overflow-hidden">
-      <h2 className="text-base font-medium text-gray-800 mb-2">Top Posting Locations</h2>
+      <h2 className="text-base font-medium text-gray-800 mb-2">
+        {t("dashboard.topcity")}
+      </h2>
       <div className="text-sm text-gray-600 mb-4">
         Posts from {formatDate(dateRange.startDate)} to{" "}
         {formatDate(dateRange.endDate)}

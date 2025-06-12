@@ -3,6 +3,7 @@
 import { FC, useState, useEffect, ReactNode, useMemo } from "react";
 import { TextInput, Select, Badge, Button, Alert } from "flowbite-react";
 import DateRangePicker from "../dashboard/DateRangePicker";
+import { useTranslation } from "react-i18next";
 
 // Base post data structure shared between components
 export interface PostData {
@@ -83,6 +84,9 @@ const SharedFilter: FC<SharedFilterProps> = ({
   const [criticism, setCriticism] = useState("");
   const [postCategory, setPostCategory] = useState("");
 
+  // change language setting
+  const { t } = useTranslation();
+
   // Calculate yesterday's date for max date restriction
   const yesterday = useMemo(() => {
     const date = new Date();
@@ -116,7 +120,11 @@ const SharedFilter: FC<SharedFilterProps> = ({
   };
 
   // Select sentiment Data
-  const sentimentData = ["Positive", "Negative", "Neutral"];
+  const sentimentData = [
+    { value: "Positive", label: t("post.sentimentdata.positive") },
+    { value: "Negative", label: t("post.sentimentdata.negative") },
+    { value: "Neutral", label: t("post.sentimentdata.neutral") },
+  ];
 
   const handleSentiment = (data: string) => {
     setSentiment(data);
@@ -141,14 +149,14 @@ const SharedFilter: FC<SharedFilterProps> = ({
 
   // Select criticism Data
   const criticismData = [
-    { value: "Has Criticism", label: "Has negative feedback" },
-    { value: "No Criticism", label: "No negative feedback" },
+    { value: "Has Criticism", label: t("post.criticismdata.criticism") },
+    { value: "No Criticism", label: t("post.criticismdata.positive") },
   ];
 
   const postTypeData = [
-    { value: "organic post", label: "Organic Post" },
-    { value: "commercial post", label: "Commercial Post" },
-    { value: "own post", label: "Own Post" },
+    { value: "organic post", label: t("post.posttypedata.organic") },
+    { value: "commercial post", label: t("post.posttypedata.commercial") },
+    { value: "own post", label: t("post.posttypedata.commercial") },
   ];
 
   const handlePostCategory = (data: string) => {
@@ -264,7 +272,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
           onChange={(e) => handlePlatform(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">Platform</option>
+          <option value="">{t("post.platform")}</option>
           {platformData.map((item, index) => {
             return <option key={index}>{item}</option>;
           })}
@@ -276,25 +284,23 @@ const SharedFilter: FC<SharedFilterProps> = ({
           onChange={(e) => handleSentiment(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">Sentiment</option>
+          <option value="">{t("post.sentiment")}</option>
           {sentimentData.map((item, index) => {
-            return <option key={index}>{item}</option>;
+            return <option key={index}>{item.label}</option>;
           })}
         </Select>
         <DateRangePicker page={title} businessId={businessId} />
-
       </div>
 
       {/* Second Row Components */}
       <div className="flex flex-wrap mt-4 gap-4">
-        
         <Select
           id="relevance"
           value={relevance}
           onChange={(e) => handleRelevance(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">Relevance Score</option>
+          <option value="">{t("post.relevance")}</option>
           {relevanceData.map((item, index) => {
             return (
               <option key={index} value={item.value}>
@@ -309,7 +315,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
           onChange={(e) => handleCriticism(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">Feedback</option>
+          <option value="">{t("post.feedback")}</option>
           {criticismData.map((item, index) => {
             return (
               <option key={index} value={item.value}>
@@ -324,7 +330,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
           onChange={(e) => handlePostCategory(e.target.value)}
           disabled={isLoading}
         >
-          <option value="">Post Type</option>
+          <option value="">{t("post.posttype")}</option>
           {postTypeData.map((item, index) => {
             return (
               <option key={index} value={item.value}>
@@ -338,7 +344,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
           <TextInput
             type="text"
             id="search"
-            placeholder="Search..."
+            placeholder={t("post.search") + "..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}

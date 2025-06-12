@@ -28,6 +28,7 @@ interface Business {
   business_type: string;
   similar_businesses: string[];
   last_crawled_time: Date;
+  additional_languages: string[];
 }
 
 interface ClientDetails {

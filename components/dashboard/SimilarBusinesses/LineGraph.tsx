@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { useAuth } from "@/context/AuthContext";
 import { useDateRange } from "@/context/DateRangeContext";
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
+import { useTranslation } from "react-i18next";
 
 echarts.use([
   TitleComponent,
@@ -58,6 +59,9 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
   const { clientDetails } = useAuth();
   // Get date range from DateRangeContext.
   const { dateRange } = useDateRange();
+
+  // change language setting
+  const { t } = useTranslation();
 
   // Process dates for API query.
   const startDateProcessed = useMemo(
@@ -223,7 +227,7 @@ export default function LineGraph({ clientId, businessId }: LineGraphProps) {
     <div className="bg-white p-6 rounded-lg shadow-md h-full">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-base font-medium text-gray-800">
-          Vs Similar Businesses
+          {t("dashboard.linegraph")}
         </h2>
       </div>
       <div className="text-sm text-gray-600 mb-4">

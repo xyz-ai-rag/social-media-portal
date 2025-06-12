@@ -1,26 +1,30 @@
-"use client"
-import { FC } from 'react';
+"use client";
+import { FC } from "react";
+import { useTranslation } from "react-i18next";
 interface TabSectionProps {
   activeTab: number;
   setActiveTab: (tab: number) => void;
 }
 
-const TabSection: FC<TabSectionProps> = ({
-  activeTab,
-  setActiveTab,
-}) => {
+const TabSection: FC<TabSectionProps> = ({ activeTab, setActiveTab }) => {
+  // change language setting
+  const { t } = useTranslation();
+
   const tabs = [
-    { id: 0, label: 'Overview' },
-    { id: 1, label: 'Popular Topics' },
-    { id: 2, label: 'Critical Feedback' },
-    { id: 3, label: 'Competitors & Similar Business' },
+    { id: 0, label: t("analysis.overview") },
+    { id: 1, label: t("analysis.populartopic") },
+    { id: 2, label: t("analysis.criticalfeedback") },
+    { id: 3, label: t("analysis.similar") },
   ];
 
   return (
     <div className="mt-6">
       {/* Tab Navigation */}
       <div className="mb-4 border-b border-gray-200">
-        <ul className="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
+        <ul
+          className="flex flex-wrap -mb-px text-sm font-medium text-center"
+          role="tablist"
+        >
           {tabs.map((tab) => (
             <li key={tab.id} className="mr-2" role="presentation">
               <button
@@ -43,4 +47,4 @@ const TabSection: FC<TabSectionProps> = ({
   );
 };
 
-export default TabSection; 
+export default TabSection;

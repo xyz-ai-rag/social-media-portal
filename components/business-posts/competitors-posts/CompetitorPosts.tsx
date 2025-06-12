@@ -13,6 +13,7 @@ import PostPreviewCard from "../PostPreviewCard";
 import { FaSync } from "react-icons/fa";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import { useDateRange } from "@/context/DateRangeContext";
+import { useTranslation } from "react-i18next";
 
 interface CompetitorPostsProps {
   clientId: string;
@@ -77,6 +78,9 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   const [prevPagePosts, setPrevPagePosts] = useState<PostData[]>([]);
   const [nextPagePosts, setNextPagePosts] = useState<PostData[]>([]);
   const [adjacentPagesLoading, setAdjacentPagesLoading] = useState(false);
+
+  // change language setting
+  const { t } = useTranslation();
 
   // Calculate yesterday's date for date limits
   const yesterday = useMemo(() => {
@@ -535,7 +539,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         <option value="">No competitors available</option>
       ) : (
         <>
-          <option value="">Select Competitor</option>
+          <option value="">{t("competitor.competitor")}</option>
           {competitors.map((comp) => (
             <option key={comp.id} value={comp.id}>
               {comp.name}
@@ -587,7 +591,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
                 role="tab"
                 onClick={() => setActiveTab(0)}
               >
-                Overview
+                {t("competitor.overview")}
               </button>
             </li>
             <li className="mr-2" role="presentation">
@@ -601,7 +605,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
                 role="tab"
                 onClick={() => setActiveTab(1)}
               >
-                Competitor Posts
+                {t("competitor.competitorpost")}
               </button>
             </li>
           </ul>

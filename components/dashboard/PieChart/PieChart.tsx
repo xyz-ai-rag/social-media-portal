@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
 // Import date range context.
 import { useDateRange } from "@/context/DateRangeContext";
+import { useTranslation } from "react-i18next";
 
 echarts.use([
   TitleComponent,
@@ -48,6 +49,9 @@ export default function PieChartComponent({
 
   // Get date range from context.
   const { dateRange } = useDateRange();
+
+  // change language setting
+  const { t } = useTranslation();
 
   // Process dates using helper functions from timeUtils.
   const startDateProcessed = useMemo(
@@ -228,7 +232,7 @@ export default function PieChartComponent({
   return (
     <div className="bg-white p-6 rounded-lg shadow-md h-full">
       <h2 className="text-base font-medium text-gray-800 mb-2">
-        Platform Distribution
+        {t("dashboard.piechart")}
       </h2>
       <div className="text-sm text-gray-600 mb-4">
         Posts from {format(new Date(dateRange.startDate), "MMM d yyyy")} to{" "}

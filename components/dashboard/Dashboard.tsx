@@ -10,6 +10,7 @@ import TopCitiesMap from "./TopCities/TopCities";
 import ContentType from "./ContentType/ContentType";
 import TopUsers from "./TopUsers/TopUsers";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 interface DashboardProps {
   clientId: string;
@@ -20,6 +21,9 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
   const { clientDetails } = useAuth();
   const [businessName, setBusinessName] = useState<string>("");
   const [lastCrawlTime, setLastCrawlTime] = useState<Date>(new Date());
+
+  // change language setting
+  const { t } = useTranslation();
 
   const getFormattedTimestamp = (data: Date) => {
     const date = new Date(data);
@@ -53,7 +57,7 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h1 className="text-[34px] font-bold text-[#5D5FEF]">
-            {businessName} Dashboard
+            {businessName + " " + t("dashboard.dashboard")}
           </h1>
           <DateRangePicker page="dashboard" businessId={businessId} />
         </div>

@@ -17,6 +17,7 @@ import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
 // Import date range context
 import { useDateRange } from "@/context/DateRangeContext";
 import { constructVercelURL } from "@/utils/generateURL";
+import { useTranslation } from "react-i18next";
 
 echarts.use([
   TitleComponent,
@@ -43,7 +44,10 @@ interface ContentTypeData {
   totalCount: number;
 }
 
-export default function ContentType({ clientId, businessId }: ContentTypeProps) {
+export default function ContentType({
+  clientId,
+  businessId,
+}: ContentTypeProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [contentTypeData, setContentTypeData] = useState<ContentTypeData>({
     contentTypeStats: [],
@@ -53,6 +57,9 @@ export default function ContentType({ clientId, businessId }: ContentTypeProps) 
 
   // Get date range from context
   const { dateRange } = useDateRange();
+
+  // change language setting
+  const { t } = useTranslation();
 
   // Format the raw date strings for display
   const formattedStart = useMemo(
@@ -129,8 +136,8 @@ export default function ContentType({ clientId, businessId }: ContentTypeProps) 
 
     // Color mapping - using colors from your example
     const typeColors: Record<string, string> = {
-      'Video': '#2196F3',  // Blue
-      'Text': '#00BCD4',   // Cyan/Teal
+      Video: "#2196F3", // Blue
+      Text: "#00BCD4", // Cyan/Teal
     };
 
     // Map data for chart
@@ -138,35 +145,35 @@ export default function ContentType({ clientId, businessId }: ContentTypeProps) 
       name: item.type,
       value: item.percentage,
       count: item.count,
-      itemStyle: { 
-        color: typeColors[item.type] || '#9C27B0'  // Default to purple
-      }
+      itemStyle: {
+        color: typeColors[item.type] || "#9C27B0", // Default to purple
+      },
     }));
 
     const option = {
       tooltip: {
         trigger: "item",
-        formatter: "{b}: {c}% ({d}%)"
+        formatter: "{b}: {c}% ({d}%)",
       },
       series: [
         {
           name: "Content Type",
           type: "pie",
-          radius: "75%",  // Traditional full pie chart
+          radius: "75%", // Traditional full pie chart
           center: ["50%", "50%"],
           data: seriesData,
           emphasis: {
             itemStyle: {
               shadowBlur: 10,
               shadowOffsetX: 0,
-              shadowColor: "rgba(0, 0, 0, 0.5)"
-            }
+              shadowColor: "rgba(0, 0, 0, 0.5)",
+            },
           },
           label: {
-            show: false  // Hide labels inside pie chart
-          }
-        }
-      ]
+            show: false, // Hide labels inside pie chart
+          },
+        },
+      ],
     };
 
     chart.setOption(option);
@@ -183,9 +190,11 @@ export default function ContentType({ clientId, businessId }: ContentTypeProps) 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md h-full">
       <div className="mb-2">
-        <h2 className="text-base font-medium text-gray-800">Content Type</h2>
+        <h2 className="text-base font-medium text-gray-800">
+          {t("dashboard.contenttype")}
+        </h2>
       </div>
-      
+
       <div className="text-sm text-gray-600 mb-4">
         Content type from {formattedStart} to {formattedEnd}
       </div>
@@ -203,21 +212,28 @@ export default function ContentType({ clientId, businessId }: ContentTypeProps) 
           <div className="h-64">
             <div ref={chartRef} style={{ width: "100%", height: "100%" }} />
           </div>
-          
+
           {/* Legend below the chart - matching your example image */}
           <div className="flex flex-wrap justify-center gap-10 mt-4">
             {contentTypeData.contentTypeStats.map((stat, index) => (
               <div key={index} className="flex items-center">
-                <div 
-                  className="w-4 h-4 mr-2" 
-                  style={{ 
-                    backgroundColor: stat.type === 'Video' ? '#2196F3' : 
-                                      stat.type === 'Text' ? '#00BCD4' : 
-                                      '#9C27B0' 
-                  }} 
+                <div
+                  className="w-4 h-4 mr-2"
+                  style={{
+                    backgroundColor:
+                      stat.type === "Video"
+                        ? "#2196F3"
+                        : stat.type === "Text"
+                        ? "#00BCD4"
+                        : "#9C27B0",
+                  }}
                 />
-                <span className="text-sm font-medium text-gray-800">{stat.type}</span>
-                <span className="ml-1 text-sm text-gray-600">({stat.count} posts)</span>
+                <span className="text-sm font-medium text-gray-800">
+                  {stat.type}
+                </span>
+                <span className="ml-1 text-sm text-gray-600">
+                  ({stat.count} posts)
+                </span>
               </div>
             ))}
           </div>

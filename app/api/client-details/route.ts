@@ -11,6 +11,7 @@ interface Business {
   business_city: string;
   business_type: string;
   similar_businesses: string[];
+  additional_languages: string[];
 }
 
 export async function GET(request: NextRequest) {
@@ -94,6 +95,7 @@ export async function GET(request: NextRequest) {
           "business_type",
           "similar_businesses",
           "last_crawled_time",
+          "additional_languages",
         ],
       });
 
