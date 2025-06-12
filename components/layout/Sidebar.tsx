@@ -417,7 +417,7 @@ export default function Sidebar() {
                 <MenuItem
                   href={getClientReportingUrl()}
                   icon={<TbReportAnalytics />}
-                  label="Client Reporting"
+                  label={t("sidebar.report")}
                   isActive={isActive(
                     "/[clientId]/[businessId]/client-reporting"
                   )}
