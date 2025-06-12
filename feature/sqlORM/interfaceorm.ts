@@ -39,9 +39,9 @@ export interface BusinessPostInstance extends Model {
   english_tag_list: string;
   hashtag_topic_category: string;
   english_desc_literal: string;
-  relevance_percent: number;
-  has_negative_or_critical_feedback: boolean;
-  negative_feedback: string;
+  relevance_percentage: number;
+  has_negative_or_criticism: boolean;
+  negative_feedback_summary: string;
   is_wrong_relevancy: boolean;
   is_good_summary: boolean;
   is_good_negative_feedback: boolean;
@@ -75,12 +75,15 @@ export interface ClientInstance extends Model {
   email_trigger_time?: string; // Optional (can be null)
   report_days?: number[]; // Optional (array of integers)
   registered_email: string;
+  enable_client_reporting: string;
 }
 
 export interface ClientUsersInstance extends Model {
   id: string; // UUID
   client_id: string;
   registered_email: string;
+  can_view_client_reporting: boolean;
+  can_view_business_reporting: boolean;
 }
 
 export interface ActiveSessionsInstance extends Model {

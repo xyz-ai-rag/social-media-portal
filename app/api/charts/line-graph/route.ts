@@ -19,16 +19,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Parse dates without timezone conversion
-    const startDate = parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date());
-    const endDate = parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date());
+    // Extract date part (YYYY-MM-DD) from the datetime string
+    const startDate = start_date.split(' ')[0];
+    const endDate = end_date.split(' ')[0];
+
+    // Create datetime objects exactly like getBusinessPosts
+    const startDateTime = new Date(`${startDate}T00:00:00.000Z`);
+    const endDateTime = new Date(`${endDate}T23:59:59.999Z`);
     
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
 
     console.log(`[LineGraph] Query params: business_id=${currentBusinessId}, start_date=${start_date}, end_date=${end_date}`);
-    console.log(`[LineGraph] Parsed dates: startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
+    console.log(`[LineGraph] Parsed dates: startDateTime=${startDateTime.toISOString()}, endDateTime=${endDateTime.toISOString()}`);
 
     // Parse similar business IDs from comma-delimited string.
     const similarBusinessIds = similarIdsParam
@@ -42,7 +46,9 @@ export async function GET(request: NextRequest) {
         where: {
           business_id: bizId,
           is_relevant: true,
-          last_update_time: { [Op.between]: [startDate, endDate] }
+          last_update_time: { 
+            [Op.between]: [startDateTime, endDateTime]
+          }
         },
         order: [['last_update_time', 'ASC']]
       });
@@ -50,7 +56,7 @@ export async function GET(request: NextRequest) {
       const dayMap: Record<string, number> = {};
       const days: string[] = [];
       // Initialize a count for every day in the range.
-      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      for (let d = new Date(startDateTime); d <= endDateTime; d.setDate(d.getDate() + 1)) {
         const dayStr = format(d, 'yyyy-MM-dd');
         dayMap[dayStr] = 0;
         days.push(dayStr);

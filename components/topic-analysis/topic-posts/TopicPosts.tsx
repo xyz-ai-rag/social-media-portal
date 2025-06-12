@@ -41,6 +41,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [noteIds, setNoteIds] = useState<any[]>([]);
+  const [title, setTitle] = useState<string>("topic-analysis");
   const [pagination, setPagination] = useState<PaginationInfo>({
     totalCount: 0,
     totalPages: 1,
@@ -67,7 +68,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
 
   const [filters, setFilters] = useState(() => {
     if (typeof window !== "undefined") {
-      const savedFilters = sessionStorage.getItem("business_page_filters");
+      const savedFilters = sessionStorage.getItem(`${title}_filters`);
       return savedFilters
         ? JSON.parse(savedFilters)
         : {
@@ -92,7 +93,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
   });
 
   useEffect(() => {
-    sessionStorage.setItem("business_page_filters", JSON.stringify(filters));
+    sessionStorage.setItem(`${title}_filters`, JSON.stringify(filters));
   }, [filters]);
   // Setting default date range
   const [dateRange, setDateRange] = useState<{startDate: string, endDate: string}>({
@@ -450,7 +451,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
 
       {/* Filters */}
       <SharedFilter
-        title=""
+        title={title}
         clientId={clientId}
         businessId={businessId}
         isLoading={isLoading}

@@ -7,81 +7,64 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const business_id = searchParams.get("business_id");
+    const all_business_ids = searchParams.get("all_business_ids");
     const start_date = searchParams.get("start_date");
     const end_date = searchParams.get("end_date");
 
-    if (!business_id || !start_date || !end_date) {
+    if (!start_date || !end_date) {
       return NextResponse.json(
-        { error: "Missing required parameters: business_id, start_date, end_date" },
+        { error: "Missing required parameters: start_date, end_date" },
         { status: 400 }
       );
     }
-    
-    // Convert date strings to Date objects
-    const startDate = parse(start_date, 'yyyy-MM-dd HH:mm:ss', new Date());
-    const endDate = parse(end_date, 'yyyy-MM-dd HH:mm:ss', new Date());
 
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    let businessIds: string[] = [];
+    if (all_business_ids) {
+      businessIds = all_business_ids.split(',').map(id => id.trim()).filter(Boolean);
+    } else if (business_id) {
+      businessIds = [business_id];
+    } else {
+      return NextResponse.json(
+        { error: "Missing business_id(s)" },
+        { status: 400 }
+      );
+    }
+
+    // Extract date part (YYYY-MM-DD) from the datetime string
+    const startDate = start_date.split(' ')[0];
+    const endDate = end_date.split(' ')[0];
+
+    // Create datetime objects exactly like getBusinessPosts
+    const startDateTime = new Date(`${startDate}T00:00:00.000Z`);
+    const endDateTime = new Date(`${endDate}T23:59:59.999Z`);
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
 
-    console.log(`[ContentTypeStats] Query params: business_id=${business_id}, start_date=${start_date}, end_date=${end_date}`);
-    console.log(`[ContentTypeStats] Parsed dates: startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
-
-    // Create an array of valid date keys (same logic as pie chart)
-    const dailyKeys: string[] = [];
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const key = d.toISOString().slice(0, 10);
-      dailyKeys.push(key);
-    }
-    console.log(`[ContentTypeStats] Valid date keys:`, dailyKeys);
-
-    // Get all posts with their types
     const posts = await BusinessPostModel.findAll({
-      attributes: ['type', 'note_id', 'last_update_time'],
+      attributes: ['type', 'note_id', 'last_update_time', 'business_id'],
       where: {
-        business_id,
+        business_id: { [Op.in]: businessIds },
         is_relevant: true,
-        last_update_time: { [Op.between]: [startDate, endDate] }
+        last_update_time: { [Op.between]: [startDateTime, endDateTime] }
       }
     });
 
-    console.log(`[ContentTypeStats] Total posts found: ${posts.length}`);
-
-    // Track unique note_ids to check for duplicates
-    const uniqueNoteIds = new Set<string>();
-    let excludedCount = 0;
-
-    // Count posts by type with date filtering
     const typeCounts: Record<string, number> = {};
-    
+    const uniqueNoteIds = new Set<string>();
+
     posts.forEach(post => {
-      // Track note_ids
       const noteId = post.getDataValue("note_id");
+      if (uniqueNoteIds.has(noteId)) return;
       uniqueNoteIds.add(noteId);
-      
-      // Check if this post's date is in the valid range
-      const postDate = new Date(post.getDataValue("last_update_time"));
-      const postDateKey = postDate.toISOString().slice(0, 10);
-      
-      if (!dailyKeys.includes(postDateKey)) {
-        console.log(`[ContentTypeStats] Excluding post with date ${postDate.toISOString()} (key: ${postDateKey})`);
-        excludedCount++;
-        return; // Skip this post
-      }
-      
-      // Get the type, defaulting to "normal" (which maps to Text) if empty
+
       const type = post.getDataValue('type') || 'normal';
-      
-      if (!(type in typeCounts)) {
-        typeCounts[type] = 0;
-      }
+      if (!(type in typeCounts)) typeCounts[type] = 0;
       typeCounts[type]++;
     });
 
     console.log(`[ContentTypeStats] Type counts:`, typeCounts);
     console.log(`[ContentTypeStats] Total unique note_ids: ${uniqueNoteIds.size}`);
-    console.log(`[ContentTypeStats] Excluded posts: ${excludedCount}`);
 
     // Map type codes to display names
     const typeMapping: Record<string, string> = {
@@ -90,41 +73,22 @@ export async function GET(request: NextRequest) {
       'normal': 'Text'
     };
 
-    // Convert to array of counts with display names
-    let contentTypeStats = Object.entries(typeCounts).map(([type, count]) => {
-      // Map the type to the display name
-      const displayType = typeMapping[type] || 'Text'; // Default to Text for any unmapped types
-      
-      return {
-        type: displayType,
-        count,
-        percentage: 0 // Will calculate after merging
-      };
-    });
-
-    // Merge counts for types that map to the same display name (Text)
-    const mergedStats: Record<string, any> = {};
-    contentTypeStats.forEach(stat => {
-      if (!mergedStats[stat.type]) {
-        mergedStats[stat.type] = { ...stat };
-      } else {
-        mergedStats[stat.type].count += stat.count;
+    const mergedStats: Record<string, { type: string, count: number, percentage: number }> = {};
+    Object.entries(typeCounts).forEach(([type, count]) => {
+      const displayType = typeMapping[type] || 'Text';
+      if (!mergedStats[displayType]) {
+        mergedStats[displayType] = { type: displayType, count: 0, percentage: 0 };
       }
+      mergedStats[displayType].count += count;
     });
 
-    // Calculate total count after filtering
     const totalPosts = Object.values(mergedStats).reduce((sum, stat) => sum + stat.count, 0);
-
-    // Calculate percentages after merging
     Object.values(mergedStats).forEach(stat => {
-      stat.percentage = Math.round((stat.count * 100) / totalPosts);
+      stat.percentage = totalPosts > 0 ? Math.round((stat.count * 100) / totalPosts) : 0;
     });
 
-    // Convert back to array
-    contentTypeStats = Object.values(mergedStats);
+    const contentTypeStats = Object.values(mergedStats);
 
-    console.log(`[ContentTypeStats] Total posts after filtering: ${totalPosts}`);
-    
     return NextResponse.json({
       contentTypeStats,
       totalCount: totalPosts

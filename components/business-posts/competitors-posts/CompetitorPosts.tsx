@@ -98,7 +98,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
 
   const [filters, setFilters] = useState(() => {
     if (typeof window !== "undefined") {
-      const savedFilters = localStorage.getItem("competitors_page_filters");
+      const savedFilters = localStorage.getItem("competitor_page_filters");
       return savedFilters
         ? JSON.parse(savedFilters)
         : {
@@ -126,7 +126,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
 
   // Add this effect to save filters to session storage when they change
   useEffect(() => {
-    localStorage.setItem("competitors_page_filters", JSON.stringify(filters));
+    localStorage.setItem("competitor_page_filters", JSON.stringify(filters));
   }, [filters]);
 
   // Get date range from context.

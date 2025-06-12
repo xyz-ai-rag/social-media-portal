@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     // First, query the client_users table to find the user with the given email
     const userRecord = await ClientUsersModel.findOne({
       where: { registered_email: email },
-      attributes: ["client_id"],
+      attributes: ["client_id", "can_view_client_reporting", "can_view_business_reporting"],
     });
 
     if (!userRecord) {
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     // Now query the clients table using the client_id
     const clientRecord = await ClientModel.findOne({
       where: { id: clientId },
-      attributes: ["id", "client_name", "business_mapping"],
+      attributes: ["id", "client_name", "business_mapping", "enable_client_reporting"],
     });
 
     if (!clientRecord) {
@@ -125,7 +125,10 @@ export async function GET(request: NextRequest) {
       id: clientRecord.id,
       client_name: clientRecord.client_name,
       registered_email: clientRecord.registered_email,
-      businesses: businesses, // This is now guaranteed to be an array
+      businesses: businesses,
+      enable_client_reporting: clientRecord.enable_client_reporting,
+      can_view_client_reporting: userRecord.can_view_client_reporting,
+      can_view_business_reporting: userRecord.can_view_business_reporting,
     };
 
     return NextResponse.json(responseData);

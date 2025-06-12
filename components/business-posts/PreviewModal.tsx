@@ -36,12 +36,6 @@ const PreviewModal = ({
   isNavigating = false,
   showCompetitorBadge = false,
 }: PreviewModalProps) => {
-  // Handle case where rowData might be empty or undefined
-  if (!rowData) return null;
-
-  // Use platform name as default header if none provided
-  const title = headerTitle || rowData.platform || "Post Preview";
-
   // Ref for the modal content
   const modalContentRef = useRef<HTMLDivElement>(null);
 
@@ -67,6 +61,12 @@ const PreviewModal = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen, onClose]);
+
+  // Handle case where rowData might be empty or undefined
+  if (!rowData) return null;
+
+  // Use platform name as default header if none provided
+  const title = headerTitle || rowData.platform || "Post Preview";
 
   return (
     <>
