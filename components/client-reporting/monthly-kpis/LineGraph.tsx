@@ -36,9 +36,9 @@ interface BusinessLineData {
   counts: MonthlyCount[];
 }
 
-// The API returns an object with two keys.
+// Updated API response structure
 interface LineGraphData {
-  similar: BusinessLineData[];
+  businesses: BusinessLineData[]; // Updated from 'similar' to 'businesses'
 }
 
 interface LineGraphProps {
@@ -50,11 +50,17 @@ interface LineGraphProps {
   level: string;
 }
 
-export default function LineGraph({ clientId, businessId, earliestDate, latestDate, allBusinessIds, level }: LineGraphProps) {
+export default function LineGraph({ 
+  clientId, 
+  businessId, 
+  earliestDate, 
+  latestDate, 
+  allBusinessIds, 
+  level 
+}: LineGraphProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [graphData, setGraphData] = useState<LineGraphData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
 
   // Process dates for API query.
   const startDateProcessed = useMemo(
@@ -79,13 +85,13 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     let isCurrent = true; // Flag to control whether the request is still valid
 
     async function fetchLineData() {
-      setIsLoading(true); // Set loading state when the request is made
+      setIsLoading(true);
 
       try {
-        // Pass the current business id separately and the similar business ids as a comma-separated list.
-        const url = `/api/client-reporting/line-graph?business_id=${encodeURIComponent(
-          businessId
-        )}&all_business_ids=${encodeURIComponent(
+        // Use the updated client-level API call
+        const url = `/api/client-reporting/line-graph?client_id=${encodeURIComponent(
+          clientId
+        )}&business_ids=${encodeURIComponent(
           allBusinessIds
         )}&start_date=${encodeURIComponent(
           startDateProcessed
@@ -96,13 +102,36 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
         const res = await fetch(url);
         const data: LineGraphData = await res.json();
 
+        // Process all businesses with cumulative counts
+        const processedBusinesses = (data.businesses || []).map((business: BusinessLineData) => {
+          let cumulative = 0;
+          const cumulativeCounts = business.counts.map((dc: MonthlyCount) => {
+            cumulative += dc.count;
+            return {
+              date: dc.date,
+              count: cumulative
+            };
+          });
+
+          return {
+            business_id: business.business_id,
+            business_name: business.business_name,
+            counts: cumulativeCounts
+          };
+        });
+
+        const processedData: LineGraphData = {
+          businesses: processedBusinesses
+        };
+
         // Only update state if this is the current request
         if (isCurrent) {
-          setGraphData(data);
+          setGraphData(processedData);
         }
       } catch (err) {
         if (isCurrent) {
           console.error("Error fetching line graph data:", err);
+          setGraphData({ businesses: [] }); // Set empty data on error
         }
       } finally {
         if (isCurrent) {
@@ -111,23 +140,26 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
       }
     }
 
-    fetchLineData();
+    // Only fetch if we have the required data
+    if (clientId && allBusinessIds) {
+      fetchLineData();
+    }
 
     // Cleanup function: Mark the previous request as invalid when a new one is made
     return () => {
       isCurrent = false;
     };
-  }, [businessId, startDateProcessed, endDateProcessed, allBusinessIds]);
+  }, [clientId, startDateProcessed, endDateProcessed, allBusinessIds, level]);
 
   // Build and initialize the chart using ECharts.
   useEffect(() => {
-    if (isLoading || !chartRef.current || !graphData) return;
+    if (isLoading || !chartRef.current || !graphData || !graphData.businesses) return;
 
     const chart = echarts.init(chartRef.current);
 
     // Merge all months from all businesses.
     const allMonthsSet = new Set<string>();
-    graphData.similar.forEach((biz) => {
+    graphData.businesses.forEach((biz) => {
       biz.counts.forEach((mc) => allMonthsSet.add(mc.date));
     });
     const sortedMonths = Array.from(allMonthsSet).sort(); // Ascending order
@@ -135,7 +167,7 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     function generateColorPalette(n: number) {
       return Array.from({ length: n }, (_, i) => `hsl(${(i * 360) / n}, 60%, 60%)`);
     }
-    const colorPalette = generateColorPalette(graphData.similar.length);
+    const colorPalette = generateColorPalette(graphData.businesses.length);
 
     // Build series for each business.
     const buildSeriesForBiz = (biz: BusinessLineData) => {
@@ -152,12 +184,10 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
       };
     };
 
-    const seriesList = [
-      ...graphData.similar.map((biz) => buildSeriesForBiz(biz)),
-    ];
+    const seriesList = graphData.businesses.map((biz) => buildSeriesForBiz(biz));
 
     const option = {
-      color: colorPalette, // 动态色环配色
+      color: colorPalette,
       tooltip: {
         trigger: "axis",
         confine: true,
@@ -186,7 +216,7 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
         type: "category",
         data: sortedMonths,
         axisLabel: {
-          formatter: (value: string) => value, //  YYYY-MM
+          formatter: (value: string) => value, // YYYY-MM
         },
       },
       yAxis: {
@@ -214,6 +244,14 @@ export default function LineGraph({ clientId, businessId, earliestDate, latestDa
     return (
       <div className="bg-white p-6 rounded-lg shadow-md flex items-center justify-center w-full">
         <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
+      </div>
+    );
+  }
+
+  if (!graphData || !graphData.businesses || graphData.businesses.length === 0) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md flex items-center justify-center w-full">
+        <p className="text-gray-500">No data available</p>
       </div>
     );
   }

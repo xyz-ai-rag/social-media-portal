@@ -1,3 +1,4 @@
+// Updated PlatformRingChart Component - Supports Both Client and Business Level
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo } from "react";
@@ -14,7 +15,6 @@ import { format } from "date-fns";
 
 // Import helper functions from timeUtils.
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
-
 
 echarts.use([
   TitleComponent,
@@ -34,7 +34,7 @@ interface PieDataItem {
 
 interface PlatformRingChartProps {
   clientId: string;
-  businessId: string;
+  businessId?: string; // Optional - for business-level reporting
   earliestDate: string;
   latestDate: string;
   allBusinessIds: string;
@@ -53,39 +53,45 @@ export default function PlatformRingChart({
   const [chartData, setChartData] = useState<PieDataItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-// Process dates for API query.
-const startDateProcessed = useMemo(
-  () => setStartOfDay(earliestDate),
-  [earliestDate]
-);
-const endDateProcessed = useMemo(
-  () => setEndOfDay(latestDate),
-  [latestDate]
-);
-const formattedStart = useMemo(
-  () => level === "monthly" ? format(new Date(earliestDate), "MMM yyyy") : format(new Date(earliestDate), "MMM d yyyy"),
-  [earliestDate, level]
-);
-const formattedEnd = useMemo(
-  () => level === "monthly" ? format(new Date(latestDate), "MMM yyyy") : format(new Date(latestDate), "MMM d yyyy"),
-  [latestDate, level]
-);
+  // Process dates for API query.
+  const startDateProcessed = useMemo(
+    () => setStartOfDay(earliestDate),
+    [earliestDate]
+  );
+  const endDateProcessed = useMemo(
+    () => setEndOfDay(latestDate),
+    [latestDate]
+  );
+  const formattedStart = useMemo(
+    () => level === "monthly" ? format(new Date(earliestDate), "MMM yyyy") : format(new Date(earliestDate), "MMM d yyyy"),
+    [earliestDate, level]
+  );
+  const formattedEnd = useMemo(
+    () => level === "monthly" ? format(new Date(latestDate), "MMM yyyy") : format(new Date(latestDate), "MMM d yyyy"),
+    [latestDate, level]
+  );
 
   // Fetch Pie data from the API route.
   useEffect(() => {
     let isCurrent = true; // Flag to control whether the request is still valid
 
     async function fetchPieData() {
-      setIsLoading(true); // Set loading state when the request is made
+      setIsLoading(true);
 
       try {
-        const url = `/api/charts/piechart?business_id=${encodeURIComponent(
-          businessId
-        )}&all_business_ids=${encodeURIComponent(
-          allBusinessIds
-        )}&start_date=${encodeURIComponent(
+        // Build API URL based on whether we have a specific businessId or not
+        let url = `/api/charts/piechart?start_date=${encodeURIComponent(
           startDateProcessed
         )}&end_date=${encodeURIComponent(endDateProcessed)}`;
+
+        if (businessId) {
+          // Business-level: Use specific business_id and all_business_ids for comparison
+          url += `&business_id=${encodeURIComponent(businessId)}&all_business_ids=${encodeURIComponent(allBusinessIds)}`;
+        } else {
+          // Client-level: Use all_business_ids only
+          url += `&all_business_ids=${encodeURIComponent(allBusinessIds)}`;
+        }
+        
         const res = await fetch(url);
         const data = await res.json();
         const platformData = data.platformData;
@@ -109,7 +115,13 @@ const formattedEnd = useMemo(
                     ? "#8593ED"
                     : item.name.toLowerCase() === "douyin"
                       ? "#C7CEFF"
-                      : "#5470c6"),
+                      : item.name.toLowerCase() === "instagram"
+                        ? "#E1306C"
+                        : item.name.toLowerCase() === "facebook"
+                          ? "#1877F2"
+                          : item.name.toLowerCase() === "twitter"
+                            ? "#1DA1F2"
+                            : "#5470c6"),
               percentage:
                 total > 0 ? Math.round((item.value / total) * 100) : 0,
             }));
@@ -125,7 +137,7 @@ const formattedEnd = useMemo(
         }
       } catch (err) {
         if (isCurrent) {
-          console.error("Error fetching Pie chart data:", err);
+          console.error("Error fetching Platform chart data:", err);
         }
       } finally {
         if (isCurrent) {
@@ -134,7 +146,10 @@ const formattedEnd = useMemo(
       }
     }
 
-    fetchPieData();
+    // Only fetch if we have the required data
+    if (allBusinessIds) {
+      fetchPieData();
+    }
 
     // Cleanup function: Mark the previous request as invalid when a new one is made
     return () => {
@@ -185,7 +200,7 @@ const formattedEnd = useMemo(
         left: "center",
         top: "center",
         style: {
-          text: totalPosts > 0 ? `${totalPosts}\nPosts` : "No Data",
+          text: totalPosts > 0 ? `${totalPosts.toLocaleString()}\nPosts` : "No Data",
           textAlign: "center",
           color: "#333",
           fontSize: 16,
@@ -228,6 +243,7 @@ const formattedEnd = useMemo(
             </div>
             <div className="text-sm text-gray-600 mb-4">
               Posts from {formattedStart} to {formattedEnd}
+              {businessId ? ' (Business Level)' : ' (Client Level)'}
             </div>
             <div className="h-64 flex items-center justify-center w-full">
               <div ref={chartRef} style={{ width: "100%", height: "100%" }} />

@@ -1,3 +1,4 @@
+// Fixed PostFormatPieChart Component - Client Level
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo } from "react";
@@ -26,7 +27,7 @@ echarts.use([
 
 interface ContentTypeProps {
   clientId: string;
-  businessId: string;
+  businessId?: string; // Optional - not used for client-level reporting
   earliestDate: string;
   latestDate: string;
   allBusinessIds: string;
@@ -44,7 +45,14 @@ interface ContentTypeData {
   totalCount: number;
 }
 
-export default function PostFormatPieChart({ clientId, businessId, earliestDate, latestDate, allBusinessIds, level }: ContentTypeProps) {
+export default function PostFormatPieChart({ 
+  clientId, 
+  businessId, // Not used for client-level
+  earliestDate, 
+  latestDate, 
+  allBusinessIds, 
+  level 
+}: ContentTypeProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [contentTypeData, setContentTypeData] = useState<ContentTypeData>({
     contentTypeStats: [],
@@ -78,34 +86,43 @@ export default function PostFormatPieChart({ clientId, businessId, earliestDate,
       setIsLoading(true);
 
       try {
-        const url = `/api/charts/getContentTypeStats?business_id=${encodeURIComponent(
-          businessId
-        )}&all_business_ids=${encodeURIComponent(
+        // Use the existing API route that already works with business_ids
+        const url = `/api/charts/getContentTypeStats?all_business_ids=${encodeURIComponent(
           allBusinessIds
         )}&start_date=${encodeURIComponent(
           startDateProcessed
         )}&end_date=${encodeURIComponent(endDateProcessed)}`;
+        
         const res = await fetch(url);
         const data = await res.json();
         
         if (isCurrent) {
-          setContentTypeData(data);
+          // Ensure we have the expected structure
+          setContentTypeData({
+            contentTypeStats: data.contentTypeStats || [],
+            totalCount: data.totalCount || 0
+          });
         }
       } catch (error) {
         if (isCurrent) {
           console.error("Error fetching content type data:", error);
         }
       } finally {
-        setIsLoading(false);
+        if (isCurrent) {
+          setIsLoading(false);
+        }
       }
     }
 
-    fetchContentTypeData();
+    // Only fetch if we have the required data
+    if (clientId && allBusinessIds) {
+      fetchContentTypeData();
+    }
 
     return () => {
       isCurrent = false;
     };
-  }, [businessId, startDateProcessed, endDateProcessed, allBusinessIds]);
+  }, [clientId, startDateProcessed, endDateProcessed, allBusinessIds]);
 
   // Initialize and configure the chart
   useEffect(() => {
@@ -117,10 +134,13 @@ export default function PostFormatPieChart({ clientId, businessId, earliestDate,
     const typeColors: Record<string, string> = {
       'Video': '#2196F3',  // Blue
       'Text': '#00BCD4',   // Cyan/Teal
+      'Image': '#4CAF50',  // Green
+      'Audio': '#FF9800',  // Orange
+      'Document': '#9C27B0', // Purple
     };
 
     // Map data for chart
-    const seriesData = contentTypeData.contentTypeStats.map((item) => ({
+    const seriesData = (contentTypeData?.contentTypeStats || []).map((item) => ({
       name: item.type,
       value: item.percentage,
       count: item.count,
@@ -132,7 +152,7 @@ export default function PostFormatPieChart({ clientId, businessId, earliestDate,
     const option = {
       tooltip: {
         trigger: "item",
-        formatter: (params: any) => `${params.name}: ${params.data.count}`
+        formatter: (params: any) => `${params.name}: ${params.data.count} posts`
       },
       series: [
         {
@@ -157,24 +177,33 @@ export default function PostFormatPieChart({ clientId, businessId, earliestDate,
 
     chart.setOption(option);
 
-    const handleResize = () => chart.resize();
-    window.addEventListener("resize", handleResize);
+    // Use ResizeObserver for better resize handling
+    const resizeObserver = new window.ResizeObserver(() => {
+      chart.resize();
+    });
+    if (chartRef.current) {
+      resizeObserver.observe(chartRef.current);
+    }
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
       chart.dispose();
     };
   }, [isLoading, contentTypeData]);
 
+  // Check if we have valid data
+  const hasValidData = contentTypeData && 
+                      contentTypeData.contentTypeStats && 
+                      contentTypeData.contentTypeStats.length > 0;
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md w-full min-h-[400px] flex flex-col">
-
       <div className="flex-1 flex flex-col">
         {isLoading ? (
           <div className="h-64 flex items-center justify-center w-full">
             <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
           </div>
-        ) : contentTypeData.contentTypeStats.length === 0 ? (
+        ) : !hasValidData ? (
           <div className="h-64 flex items-center justify-center w-full">
             <p className="text-gray-500">No content type data available</p>
           </div>
@@ -191,18 +220,23 @@ export default function PostFormatPieChart({ clientId, businessId, earliestDate,
             </div>
             {/* Legend below the chart - matching your example image */}
             <div className="flex flex-wrap justify-center gap-10 mt-4 w-full">
-              {contentTypeData.contentTypeStats.map((stat, index) => (
+              {(contentTypeData?.contentTypeStats || []).map((stat, index) => (
                 <div key={index} className="flex items-center">
                   <div
                     className="w-4 h-4 mr-2"
                     style={{
                       backgroundColor: stat.type === 'Video' ? '#2196F3' :
                         stat.type === 'Text' ? '#00BCD4' :
-                          '#9C27B0'
+                          stat.type === 'Image' ? '#4CAF50' :
+                            stat.type === 'Audio' ? '#FF9800' :
+                              '#9C27B0'
                     }}
                   />
                   <span className="text-sm font-medium text-gray-800">{stat.type}</span>
-                  <span className="ml-1 text-sm text-gray-600">({((stat.count/contentTypeData.totalCount)*100).toFixed(0)}%)</span>
+                  <span className="ml-1 text-sm text-gray-600">
+                    ({(contentTypeData?.totalCount || 0) > 0 ? 
+                      ((stat.count/(contentTypeData?.totalCount || 1))*100).toFixed(0) : 0}%)
+                  </span>
                 </div>
               ))}
             </div>

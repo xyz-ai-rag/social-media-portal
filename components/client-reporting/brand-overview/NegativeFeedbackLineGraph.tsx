@@ -1,3 +1,4 @@
+// Fixed NegativeFeedbackLineGraph Component - Client Level
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import * as echarts from "echarts/core";
 import { LineChart } from "echarts/charts";
@@ -30,7 +31,7 @@ interface NegativeFeedbackLineGraphProps {
   allBusinessIds: string;
   earliestDate: string;
   latestDate: string;
-  businessId: string;
+  businessId?: string; // Optional - not used for client-level reporting
   clientId: string;
 }
 
@@ -38,7 +39,8 @@ const NegativeFeedbackLineGraph: React.FC<NegativeFeedbackLineGraphProps> = ({
   allBusinessIds,
   earliestDate,
   latestDate,
-  businessId,
+  businessId, // Not used for client-level
+  clientId,
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [seriesData, setSeriesData] = useState<TrendSeries[]>([]);
@@ -63,23 +65,33 @@ const NegativeFeedbackLineGraph: React.FC<NegativeFeedbackLineGraphProps> = ({
 
   useEffect(() => {
     setIsLoading(true);
+    
     const fetchData = async () => {
       try {
+        // Use the existing API route that already works with all_business_ids
         const url = `/api/client-reporting/negative-feedback-trend?all_business_ids=${encodeURIComponent(
           allBusinessIds
+        )}&business_id=${encodeURIComponent(
+          allBusinessIds.split(',')[0] || '' // API requires business_id param, use first one
         )}&start_date=${encodeURIComponent(
           startDateProcessed
-        )}&end_date=${encodeURIComponent(endDateProcessed)}&business_id=${encodeURIComponent(businessId)}`;
+        )}&end_date=${encodeURIComponent(endDateProcessed)}`;
+        
         const res = await fetch(url);
         const data = await res.json();
         setSeriesData(data.series || []);
       } catch (err) {
-        console.error("Error fetching trend data:", err);
+        console.error("Error fetching negative feedback trend data:", err);
+        setSeriesData([]);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchData();
+
+    // Only fetch if we have the required data
+    if (allBusinessIds) {
+      fetchData();
+    }
   }, [allBusinessIds, startDateProcessed, endDateProcessed]);
 
   const allMonths = useMemo(() => {
@@ -100,20 +112,28 @@ const NegativeFeedbackLineGraph: React.FC<NegativeFeedbackLineGraphProps> = ({
     });
   }, [seriesData, allMonths]);
 
+  // Generate color palette for multiple businesses
+  const generateColorPalette = (count: number) => {
+    return Array.from({ length: count }, (_, i) => `hsl(${(i * 360) / count}, 65%, 55%)`);
+  };
+
   useEffect(() => {
     if (isLoading || !chartRef.current) return;
     const chart = echarts.init(chartRef.current);
 
+    const colorPalette = generateColorPalette(cumulativeSeriesData.length);
+
     const option = {
+      color: colorPalette,
       tooltip: {
         trigger: "axis",
         formatter: (params: any) => {
           const sorted = [...params].sort((a, b) => (b.data ?? 0) - (a.data ?? 0));
-          let html = `<div><b>${sorted[0].axisValue}</b></div>`;
+          let html = `<div style="margin-bottom: 8px;"><b>${sorted[0].axisValue}</b></div>`;
           sorted.forEach((item: any) => {
-            html += `<div>
+            html += `<div style="margin-bottom: 4px;">
               <span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background:${item.color}"></span>
-              ${item.seriesName}: <b>${item.data}</b>
+              ${item.seriesName}: <b>${item.data?.toLocaleString() || 0}</b> negative posts
             </div>`;
           });
           return html;
@@ -122,6 +142,7 @@ const NegativeFeedbackLineGraph: React.FC<NegativeFeedbackLineGraphProps> = ({
         borderColor: "#ccc",
         borderWidth: 1,
         textStyle: { color: "#fff" },
+        confine: true,
       },
       legend: {
         bottom: 0,
@@ -130,34 +151,54 @@ const NegativeFeedbackLineGraph: React.FC<NegativeFeedbackLineGraphProps> = ({
         itemHeight: 10,
         icon: "rect",
         data: cumulativeSeriesData.map((s) => s.businessName),
+        type: 'scroll', // Allow scrolling if too many businesses
       },
-      grid: { left: "3%", right: "4%", top: "8%", bottom: "20%", containLabel: true },
+      grid: { 
+        left: "3%", 
+        right: "4%", 
+        top: "8%", 
+        bottom: cumulativeSeriesData.length > 6 ? "25%" : "20%", // More space for legend if many businesses
+        containLabel: true 
+      },
       xAxis: {
         type: "category",
         data: allMonths,
         boundaryGap: false,
-        axisLabel: { fontSize: 12 },
+        axisLabel: { 
+          fontSize: 12,
+          formatter: (value: string) => value // Format as YYYY-MM
+        },
       },
       yAxis: {
         type: "value",
         splitLine: { lineStyle: { type: "dashed" } },
+        axisLabel: {
+          formatter: (value: number) => value.toLocaleString()
+        }
       },
-      series: cumulativeSeriesData.map((s) => ({
+      series: cumulativeSeriesData.map((s, index) => ({
         name: s.businessName,
         type: "line",
         data: allMonths.map(
           (m) => s.data.find((d) => d.month === m)?.count ?? 0
         ),
         smooth: false,
-        symbol: "none",
-        symbolSize: 8,
+        symbol: "circle",
+        symbolSize: 6,
         lineStyle: { width: 3 },
+        itemStyle: {
+          color: colorPalette[index]
+        },
+        emphasis: {
+          focus: 'series',
+          lineStyle: { width: 4 }
+        }
       })),
     };
 
     chart.setOption(option);
 
-    // Resize
+    // Resize observer
     const resizeObserver = new window.ResizeObserver(() => {
       chart.resize();
     });
@@ -170,6 +211,14 @@ const NegativeFeedbackLineGraph: React.FC<NegativeFeedbackLineGraphProps> = ({
       chart.dispose();
     };
   }, [isLoading, cumulativeSeriesData, allMonths]);
+
+  // Calculate total negative feedback across all businesses
+  const totalNegativeFeedback = useMemo(() => {
+    return cumulativeSeriesData.reduce((total, series) => {
+      const lastMonthData = series.data[series.data.length - 1];
+      return total + (lastMonthData?.count || 0);
+    }, 0);
+  }, [cumulativeSeriesData]);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md w-full min-h-[400px] flex flex-col">
@@ -186,11 +235,11 @@ const NegativeFeedbackLineGraph: React.FC<NegativeFeedbackLineGraphProps> = ({
           <>
             <div className="mb-2">
               <h2 className="text-base font-medium text-gray-800">
-              Negative Feedback/Criticism Trend
+                Negative Feedback/Criticism Trend
               </h2>
             </div>
             <div className="text-sm text-gray-600 mb-4">
-              Posts from {formattedStart} to {formattedEnd}
+              Cumulative negative feedback from {formattedStart} to {formattedEnd} • Total: {totalNegativeFeedback.toLocaleString()} negative posts
             </div>
             <div className="h-80 flex items-center justify-center w-full">
               <div ref={chartRef} style={{ width: "100%", height: "100%" }} />
