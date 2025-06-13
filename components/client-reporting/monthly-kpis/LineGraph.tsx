@@ -102,8 +102,13 @@ export default function LineGraph({
         const res = await fetch(url);
         const data: LineGraphData = await res.json();
 
+        // Sort businesses alphabetically by business_name before processing
+        const sortedBusinesses = (data.businesses || []).sort((a: BusinessLineData, b: BusinessLineData) => 
+          a.business_name.localeCompare(b.business_name)
+        );
+
         // Process all businesses with cumulative counts
-        const processedBusinesses = (data.businesses || []).map((business: BusinessLineData) => {
+        const processedBusinesses = sortedBusinesses.map((business: BusinessLineData) => {
           let cumulative = 0;
           const cumulativeCounts = business.counts.map((dc: MonthlyCount) => {
             cumulative += dc.count;
@@ -196,6 +201,13 @@ export default function LineGraph({
             return [point[0], point[1] + 10];
           }
           return [point[0], point[1] - size.contentSize[1] - 10];
+        },
+        formatter: function(params: any) {
+          let html = `<div><b>${params[0].axisValue}</b></div>`;
+          params.forEach((item: any) => {
+            html += `<div><span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background:${item.color}"></span>${item.seriesName}: <b>${item.value.toLocaleString()}</b></div>`;
+          });
+          return html;
         }
       },
       legend: {
@@ -222,6 +234,11 @@ export default function LineGraph({
       yAxis: {
         type: "value",
         splitLine: { lineStyle: { type: "dashed" } },
+        axisLabel: {
+          formatter: function(value: number) {
+            return value.toLocaleString();
+          }
+        }
       },
       series: seriesList,
     };

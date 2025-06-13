@@ -137,34 +137,40 @@ export default function BusinessPostsTable({
 
           {/* Individual business breakdown */}
           <div className="space-y-4">
-            {tableData.map((row, index) => (
-              <div
-                key={row.business_id}
-                className="cursor-pointer hover:bg-blue-50 rounded-lg p-3 transition-colors"
-                title={`${row.name}: ${row.total.toLocaleString()} posts`}
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-gray-800">{row.name}</span>
-                  <div className="text-right">
-                    <span className="text-sm font-semibold text-gray-900">
-                      {row.total.toLocaleString()}
-                    </span>
-                    <span className="text-xs text-gray-500 ml-1">
-                      ({grandTotal > 0 ? ((row.total / grandTotal) * 100).toFixed(1) : 0}%)
-                    </span>
+            {tableData.map((row, index) => {
+              // Calculate bar width relative to the highest value (first item since sorted)
+              const maxValue = tableData.length > 0 ? tableData[0].total : 1;
+              const relativeWidth = maxValue > 0 ? (row.total / maxValue) * 100 : 0;
+              
+              return (
+                <div
+                  key={row.business_id}
+                  className="cursor-pointer hover:bg-blue-50 rounded-lg p-3 transition-colors"
+                  title={`${row.name}: ${row.total.toLocaleString()} posts`}
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-gray-800">{row.name}</span>
+                    <div className="text-right">
+                      <span className="text-sm font-semibold text-gray-900">
+                        {row.total.toLocaleString()}
+                      </span>
+                      <span className="text-xs text-gray-500 ml-1">
+                        ({grandTotal > 0 ? ((row.total / grandTotal) * 100).toFixed(1) : 0}%)
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 relative group">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${relativeWidth}%` }}
+                    ></div>
+                    <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded py-1 px-2 pointer-events-none whitespace-nowrap">
+                      {row.name}: {row.total.toLocaleString()} posts
+                    </div>
                   </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 relative group">
-                  <div
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${grandTotal > 0 ? (row.total / grandTotal) * 100 : 0}%` }}
-                  ></div>
-                  <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded py-1 px-2 pointer-events-none whitespace-nowrap">
-                    {row.name}: {row.total.toLocaleString()} posts
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Summary footer */}

@@ -20,6 +20,7 @@ ChartJS.register(
   Tooltip,
   Legend
 );
+
 export default function TopicsMentionedChart({ businessId }: { businessId: string }) {
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,6 +66,33 @@ export default function TopicsMentionedChart({ businessId }: { businessId: strin
     fetchData();
   }, [businessId]);
 
+  // Chart options with comma formatting
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context: any) {
+            return `${context.dataset.label}: ${context.parsed.r.toLocaleString()}`;
+          }
+        }
+      }
+    },
+    scales: {
+      r: {
+        beginAtZero: true,
+        ticks: {
+          callback: function(value: any) {
+            return typeof value === 'number' ? value.toLocaleString() : value;
+          }
+        }
+      }
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md flex items-center justify-center h-64 w-full">
@@ -76,7 +104,7 @@ export default function TopicsMentionedChart({ businessId }: { businessId: strin
   return (
     <div className="bg-white p-6 rounded-lg shadow-md overflow-auto w-full">
       <h2 className="text-base font-medium text-gray-800 mb-2">Topics Mentioned</h2>
-      {data ? <Radar data={data} /> : <div>No data found</div>}
+      {data ? <Radar data={data} options={options} /> : <div>No data found</div>}
     </div>
   );
 }

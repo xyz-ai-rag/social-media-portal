@@ -152,7 +152,7 @@ export default function PostFormatPieChart({
     const option = {
       tooltip: {
         trigger: "item",
-        formatter: (params: any) => `${params.name}: ${params.data.count} posts`
+        formatter: (params: any) => `${params.name}: ${params.data.count.toLocaleString()} posts`
       },
       series: [
         {

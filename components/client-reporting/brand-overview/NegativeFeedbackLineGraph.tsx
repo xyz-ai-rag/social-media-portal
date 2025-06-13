@@ -79,7 +79,13 @@ const NegativeFeedbackLineGraph: React.FC<NegativeFeedbackLineGraphProps> = ({
         
         const res = await fetch(url);
         const data = await res.json();
-        setSeriesData(data.series || []);
+        
+        // Sort series data alphabetically by businessName
+        const sortedSeries = (data.series || []).sort((a: TrendSeries, b: TrendSeries) => 
+          a.businessName.localeCompare(b.businessName)
+        );
+        
+        setSeriesData(sortedSeries);
       } catch (err) {
         console.error("Error fetching negative feedback trend data:", err);
         setSeriesData([]);

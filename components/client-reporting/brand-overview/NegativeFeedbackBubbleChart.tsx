@@ -116,10 +116,15 @@ const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
   const color = d3.scaleOrdinal(d3.schemeCategory10);
 
   const handleMouseEnter = (node: any) => {
+    // Ensure percentage is a valid number
+    const percentage = (node.data.percentage && !isNaN(node.data.percentage)) 
+      ? node.data.percentage * 100 
+      : (node.data.count / total) * 100;
+    
     setTooltipData({
       name: node.data.name,
       count: node.data.count,
-      percentage: node.data.percentage * 100,
+      percentage: isNaN(percentage) ? 0 : percentage,
       x: node.x,
       y: node.y,
       r: node.r

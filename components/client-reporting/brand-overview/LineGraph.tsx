@@ -102,8 +102,14 @@ export default function LineGraph({
         const res = await fetch(url);
         const data = await res.json();
         console.log("business data line graph",data)
+        
+        // Sort businesses alphabetically by business_name before processing
+        const sortedBusinesses = data.businesses.sort((a: BusinessLineData, b: BusinessLineData) => 
+          a.business_name.localeCompare(b.business_name)
+        );
+
         // Process all businesses with cumulative counts
-        const processedBusinesses = data.businesses.map((business: BusinessLineData) => {
+        const processedBusinesses = sortedBusinesses.map((business: BusinessLineData) => {
           let cumulative = 0;
           const cumulativeCounts = business.counts.map((dc: MonthlyCount) => {
             cumulative += dc.count;

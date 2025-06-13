@@ -180,8 +180,9 @@ export default function PostTypeRingChart({
     const option = {
       tooltip: {
         trigger: "item",
-        formatter:
-          "<div style='width:140px; height:50px'><span style='font-size:12px; color:white'>{b}</span> <br/> <span style='color:white; font-size:16px'>{c} posts</span></div>",
+        formatter: (params: any) => {
+          return `<div style='width:140px; height:50px'><span style='font-size:12px; color:white'>${params.name}</span> <br/> <span style='color:white; font-size:16px'>${params.value.toLocaleString()} posts</span></div>`;
+        },
         backgroundColor: "#37375C",
         borderColor: "#ccc",
         borderWidth: 1,
@@ -203,7 +204,7 @@ export default function PostTypeRingChart({
         left: "center",
         top: "center",
         style: {
-          text: totalPosts > 0 ? `${totalPosts}\nPosts` : "No Data",
+          text: totalPosts > 0 ? `${totalPosts.toLocaleString()}\nPosts` : "No Data",
           textAlign: "center",
           color: "#333",
           fontSize: 16,
