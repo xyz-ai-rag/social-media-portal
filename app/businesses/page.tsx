@@ -88,7 +88,7 @@ export default function Home() {
             Welcome to Your Dashboard
           </h2>
           <p className="text-sm text-gray-500 mb-6">
-            Choose how you'd like to view your data:
+            Choose how you&apos;d like to view your data:
           </p>
 
           {/* Client-level overview option (only show if user has client reporting permissions) */}
