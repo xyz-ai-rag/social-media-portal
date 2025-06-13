@@ -56,58 +56,121 @@ export default function Home() {
     );
   }
 
-  // If the user is logged in and has businesses, show a business selection screen
-  // NOTE: Removed the duplicate header that was causing issues
+  // Get user permissions
+  const canViewClientReporting = clientDetails.can_view_client_reporting || false;
+  const canViewBusinessReporting = clientDetails.can_view_business_reporting || false;
+
+  // If user has no permissions at all
+  if (!canViewClientReporting && !canViewBusinessReporting) {
+    return (
+      <div className="flex flex-col items-center justify-center p-6 text-center">
+        <div className="max-w-md">
+          <h2 className="text-xl font-semibold mb-4">Access Restricted</h2>
+          <p className="mb-6">
+            Your account doesn&apos;t have permission to view any reporting features.
+          </p>
+          <p className="text-gray-600">
+            Please contact your administrator or support at{" "}
+            <span className="font-medium">support@hyprdata.ai</span> for
+            assistance.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show selection screen for users who have any reporting permissions
   return (
     <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div className="px-4 py-6 sm:px-0">
         <div className="rounded-lg bg-white shadow px-5 py-6 sm:px-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">
-            Select a Business
+            Welcome to Your Dashboard
           </h2>
           <p className="text-sm text-gray-500 mb-6">
-            Please select a business to view its dashboard:
+            Choose how you&apos;d like to view your data:
           </p>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {clientDetails.businesses
-              .sort((a, b) => a.business_name.localeCompare(b.business_name))
-              .map((business) => (
-                <Link
-                  href={`/${clientDetails.id}/${business.business_id}/dashboard`}
-                  key={business.business_id}
-                >
-                  <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200 cursor-pointer">
-                    <div className="px-4 py-5 sm:p-6">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                          <span className="text-blue-700 text-xl">
-                            {business.business_name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="ml-5">
-                          <h3 className="text-lg leading-6 font-medium text-gray-900">
-                            {business.business_name}
-                          </h3>
-                          <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                            {business.business_city || ""}
-                            {business.business_type &&
-                              business.business_city &&
-                              " | "}
-                            {business.business_type || ""}
-                          </p>
-                        </div>
+          {/* Client-level overview option (only show if user has client reporting permissions) */}
+          {canViewClientReporting && (
+            <div className="mb-8">
+              <h3 className="text-md font-medium text-gray-800 mb-3">Client Overview</h3>
+              <Link href={`/${clientDetails.id}/business-overview`}>
+                <div className="bg-blue-50 border border-blue-200 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer">
+                  <div className="px-4 py-5 sm:p-6">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 bg-blue-500 rounded-md p-3">
+                        <span className="text-white text-xl">📊</span>
                       </div>
-                    </div>
-                    <div className="bg-gray-50 px-4 py-4 sm:px-6">
-                      <div className="text-sm text-blue-600 font-medium">
-                        View Dashboard →
+                      <div className="ml-5">
+                        <h4 className="text-lg leading-6 font-medium text-gray-900">
+                          View All Businesses Combined
+                        </h4>
+                        <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                          See aggregated data and insights across all your businesses
+                        </p>
                       </div>
                     </div>
                   </div>
-                </Link>
-              ))}
-          </div>
+                  <div className="bg-blue-100 px-4 py-4 sm:px-6">
+                    <div className="text-sm text-blue-700 font-medium">
+                      View Client Overview →
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          )}
+
+          {/* Individual business selection (only show if user has business reporting permissions) */}
+          {canViewBusinessReporting && (
+            <div>
+              <h3 className="text-md font-medium text-gray-800 mb-3">Individual Business Analysis</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Select a specific business to view detailed analytics:
+              </p>
+
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {clientDetails.businesses
+                  .sort((a, b) => a.business_name.localeCompare(b.business_name))
+                  .map((business) => (
+                    <Link
+                      href={`/${clientDetails.id}/${business.business_id}/dashboard`}
+                      key={business.business_id}
+                    >
+                      <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200 cursor-pointer">
+                        <div className="px-4 py-5 sm:p-6">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 bg-gray-100 rounded-md p-3">
+                              <span className="text-gray-700 text-xl">
+                                {business.business_name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="ml-5">
+                              <h4 className="text-lg leading-6 font-medium text-gray-900">
+                                {business.business_name}
+                              </h4>
+                              <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                                {business.business_city || ""}
+                                {business.business_type &&
+                                  business.business_city &&
+                                  " | "}
+                                {business.business_type || ""}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-gray-50 px-4 py-4 sm:px-6">
+                          <div className="text-sm text-blue-600 font-medium">
+                            View Business Dashboard →
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </main>

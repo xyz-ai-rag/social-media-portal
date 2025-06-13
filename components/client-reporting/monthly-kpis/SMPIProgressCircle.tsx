@@ -164,7 +164,7 @@ export default function SMPIProgressCircle({ selectedMonth, lastMonthStr, monthl
                                 minWidth: 320,
                             }}
                         >
-                            <table className="text-xs w-full">
+                            <table className="text-sm w-full">
                                 <thead>
                                     <tr>
                                         <th className="text-left font-semibold px-4">Metric</th>
@@ -176,45 +176,45 @@ export default function SMPIProgressCircle({ selectedMonth, lastMonthStr, monthl
                                 <tbody>
                                     <tr className="border-t">
                                         <td className="pr-4 py-1">Total Mentions (M)</td>
-                                        <td className="text-right py-1 px-4">{currentInputs.avg_M.toFixed(1) ?? 0}</td>
-                                        <td className="text-right py-1 px-4">{lastInputs.M ?? 0}</td>
-                                        <td className="text-right py-1 px-4">{currentInputs.M ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.avg_M.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                                        <td className="text-right py-1 px-4">{(lastInputs.M ?? 0).toLocaleString()}</td>
+                                        <td className="text-right py-1 px-4">{(currentInputs.M ?? 0).toLocaleString()}</td>
                                     </tr>
                                     <tr className="bg-gray-50">
                                         <td className="pr-4 py-1">Highly Positive (HP)</td>
-                                        <td className="text-right py-1 px-4">{currentInputs.avg_HP.toFixed(1) ?? 0}</td>
-                                        <td className="text-right py-1 px-4">{lastInputs.HP ?? 0}</td>
-                                        <td className="text-right py-1 px-4">{currentInputs.HP ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.avg_HP.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                                        <td className="text-right py-1 px-4">{(lastInputs.HP ?? 0).toLocaleString()}</td>
+                                        <td className="text-right py-1 px-4">{(currentInputs.HP ?? 0).toLocaleString()}</td>
                                     </tr>
                                     <tr>
                                         <td className="pr-4 py-1">Positive (P)</td>
-                                        <td className="text-right py-1 px-4">{currentInputs.avg_P.toFixed(1) ?? 0}</td>
-                                        <td className="text-right py-1 px-4">{lastInputs.P ?? 0}</td>
-                                        <td className="text-right py-1 px-4">{currentInputs.P ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.avg_P.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                                        <td className="text-right py-1 px-4">{(lastInputs.P ?? 0).toLocaleString()}</td>
+                                        <td className="text-right py-1 px-4">{(currentInputs.P ?? 0).toLocaleString()}</td>
                                     </tr>
                                     <tr className="bg-gray-50">
                                         <td className="pr-4 py-1">Neutral (N)</td>
-                                        <td className="text-right py-1 px-4">{(totalData?.neutral / totalData?.countMonths || 0).toFixed(1)}</td>
-                                        <td className="text-right py-1 px-4">{(lastMonthData?.sentiments?.neutral ?? 0)}</td>
-                                        <td className="text-right py-1 px-4">{(currentMonthData?.sentiments?.neutral ?? 0)}</td>
+                                        <td className="text-right py-1 px-4">{(totalData?.neutral / totalData?.countMonths || 0).toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                                        <td className="text-right py-1 px-4">{(lastMonthData?.sentiments?.neutral ?? 0).toLocaleString()}</td>
+                                        <td className="text-right py-1 px-4">{(currentMonthData?.sentiments?.neutral ?? 0).toLocaleString()}</td>
                                     </tr>
                                     <tr>
                                         <td className="pr-4 py-1">Negative (Neg)</td>
-                                        <td className="text-right py-1 px-4">{currentInputs.avg_Neg.toFixed(1) ?? 0}</td>
-                                        <td className="text-right py-1 px-4">{lastInputs.Neg ?? 0}</td>
-                                        <td className="text-right py-1 px-4">{currentInputs.Neg ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.avg_Neg.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                                        <td className="text-right py-1 px-4">{(lastInputs.Neg ?? 0).toLocaleString()}</td>
+                                        <td className="text-right py-1 px-4">{(currentInputs.Neg ?? 0).toLocaleString()}</td>
                                     </tr>
                                     <tr className="bg-gray-50">
                                         <td className="pr-4 py-1">Highly Negative (HN)</td>
-                                        <td className="text-right py-1 px-4">{currentInputs.avg_HN.toFixed(1) ?? 0}</td>
-                                        <td className="text-right py-1 px-4">{lastInputs.HN ?? 0}</td>
-                                        <td className="text-right py-1 px-4">{currentInputs.HN ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.avg_HN.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                                        <td className="text-right py-1 px-4">{(lastInputs.HN ?? 0).toLocaleString()}</td>
+                                        <td className="text-right py-1 px-4">{(currentInputs.HN ?? 0).toLocaleString()}</td>
                                     </tr>
                                     <tr>
                                         <td className="pr-4 py-1">Critical Feedback (Crit)</td>
-                                        <td className="text-right py-1 px-4">{currentInputs.avg_Crit.toFixed(1) ?? 0}</td>
-                                        <td className="text-right py-1 px-4">{lastInputs.Crit ?? 0}</td>
-                                        <td className="text-right py-1 px-4">{currentInputs.Crit ?? 0}</td>
+                                        <td className="text-right py-1 px-4">{currentInputs.avg_Crit.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                                        <td className="text-right py-1 px-4">{(lastInputs.Crit ?? 0).toLocaleString()}</td>
+                                        <td className="text-right py-1 px-4">{(currentInputs.Crit ?? 0).toLocaleString()}</td>
                                     </tr>
                                     <tr className="border-t-2">
                                         <td className="pr-4 py-1 font-bold">SMPI</td>

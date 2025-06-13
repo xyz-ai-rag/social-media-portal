@@ -45,6 +45,10 @@ export default function ComparisonBarChart({
         trigger: 'axis',
         axisPointer: {
           type: 'shadow'
+        },
+        formatter: function(params: any) {
+          const param = params[0];
+          return `${param.name}: ${param.value.toLocaleString()}`;
         }
       },
       grid: {
@@ -66,13 +70,18 @@ export default function ComparisonBarChart({
         }
       },
       yAxis: {
-        type: 'value'
+        type: 'value',
+        axisLabel: {
+          formatter: function(value: number) {
+            return value.toLocaleString();
+          }
+        }
       },
       series: [
         {
           name: 'Posts',
           type: 'bar',
-          data: [thisMonthData, lastMonthData, monthlyAvgData.toFixed(1)],
+          data: [thisMonthData, lastMonthData, parseFloat(monthlyAvgData.toFixed(1))],
           itemStyle: {
             color: function(params: any) {
               if (params.dataIndex === 0) return '#5D5FEF';
@@ -83,7 +92,13 @@ export default function ComparisonBarChart({
           label: {
             show: true,
             position: 'top',
-            formatter: '{c}'
+            formatter: function(params: any) {
+              if (params.dataIndex === 2) {
+                // For monthly average, show one decimal place
+                return parseFloat(monthlyAvgData.toFixed(1)).toLocaleString();
+              }
+              return params.value.toLocaleString();
+            }
           }
         }
       ]
@@ -98,7 +113,6 @@ export default function ComparisonBarChart({
     if (chartRef.current) {
       resizeObserver.observe(chartRef.current);
     }
-
 
     return () => {
       resizeObserver.disconnect();
@@ -121,4 +135,4 @@ export default function ComparisonBarChart({
       <div ref={chartRef} style={{ width: '100%', height: '200px' }} />
     </div>
   );
-} 
+}

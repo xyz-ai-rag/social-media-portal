@@ -4,6 +4,7 @@ import * as d3 from "d3";
 import { convertTopicsToTree, Topic, Tree } from "@/utils/topicTree";
 import { setEndOfDay, setStartOfDay } from "@/utils/timeUtils";
 import { format } from "date-fns";
+
 interface NegativeTopicsBubbleChartProps {
   businessId: string;
   clientId: string;
@@ -67,8 +68,6 @@ const NegativeTopicsBubbleChart: FC<NegativeTopicsBubbleChartProps> = ({
     };
   }, [businessId]);
 
-
-
   // Calculate dimensions based on the number of topics
   const baseSize = 600; // Base size
   const minSize = 200;  // Minimum size
@@ -90,8 +89,6 @@ const NegativeTopicsBubbleChart: FC<NegativeTopicsBubbleChartProps> = ({
   const root = packGenerator(hierarchy);
   const color = d3.scaleOrdinal(d3.schemeCategory10);
 
-
-
   const handleMouseEnter = (node: any) => {
     setTooltipData({
       name: node.data.name,
@@ -108,7 +105,6 @@ const NegativeTopicsBubbleChart: FC<NegativeTopicsBubbleChartProps> = ({
     setTooltipData(null);
     setHoveredCircle(null);
   };
-
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md relative w-full">
@@ -175,7 +171,6 @@ const NegativeTopicsBubbleChart: FC<NegativeTopicsBubbleChartProps> = ({
 
                   const totalLines = displayName.length; // +1 for the count
 
-
                   return (
                     <text
                       key={node.data.name}
@@ -197,7 +192,7 @@ const NegativeTopicsBubbleChart: FC<NegativeTopicsBubbleChartProps> = ({
                           {line}
                         </tspan>
                       ))}
-                      <tspan x={node.x} dy="1.2em">{count}</tspan>
+                      <tspan x={node.x} dy="1.2em">{count.toLocaleString()}</tspan>
                     </text>
                   );
                 })}
@@ -213,7 +208,7 @@ const NegativeTopicsBubbleChart: FC<NegativeTopicsBubbleChartProps> = ({
                 }}
               >
                 <div className="mb-1">{tooltipData.name}</div>
-                <div>Posts: {tooltipData.count}</div>
+                <div>Posts: {tooltipData.count.toLocaleString()}</div>
               </div>
             )}
           </div>
