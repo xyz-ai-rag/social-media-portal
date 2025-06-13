@@ -1,0 +1,97 @@
+{
+  "sidebar": {
+    "menu": "サイドバー",
+    "dashboard": "ダッシュボード",
+    "post": "すべての投稿",
+    "analysis": "分析",
+    "competitors": "競合他社",
+    "others": "その他",
+    "setting": "設定",
+    "logout": "ログアウト",
+    "changebusiness": "ビジネスを変える",
+    "report": "クライアントレポート"
+  },
+  "setting": {
+    "settings": "設定",
+    "language": "言語を選択: ",
+    "languageType": {
+      "english": "English",
+      "japanese": "Japanese",
+      "korean": "한국인",
+      "french": "法语",
+      "chinese": "中文",
+      "german": "Deutsch",
+      "spanish": "española",
+      "italian": "italiana",
+      "portuguese": "português",
+      "russian": "русский",
+      "arabic": "عربي",
+      "hindi": "हिंदी"
+    }
+  },
+  "dashboard": {
+    "dashboard": "ダッシュボード",
+    "barchart": "1日あたりの投稿数",
+    "piechart": "プラットフォーム配布",
+    "hashtag": "トップハッシュタグ",
+    "linegraph": "類似ビジネスと比較",
+    "topcity": "人気の投稿場所",
+    "contenttype": "コンテンツタイプ",
+    "topuser": "トップユーザー"
+  },
+  "post": {
+    "post": "{{name}}の投稿",
+    "platform": "プラットフォーム",
+    "sentiment": "感情",
+    "relevance": "関連性スコア",
+    "feedback": "フィードバック",
+    "posttype": "投稿タイプ",
+    "search": "検索",
+    "sentimentdata": {
+      "positive": "ポジティブ",
+      "negative": "ネガティブ",
+      "neutral": "ニュートラル"
+    },
+    "criticismdata": {
+      "criticism": "否定的なフィードバックあり",
+      "positive": "否定的なフィードバックなし"
+    },
+    "posttypedata": {
+      "organic": "オーガニック投稿",
+      "commercial": "商業投稿",
+      "own": "自社投稿"
+    }
+  },
+  "daterange": {
+    "yesterday": "昨日",
+    "last7days": "過去7日間",
+    "last30days": "過去30日間",
+    "last60days": "過去60日間",
+    "last90days": "過去90日間",
+    "last120days": "過去120日間",
+    "thismonth": "今月",
+    "lastmonth": "先月",
+    "everything": "すべて",
+    "custom": "カスタム範囲"
+  },
+  "table": {
+    "date": "日付",
+    "platform": "プラットフォーム",
+    "user": "ユーザー",
+    "post": "投稿",
+    "originalLanguage": "原文の言語",
+    "relevanceScore": "関連度スコア"
+  },
+  "competitor": {
+    "competitor": "競合を選択",
+    "overview": "概要",
+    "competitorpost": "競合の投稿"
+  },
+  "analysis": {
+    "overview": "概要",
+    "populartopic": "人気のトピック",
+    "criticalfeedback": "批判的なフィードバック",
+    "similar": "競合および類似ビジネス",
+    "analysis": "{{name}}の分析"
+  }
+}
