@@ -185,30 +185,30 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                     </Table.Cell>
                     <Table.Cell className="text-center align-middle">
                       <Tooltip content={
-                        item.postCategory === "organic post" ? "Organic Post" :
-                        item.postCategory === "commercial post" ? "Commercial Post" :
-                        item.postCategory === "own post" ? "Own Post" :
+                        item.postCategory?.toLowerCase() === "organic post" ? "Organic Post" :
+                        item.postCategory?.toLowerCase() === "commercial post" ? "Commercial Post" :
+                        item.postCategory?.toLowerCase() === "own post" ? "Own Post" :
                         "Null"
                       } placement="top">
-                          {item.postCategory === "organic post" ? "O" :
-                           item.postCategory === "commercial post" ? "C" :
-                           item.postCategory === "own post" ? "W" :
+                          {item.postCategory?.toLowerCase() === "organic post" ? "O" :
+                           item.postCategory?.toLowerCase() === "commercial post" ? "C" :
+                           item.postCategory?.toLowerCase() === "own post" ? "W" :
                            ""}
                       </Tooltip>
                     </Table.Cell>
-                    <Table.Cell className="text-center align-middle">
-                    <Tooltip content={item.sentiment} placement="top">
-                      {item.sentiment?.toLowerCase() === "highly positive" ? (
-                        <div className="flex items-center justify-center space-x-1">
-                          <FaThumbsUp className="text-green-500" />
-                          <FaThumbsUp className="text-green-500" />
-                        </div>
+                   <Table.Cell className="text-center align-middle">
+                      <Tooltip content={item.sentiment} placement="top">
+                        {item.sentiment?.toLowerCase() === "highly positive" ? (
+                          <div className="relative inline-block w-6 h-6">
+                            <FaThumbsUp className="absolute top-0 left-0 text-green-500 text-sm" />
+                            <FaThumbsUp className="absolute top-1 left-1 text-green-500 text-sm opacity-80" />
+                          </div>
                         ) : item.sentiment?.toLowerCase() === "positive" ? (
                           <FaThumbsUp className="text-blue-500" />
                         ) : item.sentiment?.toLowerCase() === "highly negative" ? (
-                          <div className="flex items-center justify-center space-x-1">
-                            <FaThumbsDown className="text-red-500" />
-                            <FaThumbsDown className="text-red-500" />
+                          <div className="relative inline-block w-6 h-6">
+                            <FaThumbsDown className="absolute top-0 left-0 text-red-500 text-sm" />
+                            <FaThumbsDown className="absolute top-1 left-1 text-red-500 text-sm opacity-80" />
                           </div>
                         ) : item.sentiment?.toLowerCase() === "negative" ? (
                           <FaThumbsDown className="text-pink-300"/>

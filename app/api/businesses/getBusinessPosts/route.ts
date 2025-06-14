@@ -123,7 +123,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (postCategory) {
-      whereConditions.post_category = postCategory;
+      whereConditions.post_category = {
+        [Op.iLike]: postCategory // Case-insensitive comparison
+      };
     }
 
     // Apply search filter if provided
