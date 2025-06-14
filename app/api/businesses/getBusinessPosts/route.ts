@@ -96,7 +96,9 @@ export async function GET(request: NextRequest) {
 
     // Apply sentiment filter if provided
     if (sentiment) {
-      whereConditions.english_sentiment = sentiment;
+      whereConditions.english_sentiment = {
+        [Op.iLike]: sentiment // iLike is case-insensitive
+      };
     }
 
     // Apply relevance filter if provided
