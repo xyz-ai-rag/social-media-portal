@@ -198,25 +198,25 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                     </Table.Cell>
                     <Table.Cell className="text-center align-middle">
                     <Tooltip content={item.sentiment} placement="top">
-                      {item.sentiment === "Highly Positive" ? (
+                      {item.sentiment?.toLowerCase() === "highly positive" ? (
                         <div className="flex items-center justify-center space-x-1">
                           <FaThumbsUp className="text-green-500" />
                           <FaThumbsUp className="text-green-500" />
                         </div>
-                      ) : item.sentiment === "Positive" ? (
-                        <FaThumbsUp className="text-blue-500" />
-                      ) : item.sentiment === "Highly Negative" ? (
-                        <div className="flex items-center justify-center space-x-1">
-                          <FaThumbsDown className="text-red-500" />
-                          <FaThumbsDown className="text-red-500" />
-                        </div>
-                      ) : item.sentiment === "Negative" ? (
-                        <FaThumbsDown className="text-pink-300"/>
-                      ) : (
-                        <FaMinus />
-                      )}
-                    </Tooltip>
-                  </Table.Cell>
+                        ) : item.sentiment?.toLowerCase() === "positive" ? (
+                          <FaThumbsUp className="text-blue-500" />
+                        ) : item.sentiment?.toLowerCase() === "highly negative" ? (
+                          <div className="flex items-center justify-center space-x-1">
+                            <FaThumbsDown className="text-red-500" />
+                            <FaThumbsDown className="text-red-500" />
+                          </div>
+                        ) : item.sentiment?.toLowerCase() === "negative" ? (
+                          <FaThumbsDown className="text-pink-300"/>
+                        ) : (
+                          <FaMinus />
+                        )}
+                      </Tooltip>
+                    </Table.Cell>
                     <Table.Cell className="text-center align-middle whitespace-nowrap">
                       {item.hasCriticism && (
                         <Tooltip content="Has negative feedback" placement="top">
