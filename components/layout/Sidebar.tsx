@@ -322,6 +322,17 @@ export default function Sidebar() {
                     onClick={!hasBusiness ? handleDisabledClick : undefined}
                   />
 
+                  {/* Add Monthly KPIs to Business section as well */}
+                  <MenuItem
+                    href={getBusinessMonthlyKPIsUrl()}
+                    icon={<FiTrendingUp />}
+                    label="Monthly KPIs"
+                    isActive={isActive("/[clientId]/[businessId]/business-monthly-kpis")}
+                    disabled={!hasBusiness}
+                    collapsed={collapsed}
+                    onClick={!hasBusiness ? handleDisabledClick : undefined}
+                  />
+                  
                   <MenuItem
                     href={getPostsUrl()}
                     icon={<FiList />}
@@ -352,16 +363,6 @@ export default function Sidebar() {
                     onClick={!hasBusiness ? handleDisabledClick : undefined}
                   />
 
-                  {/* Add Monthly KPIs to Business section as well */}
-                  <MenuItem
-                    href={getBusinessMonthlyKPIsUrl()}
-                    icon={<FiTrendingUp />}
-                    label="Monthly KPIs"
-                    isActive={isActive("/[clientId]/[businessId]/business-monthly-kpis")}
-                    disabled={!hasBusiness}
-                    collapsed={collapsed}
-                    onClick={!hasBusiness ? handleDisabledClick : undefined}
-                  />
                 </nav>
               </>
             )}
