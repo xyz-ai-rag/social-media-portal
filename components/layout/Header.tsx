@@ -74,8 +74,7 @@ export default function Header() {
       pathname.includes("/dashboard") ||
       pathname.includes("/posts") ||
       pathname.includes("/competitors") ||
-      pathname.includes("/topic-analysis") ||
-      pathname.includes("/business-reporting")
+      pathname.includes("/topic-analysis") 
     );
   }, [pathname, forceUpdate]); // Re-compute when pathname or forceUpdate changes
 
