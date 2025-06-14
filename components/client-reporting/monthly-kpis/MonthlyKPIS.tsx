@@ -11,13 +11,16 @@ import SMPIProgressCircle from './SMPIProgressCircle';
 interface MonthlyReportingProps {
   clientId: string;
   businessId: string;
+  level?: 'client' | 'business'; // Add level prop to determine context
 }
 
-export default function MonthlyReporting({ clientId, businessId }: MonthlyReportingProps) {
+export default function MonthlyReporting({ clientId, businessId, level = 'client' }: MonthlyReportingProps) {
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
   const [earliestDate, setEarliestDate] = useState<string>("2024-06-01");
   const [startDate, setStartDate] = useState<string>(format(subMonths(new Date(), 1), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [selectedView, setSelectedView] = useState<'client' | 'business'>('client'); // New state for view selection
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string>(businessId); // Track selected business internally
   const { clientDetails } = useAuth();
   const [monthlyData, setMonthlyData] = useState<any>(null);
   const [totalData, setTotalData] = useState<any>(null);
@@ -28,9 +31,33 @@ export default function MonthlyReporting({ clientId, businessId }: MonthlyReport
   );
 
   const businessName = useMemo(
-    () => clientDetails?.businesses?.find((biz) => biz.business_id === businessId)?.business_name || "",
-    [clientDetails, businessId]
+    () => clientDetails?.businesses?.find((biz) => biz.business_id === selectedBusinessId)?.business_name || "",
+    [clientDetails, selectedBusinessId]
   );
+
+  const clientName = useMemo(
+    () => clientDetails?.client_name || "",
+    [clientDetails]
+  );
+
+  // Determine title based on level and selected view
+  const pageTitle = useMemo(() => {
+    if (level === 'business') {
+      return `Monthly KPIs: ${businessName}`;
+    } else {
+      // Client level
+      if (selectedView === 'client') {
+        return `Monthly KPIs: ${clientName} (All Businesses)`;
+      } else {
+        return `Monthly KPIs: ${businessName}`;
+      }
+    }
+  }, [level, selectedView, businessName, clientName]);
+
+  // Handle business selection within client context
+  const handleBusinessChange = (newBusinessId: string) => {
+    setSelectedBusinessId(newBusinessId);
+  };
 
   useEffect(() => {
     setStartDate(format(parseISO(selectedMonth + '-01'), 'yyyy-MM-dd'));
@@ -40,7 +67,9 @@ export default function MonthlyReporting({ clientId, businessId }: MonthlyReport
   useEffect(() => {
     const fetchDateRange = async () => {
       try {
-        const response = await fetch(`/api/charts/dateRange?business_id=${businessId}`);
+        // Use the currently selected business for date range
+        const businessIdToUse = level === 'business' ? businessId : selectedBusinessId;
+        const response = await fetch(`/api/charts/dateRange?business_id=${businessIdToUse}`);
         const data = await response.json();
         if (data.earliest_date && data.latest_date) {
           setEarliestDate(data.earliest_date);
@@ -60,12 +89,28 @@ export default function MonthlyReporting({ clientId, businessId }: MonthlyReport
       }
     };
     fetchDateRange();
-  }, [businessId]);
+  }, [businessId, selectedBusinessId, level]); // Updated dependencies
 
   useEffect(() => {
     const fetchMonthlyData = async () => {
       try {
-        const url = `/api/client-reporting/posts-count?businessId=${businessId}`;
+        // Determine which parameters to send based on level and selected view
+        let url = `/api/client-reporting/posts-count?`;
+        
+        if (level === 'business') {
+          // Business level always uses businessId
+          url += `businessId=${businessId}&level=business`;
+        } else {
+          // Client level
+          if (selectedView === 'client') {
+            // Show aggregated data for all businesses under client
+            url += `businessIds=${allBusinessIds}&level=client`;
+          } else {
+            // Show specific business data using selectedBusinessId
+            url += `businessId=${selectedBusinessId}&level=business`;
+          }
+        }
+
         const calculateResponse = await fetch(url, { method: 'GET' });
 
         if (!calculateResponse.ok) {
@@ -81,7 +126,7 @@ export default function MonthlyReporting({ clientId, businessId }: MonthlyReport
       }
     };
     fetchMonthlyData();
-  }, [businessId]);
+  }, [businessId, selectedBusinessId, allBusinessIds, level, selectedView]); // Updated dependencies
 
   // Generate month options for dropdown
   const monthOptions = useMemo(() => {
@@ -113,15 +158,43 @@ export default function MonthlyReporting({ clientId, businessId }: MonthlyReport
     <div className="container mx-auto px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-[34px] font-bold text-[#5D5FEF]">Monthly KPIs: {businessName}</h1>
+          <h1 className="text-[34px] font-bold text-[#5D5FEF]">{pageTitle}</h1>
           <h1 className="text-[24px] font-bold text-[#5D5FEF]">{format(parseISO(selectedMonth + '-01'), 'MMMM yyyy')}</h1>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <BusinessSelector 
-            currentBusinessId={businessId}
-            clientId={clientId}
-            basePath="/monthly-kpis"
-          />
+          {/* Only show view controls at client level */}
+          {level === 'client' && (
+            <>
+              {/* View selector dropdown for client level - always visible */}
+              <select
+                value={selectedView}
+                onChange={(e) => setSelectedView(e.target.value as 'client' | 'business')}
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="client">Client Level (All Businesses)</option>
+                <option value="business">Business Level</option>
+              </select>
+              
+              {/* Custom business selector - only show when viewing specific business */}
+              {selectedView === 'business' && (
+                <select
+                  value={selectedBusinessId}
+                  onChange={(e) => handleBusinessChange(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {clientDetails?.businesses
+                    ?.sort((a, b) => a.business_name.localeCompare(b.business_name))
+                    .map((business) => (
+                      <option key={business.business_id} value={business.business_id}>
+                        {business.business_name}
+                      </option>
+                    ))}
+                </select>
+              )}
+            </>
+          )}
+          
+          {/* Month selector - always visible */}
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
@@ -148,7 +221,7 @@ export default function MonthlyReporting({ clientId, businessId }: MonthlyReport
         <div className="md:col-span-2 w-full h-full flex items-stretch">
           <LineGraph
             clientId={clientId}
-            businessId={businessId}
+            businessId={level === 'business' ? businessId : selectedBusinessId}
             earliestDate={startDate}
             latestDate={endDate}
             allBusinessIds={allBusinessIds}

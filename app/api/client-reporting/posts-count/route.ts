@@ -7,11 +7,52 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const businessId = searchParams.get("businessId");
-    if (!businessId) {
+    const businessIds = searchParams.get("businessIds"); // For client level aggregation
+    const level = searchParams.get("level"); // 'client' or 'business'
+    
+    // For client level, we need businessIds. For business level, we need businessId
+    if (level === 'client' && !businessIds) {
       return NextResponse.json(
-        { error: "Missing required parameters: businessId" },
+        { error: "Missing required parameter: businessIds for client level" },
         { status: 400 }
       );
+    }
+    
+    if (level === 'business' && !businessId) {
+      return NextResponse.json(
+        { error: "Missing required parameter: businessId for business level" },
+        { status: 400 }
+      );
+    }
+
+    // Build where condition based on level
+    let whereCondition: any = {
+      is_relevant: true,
+    };
+
+    if (level === 'client') {
+      // For client level, aggregate across all businesses under this client
+      if (!businessIds || businessIds.trim() === '') {
+        return NextResponse.json(
+          { error: "No business IDs provided for client level aggregation" },
+          { status: 400 }
+        );
+      }
+      
+      const businessIdArray = businessIds.split(',').filter(id => id.trim());
+      if (businessIdArray.length === 0) {
+        return NextResponse.json(
+          { error: "No valid business IDs found for client level aggregation" },
+          { status: 400 }
+        );
+      }
+      
+      whereCondition.business_id = {
+        [Op.in]: businessIdArray
+      };
+    } else {
+      // For business level, filter by specific business
+      whereCondition.business_id = businessId;
     }
 
     const monthlySentimentRows = await BusinessPostModel.findAll({
@@ -21,8 +62,7 @@ export async function GET(request: NextRequest) {
         [fn('COUNT', literal('DISTINCT note_id')), 'count']
       ],
       where: {
-        business_id: businessId,
-        is_relevant: true,
+        ...whereCondition,
         english_sentiment: {
           [Op.not]: null 
         }
@@ -36,10 +76,7 @@ export async function GET(request: NextRequest) {
         [fn('to_char', col('last_update_time'), 'YYYY-MM'), 'month'],
         [fn('COUNT', literal('DISTINCT note_id')), 'count']
       ],
-      where: {
-        business_id: businessId,
-        is_relevant: true,
-      },
+      where: whereCondition,
       group: [fn('to_char', col('last_update_time'), 'YYYY-MM')],
       order: [[fn('to_char', col('last_update_time'), 'YYYY-MM'), 'ASC']]
     });
@@ -50,8 +87,7 @@ export async function GET(request: NextRequest) {
         [fn('COUNT', literal('DISTINCT note_id')), 'count']
       ],
       where: {
-        business_id: businessId,
-        is_relevant: true,
+        ...whereCondition,
         has_negative_or_criticism: true
       },
       group: [fn('to_char', col('last_update_time'), 'YYYY-MM')],
@@ -59,24 +95,28 @@ export async function GET(request: NextRequest) {
     });
 
     const totalPosts = await BusinessPostModel.count({
-      where: { business_id: businessId, is_relevant: true },
+      where: whereCondition,
       distinct: true,
       col: 'note_id'
     });
+    
     const totalCriticism = await BusinessPostModel.count({
-      where: { business_id: businessId, is_relevant: true, has_negative_or_criticism: true },
+      where: { ...whereCondition, has_negative_or_criticism: true },
       distinct: true,
       col: 'note_id'
     });
+    
     const sentimentTotals: Record<string, number> = {};
     const SENTIMENTS = ['Positive', 'Highly Positive', 'Negative', 'Highly Negative', 'Neutral'];
+    
     function toSnakeCase(str: string | null) {
       if (!str) return '';
       return str.toLowerCase().replace(/\s+/g, '_');
     }
+    
     for (const sentiment of SENTIMENTS) {
       sentimentTotals[toSnakeCase(sentiment)] = await BusinessPostModel.count({
-        where: { business_id: businessId, is_relevant: true, english_sentiment: sentiment },
+        where: { ...whereCondition, english_sentiment: sentiment },
         distinct: true,
         col: 'note_id'
       });
@@ -90,12 +130,14 @@ export async function GET(request: NextRequest) {
       if (!monthly[month]) monthly[month] = { sentiments: {}, total: 0, criticism: 0 };
       monthly[month].sentiments[toSnakeCase(sentiment)] = count;
     });
+    
     monthlyTotalRows.forEach((row: any) => {
       const month = row.get('month');
       const count = parseInt(row.get('count'));
       if (!monthly[month]) monthly[month] = { sentiments: {}, total: 0, criticism: 0 };
       monthly[month].total = count;
     });
+    
     monthlyCriticismRows.forEach((row: any) => {
       const month = row.get('month');
       const count = parseInt(row.get('count'));
@@ -121,6 +163,7 @@ export async function GET(request: NextRequest) {
         if (sm > 12) { sm = 1; sy++; }
       }
     }
+    
     const fullMonths = Array.from(monthRange(earliestMonth, thisMonth));
     fullMonths.forEach(month => {
       if (!monthly[month]) {
