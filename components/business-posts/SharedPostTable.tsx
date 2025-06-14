@@ -196,19 +196,19 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
                            ""}
                       </Tooltip>
                     </Table.Cell>
-                   <Table.Cell className="text-center align-middle">
+                    <Table.Cell className="text-center align-middle">
                       <Tooltip content={item.sentiment} placement="top">
                         {item.sentiment?.toLowerCase() === "highly positive" ? (
-                          <div className="relative inline-block w-6 h-6">
-                            <FaThumbsUp className="absolute top-0 left-0 text-green-500 text-sm" />
-                            <FaThumbsUp className="absolute top-1 left-1 text-green-500 text-sm opacity-80" />
+                          <div className="relative inline-block w-8 h-4">
+                            <FaThumbsUp className="absolute top-0 left-0 text-green-500 text-sm z-10" />
+                            <FaThumbsUp className="absolute top-0 left-2 text-green-500 text-sm opacity-75 z-0" />
                           </div>
                         ) : item.sentiment?.toLowerCase() === "positive" ? (
                           <FaThumbsUp className="text-blue-500" />
                         ) : item.sentiment?.toLowerCase() === "highly negative" ? (
-                          <div className="relative inline-block w-6 h-6">
-                            <FaThumbsDown className="absolute top-0 left-0 text-red-500 text-sm" />
-                            <FaThumbsDown className="absolute top-1 left-1 text-red-500 text-sm opacity-80" />
+                          <div className="relative inline-block w-8 h-4">
+                            <FaThumbsDown className="absolute top-0 left-0 text-red-500 text-sm z-10" />
+                            <FaThumbsDown className="absolute top-0 left-2 text-red-500 text-sm opacity-75 z-0" />
                           </div>
                         ) : item.sentiment?.toLowerCase() === "negative" ? (
                           <FaThumbsDown className="text-pink-300"/>
