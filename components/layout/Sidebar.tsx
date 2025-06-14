@@ -97,6 +97,16 @@ export default function Sidebar() {
   const { logout, clientDetails } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  
+  // Force re-render when URL changes by including pathname in dependency
+  const [currentPath, setCurrentPath] = useState(pathname);
+  const [forceUpdate, setForceUpdate] = useState(0);
+  
+  useEffect(() => {
+    setCurrentPath(pathname);
+    // Force re-render when pathname or search params change
+    setForceUpdate(prev => prev + 1);
+  }, [pathname, searchParams]);
 
   // Get client and business IDs directly from clientDetails instead of parsing URL
   const effectiveClientId = clientDetails?.id || null;
@@ -120,7 +130,7 @@ export default function Sidebar() {
 
   // Simple permission logic:
   // - can_view_client_reporting = true -> show Brand Overview, Monthly KPIs, Business Reporting
-  // - can_view_business_reporting = true -> show Dashboard, All Posts, Analysis, Competitors
+  // - can_view_business_reporting = true -> show Dashboard, All Posts, Analysis, Competitors, Monthly KPIs
   // - If only client reporting (no business reporting) -> don't show business selection
 
   // Determine if we need business selection
@@ -137,12 +147,47 @@ export default function Sidebar() {
 
   // Function to check if a route is active (simplified)
   const isActive = (path: string): boolean => {
-    // Simple pathname matching
+    // For monthly-kpis, check both pathname and level parameter
+    if (path.includes("monthly-kpis")) {
+      const isMonthlyKpisPath = pathname.includes('/monthly-kpis');
+      if (!isMonthlyKpisPath) return false;
+      
+      // Get the current level from URL - check if window exists first
+      let currentLevel = 'business'; // default
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        currentLevel = urlParams.get('level') || 'business';
+      } else {
+        // Fallback to searchParams hook for SSR
+        currentLevel = searchParams.get('level') || 'business';
+      }
+      
+      // Debug logging (remove in production)
+      if (typeof window !== 'undefined') {
+        console.log('isActive debug:', {
+          path,
+          currentLevel,
+          isClientPath: path.includes("client-monthly-kpis"),
+          isBusinessPath: path.includes("business-monthly-kpis"),
+          shouldBeActive: path.includes("client-monthly-kpis") ? currentLevel === 'client' : currentLevel === 'business'
+        });
+      }
+      
+      // Determine which level this menu item represents and match correctly
+      if (path.includes("client-monthly-kpis")) {
+        // This is the BRAND section Monthly KPIs - should be active when level=client
+        return currentLevel === 'client';
+      } else if (path.includes("business-monthly-kpis")) {
+        // This is the BUSINESS section Monthly KPIs - should be active when level=business
+        return currentLevel === 'business';
+      }
+      
+      return false;
+    }
+    
+    // Simple pathname matching for other routes
     if (path.includes("[clientId]/business-overview")) {
       return pathname === `/${effectiveClientId}/business-overview`;
-    }
-    if (path.includes("[clientId]/[businessId]/monthly-kpis")) {
-      return pathname === `/${effectiveClientId}/${effectiveBusinessId}/monthly-kpis`;
     }
     if (path.includes("[clientId]/[businessId]/business-reporting")) {
       return pathname === `/${effectiveClientId}/${effectiveBusinessId}/business-reporting`;
@@ -170,7 +215,8 @@ export default function Sidebar() {
   // Build destination URLs
   const getClientOverviewUrl = () => `/${effectiveClientId}/business-overview`;
   const getBusinessReportingUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/business-reporting`;
-  const getMonthlyKPIsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/monthly-kpis`;
+  const getClientMonthlyKPIsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/monthly-kpis?level=client`;
+  const getBusinessMonthlyKPIsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/monthly-kpis?level=business`;
   const getDashboardUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/dashboard`;
   const getPostsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/posts`;
   const getCompetitorsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/competitors`;
@@ -235,10 +281,10 @@ export default function Sidebar() {
                   />
 
                   <MenuItem
-                    href={getMonthlyKPIsUrl()}
+                    href={getClientMonthlyKPIsUrl()}
                     icon={<FiTrendingUp />}
                     label="Monthly KPIs"
-                    isActive={isActive("/[clientId]/[businessId]/monthly-kpis")}
+                    isActive={isActive("/[clientId]/[businessId]/client-monthly-kpis")}
                     disabled={!hasBusiness && needsBusinessSelection}
                     collapsed={collapsed}
                     onClick={(!hasBusiness && needsBusinessSelection) ? handleDisabledClick : undefined}
@@ -301,6 +347,17 @@ export default function Sidebar() {
                     icon={<FiUsers />}
                     label="Competitors"
                     isActive={isActive("/[clientId]/[businessId]/competitors")}
+                    disabled={!hasBusiness}
+                    collapsed={collapsed}
+                    onClick={!hasBusiness ? handleDisabledClick : undefined}
+                  />
+
+                  {/* Add Monthly KPIs to Business section as well */}
+                  <MenuItem
+                    href={getBusinessMonthlyKPIsUrl()}
+                    icon={<FiTrendingUp />}
+                    label="Monthly KPIs"
+                    isActive={isActive("/[clientId]/[businessId]/business-monthly-kpis")}
                     disabled={!hasBusiness}
                     collapsed={collapsed}
                     onClick={!hasBusiness ? handleDisabledClick : undefined}
