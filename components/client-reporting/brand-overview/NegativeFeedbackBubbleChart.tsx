@@ -1,11 +1,12 @@
+// Fixed NegativeFeedbackBubbleChart Component - Client Level
 "use client"
 import { FC, useMemo, useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { convertTopicsToTree, Topic, Tree } from "@/utils/topicTree";
 import { setEndOfDay, setStartOfDay } from "@/utils/timeUtils";
 import { format } from "date-fns";
+
 interface NegativeFeedbackBubbleChartProps {
-  businessId: string;
   clientId: string;
   earliestDate: string;
   latestDate: string;
@@ -22,7 +23,6 @@ interface TooltipData {
 }
 
 const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
-  businessId,
   clientId,
   earliestDate,
   latestDate,
@@ -36,6 +36,7 @@ const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
   const [topics, setTopics] = useState<Topic[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
   // Process dates for API query.
   const startDateProcessed = useMemo(
     () => setStartOfDay(earliestDate),
@@ -53,55 +54,54 @@ const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
     () => format(new Date(latestDate), "MMM yyyy"),
     [latestDate]
   );
-  // Fetch topic data - just add request tracking
+
+  // Fetch topic data for client-level reporting
   useEffect(() => {
     const fetchData = async () => {
       try {
-        if (!businessId) return;
+        setIsLoading(true);
 
-        const url = `/api/client-reporting/negative-feedback?business_id=${encodeURIComponent(
-          businessId
+        // Use the existing API route that already works with all_business_ids
+        const url = `/api/client-reporting/negative-feedback?all_business_ids=${encodeURIComponent(
+          allBusinessIds
         )}&start_date=${encodeURIComponent(
           startDateProcessed
         )}&end_date=${encodeURIComponent(
           endDateProcessed
-        )}&all_business_ids=${encodeURIComponent(
-          allBusinessIds
         )}`;
 
         const res = await fetch(url);
         const data = await res.json();
 
-        setTopics(data.feedbackStats);
-        setTotal(data.total);
-        setIsLoading(false);
+        setTopics(data.feedbackStats || []);
+        setTotal(data.total || 0);
 
       } catch (error) {
-        console.error("Error fetching topics:", error);
-        // Don't set an error message for users to see
+        console.error("Error fetching negative feedback topics:", error);
+        setTopics([]);
+        setTotal(0);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
+    // Only fetch if we have the required data
+    if (allBusinessIds) {
+      fetchData();
+    }
 
     // Clear request tracker when component unmounts
     return () => {
       requestTracker.current.clear();
     };
-  }, [businessId, startDateProcessed, endDateProcessed, allBusinessIds]);
-
-
+  }, [startDateProcessed, endDateProcessed, allBusinessIds]);
 
   // Calculate dimensions based on the number of topics
   const baseSize = 600; // Base size
   const minSize = 200;  // Minimum size
   const maxSize = 1000; // Maximum size
   const size = Math.min(maxSize, Math.max(minSize, baseSize * Math.sqrt(topics.length / 10)));
-  // const sizeScale = scaleSqrt()
-  // .domain([min, max])
-  // .range([BUBBLE_MIN_SIZE, BUBBLE_MAX_SIZE]);
+  
   const width = size;
   const height = size;
 
@@ -115,13 +115,16 @@ const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
   const root = packGenerator(hierarchy);
   const color = d3.scaleOrdinal(d3.schemeCategory10);
 
-
-
   const handleMouseEnter = (node: any) => {
+    // Ensure percentage is a valid number
+    const percentage = (node.data.percentage && !isNaN(node.data.percentage)) 
+      ? node.data.percentage * 100 
+      : (node.data.count / total) * 100;
+    
     setTooltipData({
       name: node.data.name,
       count: node.data.count,
-      percentage: node.data.percentage * 100,
+      percentage: isNaN(percentage) ? 0 : percentage,
       x: node.x,
       y: node.y,
       r: node.r
@@ -134,7 +137,6 @@ const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
     setHoveredCircle(null);
   };
 
-
   return (
     <div className="bg-white p-6 rounded-lg shadow-md relative overflow-auto w-full">
       {isLoading ? (
@@ -142,7 +144,7 @@ const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
           <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-500 border-r-transparent"></div>
         </div>
       ) : total === 0 ? (
-        <div className="h-64  flex items-center justify-center">
+        <div className="h-64 flex items-center justify-center">
           <p className="text-gray-500">No criticism topics available</p>
         </div>
       ) : (
@@ -153,8 +155,8 @@ const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
             </h2>
           </div>
           <div className="text-sm text-gray-600 mb-4">
-              Posts from {formattedStart} to {formattedEnd}
-            </div>
+            Posts from {formattedStart} to {formattedEnd} • Total: {total.toLocaleString()} negative feedback posts
+          </div>
           <div className="flex items-center justify-center w-full h-full">
             <svg width={width} height={height} className="">
               {root
@@ -200,8 +202,7 @@ const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
                     displayName = [name];
                   }
 
-                  const totalLines = displayName.length; // +1 for the count
-
+                  const totalLines = displayName.length;
 
                   return (
                     <text
@@ -224,23 +225,24 @@ const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
                           {line}
                         </tspan>
                       ))}
-                      <tspan x={node.x} dy="1.2em">{count}</tspan>
+                      <tspan x={node.x} dy="1.2em">{count.toLocaleString()}</tspan>
                     </text>
                   );
                 })}
             </svg>
             {tooltipData && (
               <div
-                className="absolute bg-white text-black p-3 rounded shadow-sm pointer-events-none z-50"
+                className="absolute bg-gray-800 text-white p-3 rounded shadow-lg pointer-events-none z-50"
                 style={{
                   left: tooltipData.x + 10,
                   top: tooltipData.y - 10,
                   fontSize: "13px",
-                  fontWeight: "bold"
+                  fontWeight: "normal"
                 }}
               >
-                <div className="mb-1">{tooltipData.name}</div>
-                <div>Posts: {tooltipData.count}</div>
+                <div className="font-semibold mb-1">{tooltipData.name}</div>
+                <div>Posts: {tooltipData.count.toLocaleString()}</div>
+                <div>Percentage: {tooltipData.percentage.toFixed(1)}%</div>
               </div>
             )}
           </div>

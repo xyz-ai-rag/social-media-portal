@@ -12,6 +12,7 @@ import PostTypeRingChart from '../PostTypeRingChart';
 import PostFormatPieChart from '../PostFormatPieChart';
 import TopicsMentionedChart from './TopicsMentionedChart';
 import NegativeTopicsBubbleChart from './NegativeTopicsBubbleChart';
+import BusinessSelector from '../BusinessSelector';
 interface BusinessReportingProps {
   clientId: string;
   businessId: string;
@@ -62,7 +63,14 @@ export default function BusinessReporting({ clientId, businessId }: BusinessRepo
         <div>
           <h1 className="text-[34px] font-bold text-[#5D5FEF]">Business Reporting: {businessName}</h1>
         </div>
-        <DateRangePicker page="business-reporting" businessId={businessId} />
+        <div className="flex flex-col items-end gap-2">
+          <BusinessSelector
+            currentBusinessId={businessId}
+            clientId={clientId}
+            basePath="/business-reporting"
+          />
+          <DateRangePicker page="business-reporting" businessId={businessId} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
