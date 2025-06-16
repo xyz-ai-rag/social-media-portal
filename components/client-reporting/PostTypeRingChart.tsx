@@ -1,3 +1,4 @@
+// Fixed PostTypeRingChart Component - Client Level
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo } from "react";
@@ -33,7 +34,7 @@ interface PieDataItem {
 
 interface PostTypeRingChartProps {
   clientId: string;
-  businessId: string;
+  businessId?: string;
   earliestDate: string;
   latestDate: string;
   allBusinessIds: string;
@@ -51,7 +52,6 @@ export default function PostTypeRingChart({
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartData, setChartData] = useState<PieDataItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
 
   // Process dates for API query.
   const startDateProcessed = useMemo(
@@ -71,23 +71,43 @@ export default function PostTypeRingChart({
     [latestDate, level]
   );
 
+  // Determine which business IDs to use
+  const businessIdsToUse = useMemo(() => {
+    if (businessId) {
+      return businessId;
+    }
+    return allBusinessIds;
+  }, [businessId, allBusinessIds]);
+
   // Fetch Pie data from the API route.
   useEffect(() => {
     let isCurrent = true; // Flag to control whether the request is still valid
 
     async function fetchPieData() {
-      setIsLoading(true); // Set loading state when the request is made
+      setIsLoading(true);
 
       try {
-        const url = `/api/client-reporting/category-chart?business_id=${encodeURIComponent(
-          businessId
-        )}&start_date=${encodeURIComponent(
-          startDateProcessed
-        )}&end_date=${encodeURIComponent(
-          endDateProcessed
-      )}&all_business_ids=${encodeURIComponent(
-          allBusinessIds
-        )}`;
+        // Build URL with appropriate business ID parameter
+        let url;
+        if (businessId) {
+          // If specific businessId is provided, use business_id parameter
+          url = `/api/client-reporting/category-chart?business_id=${encodeURIComponent(
+            businessId
+          )}&start_date=${encodeURIComponent(
+            startDateProcessed
+          )}&end_date=${encodeURIComponent(
+            endDateProcessed
+          )}`;
+        } else {
+          // Use the existing API route that works with all_business_ids
+          url = `/api/client-reporting/category-chart?all_business_ids=${encodeURIComponent(
+            allBusinessIds
+          )}&start_date=${encodeURIComponent(
+            startDateProcessed
+          )}&end_date=${encodeURIComponent(
+            endDateProcessed
+          )}`;
+        }
 
         const res = await fetch(url);
         const data = await res.json();
@@ -109,14 +129,18 @@ export default function PostTypeRingChart({
                   ? "#8593ED"
                   : item.category.toLowerCase() === "own post"
                     ? "#C7CEFF"
-                    : "#5470c6",
+                    : item.category.toLowerCase() === "promotional post"
+                      ? "#9F7AEA"
+                      : item.category.toLowerCase() === "news post"
+                        ? "#68D391"
+                        : "#5470c6",
             percentage: total > 0 ? Math.round((item.count / total) * 100) : 0,
           }));
           setChartData(mappedData);
         }
       } catch (err) {
         if (isCurrent) {
-          console.error("Error fetching Pie chart data:", err);
+          console.error("Error fetching Post Type chart data:", err);
         }
       } finally {
         if (isCurrent) {
@@ -125,13 +149,16 @@ export default function PostTypeRingChart({
       }
     }
 
-    fetchPieData();
+    // Only fetch if we have the required data
+    if (businessIdsToUse) {
+      fetchPieData();
+    }
 
     // Cleanup function: Mark the previous request as invalid when a new one is made
     return () => {
       isCurrent = false;
     };
-  }, [businessId, startDateProcessed, endDateProcessed, allBusinessIds]);
+  }, [startDateProcessed, endDateProcessed, businessId, allBusinessIds, businessIdsToUse]);
 
   // Initialize and configure the chart once data is loaded.
   useEffect(() => {
@@ -153,16 +180,16 @@ export default function PostTypeRingChart({
     const option = {
       tooltip: {
         trigger: "item",
-        formatter:
-        "<div style='width:140px; height:50px'><span style='font-size:12px; color:white'>{b}</span> <br/> <span style='color:white; font-size:16px'>{c} posts</span></div>",
+        formatter: (params: any) => {
+          return `<div style='width:140px; height:50px'><span style='font-size:12px; color:white'>${params.name}</span> <br/> <span style='color:white; font-size:16px'>${params.value.toLocaleString()} posts</span></div>`;
+        },
         backgroundColor: "#37375C",
         borderColor: "#ccc",
         borderWidth: 1,
       },
-
       series: [
         {
-          name: "Platforms",
+          name: "Post Types",
           type: "pie",
           radius: ["40%", "70%"], // donut style
           avoidLabelOverlap: false,
@@ -177,7 +204,7 @@ export default function PostTypeRingChart({
         left: "center",
         top: "center",
         style: {
-          text: totalPosts > 0 ? `${totalPosts}\nPosts` : "No Data",
+          text: totalPosts > 0 ? `${totalPosts.toLocaleString()}\nPosts` : "No Data",
           textAlign: "center",
           color: "#333",
           fontSize: 16,

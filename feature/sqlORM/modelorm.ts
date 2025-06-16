@@ -212,6 +212,11 @@ export const ClientUsersModel =
         allowNull: false,
         defaultValue: false,
       },
+      is_active: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+      },
     },
     {
       tableName: "client_users",

@@ -1,6 +1,9 @@
-import { BusinessPostModel, BusinessModel } from "@/feature/sqlORM/modelorm";
+import { BusinessTopicsModel, TestBusinessTopicsModel, BusinessModel } from "@/feature/sqlORM/modelorm";
 import { NextRequest, NextResponse } from "next/server";
-import { Op } from "sequelize";
+import { Op, fn, col, literal } from "sequelize";
+
+const DEPLOY_ENV = process.env.DEPLOY_ENV;
+const TopicModelToUse = DEPLOY_ENV === "test" ? TestBusinessTopicsModel : BusinessTopicsModel;
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +20,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-
     const businesses = await BusinessModel.findAll({
       where: { business_id: { [Op.in]: businessIds } },
       attributes: ['business_id', 'business_name'],
@@ -28,48 +30,36 @@ export async function GET(request: NextRequest) {
       businessNameMap.set(b.business_id, b.business_name);
     });
 
-    const posts = await BusinessPostModel.findAll({
-      attributes: ['business_id', 'note_id', 'english_negative_topics'],
+    // Query business_topics table (or test table) for Criticism topics using grouping for better performance
+    const topicCounts = await TopicModelToUse.findAll({
       where: {
         business_id: { [Op.in]: businessIds },
-        is_relevant: true,
-        has_negative_or_criticism: true,
-        english_negative_topics: { [Op.not]: null }
+        topic_type: "Criticism"
       },
+      attributes: [
+        "topic",
+        [fn("COUNT", col("id")), "count"]
+      ],
+      group: ["topic"],
+      order: [[literal("count"), "DESC"]],
       raw: true,
-    });
+    }) as any[];
 
-    const topicStats = new Map<string, Set<string>>();
-
-    posts.forEach(post => {
-      let negativeTopics: string[] = [];
-      if (typeof post.english_negative_topics === "string") {
-        negativeTopics = post.english_negative_topics
-          .split(",")
-          .map((t: string) => t.trim())
-          .filter((t: string) => t.length > 0);
-      }
-      negativeTopics.forEach((topic: string) => {
-        if (!topicStats.has(topic)) {
-          topicStats.set(topic, new Set());
-        }
-        topicStats.get(topic)!.add(post.note_id);
-      });
-    });
-
-    const feedbackStats = Array.from(topicStats.entries()).map(([topic, noteSet]) => ({
-      topic,
-      count: noteSet.size
+    // Map to the expected format
+    const feedbackStats = topicCounts.map((item: any) => ({
+      topic: item.topic,
+      count: Number(item.count)
     }));
 
-    feedbackStats.sort((a, b) => b.count - a.count);
+    // Calculate total
+    const total = feedbackStats.reduce((sum, stat) => sum + stat.count, 0);
 
     return NextResponse.json({
       feedbackStats,
-      total: feedbackStats.reduce((sum, stat) => sum + stat.count, 0)
+      total
     });
   } catch (error: any) {
     console.error(`[NegativeFeedbackStats] Error:`, error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-} 
+}

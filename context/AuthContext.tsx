@@ -204,6 +204,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // 2. Check for /:clientId/:businessId/* pattern with known business sections
     const pathParts = pathname.split("/").filter(Boolean);
+    if (pathParts.length >= 2) {
+    // Check for client-level business-overview first
+    if (pathParts.length === 2 && pathParts[1] === "business-overview") {
+      debugLog(
+        "path",
+        `isBusinessPage: "${pathname}" matches clientId/business-overview pattern`
+      );
+      return true;
+    }
+    
     if (pathParts.length >= 3) {
       // List of all known business section pages
       const businessSections = [
@@ -211,8 +221,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         "competitors",
         "posts",
         "topic-analysis",
+        "monthly-kpis",
+        "business-reporting"
       ];
-
+      
       // Check if the third part of the path is a known business section
       if (businessSections.includes(pathParts[2])) {
         debugLog(
@@ -234,6 +246,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Add other section sub-pages if needed in the future
       }
     }
+  }
 
     debugLog("path", `isBusinessPage: "${pathname}" is NOT a business page`);
     return false;

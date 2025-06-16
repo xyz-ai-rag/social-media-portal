@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [hasRedirected, setHasRedirected] = useState(false);
+  const [accountDisabled, setAccountDisabled] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -46,18 +47,44 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setAccountDisabled(false);
     setLoading(true);
 
-    const { success, error: loginError } = await login(email, password);
-    if (!success) {
-      setError(loginError || "Login failed");
+    try {
+      // First check if account is active
+      const response = await fetch("/api/auth/validate-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.accountDisabled) {
+          setAccountDisabled(true);
+          setError(data.error);
+          setLoading(false);
+          return;
+        }
+        // For other errors, let normal login flow handle it
+      }
+
+      // Proceed with normal login
+      const { success, error: loginError } = await login(email, password);
+      if (!success) {
+        setError(loginError || "Login failed");
+        setLoading(false);
+        return;
+      }
+      
+      await new Promise((r) => setTimeout(r, 200));
+      window.location.href = "/businesses";
+    } catch (error) {
+      console.error("Login process failed:", error);
+      setError("An error occurred. Please try again.");
       setLoading(false);
-      return;
     }
-    await new Promise((r) => setTimeout(r, 200));
-    // Redirect on fresh login
-    // router.replace("/businesses");
-    window.location.href = "/businesses";
   };
 
   // While supabase context is booting, show spinner
@@ -94,6 +121,12 @@ export default function LoginPage() {
             </div>
           )}
 
+          {accountDisabled && (
+            <div className="p-4 mb-4 text-sm text-red-800 bg-red-100 rounded-lg">
+              <strong>Account Disabled:</strong> {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label
@@ -126,15 +159,14 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className={`bg-blue-50 border ${
-                  error && !sessionExpired ? "border-red-500" : "border-gray-300"
+                  (error && !sessionExpired && !accountDisabled) ? "border-red-500" : "border-gray-300"
                 } text-gray-900 rounded-lg block w-full p-2.5 focus:ring-blue-500 focus:border-blue-500`}
                 placeholder="••••••••"
                 required
               />
             </div>
 
-
-            {error && !sessionExpired && (
+            {error && !sessionExpired && !accountDisabled && (
               <div className="text-red-500 text-sm">{error}</div>
             )}
 

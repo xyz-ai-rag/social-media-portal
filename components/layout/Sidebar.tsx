@@ -1,6 +1,3 @@
-"use client";
-export const dynamic = "force-dynamic";
-
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -13,12 +10,13 @@ import {
   FiList,
   FiUsers,
   FiAlertCircle,
+  FiBarChart,
+  FiTrendingUp,
 } from "react-icons/fi";
 import { TbReportAnalytics } from "react-icons/tb";
 import { IoAnalyticsOutline } from "react-icons/io5";
 
 import { useAuth } from "@/context/AuthContext";
-import { useTranslation } from "react-i18next";
 
 type MenuItemProps = {
   href: string;
@@ -43,9 +41,8 @@ const MenuItem: React.FC<MenuItemProps> = ({
   if (disabled) {
     return (
       <div
-        className={`flex items-center p-2 rounded-md cursor-not-allowed ${
-          collapsed ? "justify-center" : ""
-        } text-gray-400`}
+        className={`flex items-center p-2 rounded-md cursor-not-allowed ${collapsed ? "justify-center" : ""
+          } text-gray-400`}
         onClick={onClick}
       >
         <span className="flex items-center relative group">
@@ -71,13 +68,11 @@ const MenuItem: React.FC<MenuItemProps> = ({
   return (
     <Link
       href={href}
-      className={`flex items-center p-2 rounded-md ${
-        collapsed ? "justify-center" : ""
-      } ${
-        isActive
+      className={`flex items-center p-2 rounded-md ${collapsed ? "justify-center" : ""
+        } ${isActive
           ? "bg-[#5A67BA]/10 text-[#5A67BA]"
           : "text-gray-700/60 hover:bg-[#5A67BA]/10"
-      }`}
+        }`}
     >
       <span className="flex items-center relative group">
         <span className="inline-flex items-center justify-center w-6 h-6">
@@ -102,141 +97,46 @@ export default function Sidebar() {
   const { logout, clientDetails } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentTab = searchParams.get("tab") || "brand-overview";
+  
+  // Force re-render when URL changes by including pathname in dependency
+  const [currentPath, setCurrentPath] = useState(pathname);
+  const [forceUpdate, setForceUpdate] = useState(0);
+  
+  useEffect(() => {
+    setCurrentPath(pathname);
+    // Force re-render when pathname or search params change
+    setForceUpdate(prev => prev + 1);
+  }, [pathname, searchParams]);
 
-  // Extract client and business ID from URL for dynamic routing
-  const urlParts = pathname.split("/").filter(Boolean);
-  const currentClientId = urlParts.length >= 2 ? urlParts[0] : null;
-  const currentBusinessId = urlParts.length >= 2 ? urlParts[1] : null;
+  // Get client and business IDs directly from clientDetails instead of parsing URL
+  const effectiveClientId = clientDetails?.id || null;
+  
+  // Get the first business ID (alphabetically sorted) as default
+  let effectiveBusinessId = null;
+  if (clientDetails?.businesses && clientDetails.businesses.length > 0) {
+    const sortedBusinesses = [...clientDetails.businesses].sort((a, b) => 
+      a.business_name.localeCompare(b.business_name)
+    );
+    effectiveBusinessId = sortedBusinesses[0].business_id;
+  }
 
-  // Check if we're on the business selection page
+  // Check if we're on special pages
   const isBusinessSelectionPage = pathname === "/businesses";
   const isSettingsPage = pathname === "/settings";
 
-  // Check if a business is selected or retrieve from localStorage
-  const [hasSelectedBusiness, setHasSelectedBusiness] =
-    useState<boolean>(false);
-  const [lastClientId, setLastClientId] = useState<string | null>(null);
-  const [lastBusinessId, setLastBusinessId] = useState<string | null>(null);
+  // Get user permissions from clientDetails with safe defaults
+  const canViewClientReporting = clientDetails?.can_view_client_reporting || false;
+  const canViewBusinessReporting = clientDetails?.can_view_business_reporting || false;
 
-  // change language setting
-  const { t } = useTranslation();
+  // Simple permission logic:
+  // - can_view_client_reporting = true -> show Brand Overview, Monthly KPIs, Business Reporting
+  // - can_view_business_reporting = true -> show Dashboard, All Posts, Analysis, Competitors, Monthly KPIs
+  // - If only client reporting (no business reporting) -> don't show business selection
 
-  // Initialize states from localStorage on component mount
-  useEffect(() => {
-    const savedState = localStorage.getItem("sidebarCollapsed");
-    if (savedState !== null) {
-      setCollapsed(JSON.parse(savedState));
-    }
-
-    // Retrieve last selected business from localStorage
-    const savedClientId = localStorage.getItem("lastClientId");
-    const savedBusinessId = localStorage.getItem("lastBusinessId");
-
-    if (savedClientId && savedBusinessId) {
-      setLastClientId(savedClientId);
-      setLastBusinessId(savedBusinessId);
-    }
-  }, []);
-
-  // Save current business selection to localStorage when navigating
-  useEffect(() => {
-    // Only update if we're on a business-specific page
-    if (
-      currentClientId &&
-      currentBusinessId &&
-      !isBusinessSelectionPage &&
-      !isSettingsPage
-    ) {
-      localStorage.setItem("lastClientId", currentClientId);
-      localStorage.setItem("lastBusinessId", currentBusinessId);
-      setLastClientId(currentClientId);
-      setLastBusinessId(currentBusinessId);
-      setHasSelectedBusiness(true);
-    }
-  }, [
-    currentClientId,
-    currentBusinessId,
-    isBusinessSelectionPage,
-    isSettingsPage,
-  ]);
-
-  // Determine if we have a business selected (either current or from history)
-  const effectiveClientId = currentClientId || lastClientId;
-  const effectiveBusinessId = currentBusinessId || lastBusinessId;
+  // Determine if we need business selection
+  const needsBusinessSelection = canViewBusinessReporting;
   const hasBusiness = Boolean(effectiveClientId && effectiveBusinessId);
-  const canViewBusinessReporting = clientDetails?.can_view_business_reporting;
-
-  //  Find current business limitation from clientDetails
-  useEffect(() => {
-    if (clientDetails?.businesses?.length) {
-      const currentBusiness = clientDetails.businesses.find(
-        (biz) => biz.business_id === effectiveBusinessId
-      );
-
-      if (currentBusiness) {
-        // Get user permissions from clientDetails
-        const canViewClientReporting = clientDetails.can_view_client_reporting;
-        const canViewBusinessReporting =
-          clientDetails.can_view_business_reporting;
-        const reportingLevel = clientDetails.enable_client_reporting;
-
-        // Set menu visibility based on permissions and reporting level
-        if (!canViewClientReporting && !canViewBusinessReporting) {
-          // User has no permissions
-          setShowClientReporting(false);
-          setShowAllPosts(false);
-          setShowTopicAnalysis(false);
-          setShowCompetitors(false);
-        } else if (canViewClientReporting && !canViewBusinessReporting) {
-          // User can only view client reporting
-          setShowClientReporting(true);
-          setShowAllPosts(false);
-          setShowTopicAnalysis(false);
-          setShowCompetitors(false);
-        } else if (!canViewClientReporting && canViewBusinessReporting) {
-          // User can only view business reporting
-          setShowClientReporting(false);
-          setShowAllPosts(true);
-          setShowTopicAnalysis(true);
-          setShowCompetitors(true);
-        } else {
-          // User has both permissions, check reporting level
-          if (!reportingLevel) {
-            // Hide all analysis tabs if enable_client_reporting is empty/null
-            setShowClientReporting(false);
-            setShowAllPosts(true);
-            setShowTopicAnalysis(true);
-            setShowCompetitors(true);
-          } else if (reportingLevel === "client_only") {
-            // Only show client reporting
-            setShowClientReporting(true);
-            setShowAllPosts(false);
-            setShowTopicAnalysis(false);
-            setShowCompetitors(false);
-          } else if (reportingLevel === "client_business") {
-            // Show all tabs
-            setShowClientReporting(true);
-            setShowAllPosts(true);
-            setShowTopicAnalysis(true);
-            setShowCompetitors(true);
-          } else if (reportingLevel === "client_competitors") {
-            // Show client reporting and competitors
-            setShowClientReporting(true);
-            setShowAllPosts(false);
-            setShowTopicAnalysis(false);
-            setShowCompetitors(true);
-          }
-        }
-      }
-    }
-  }, [clientDetails, effectiveBusinessId]);
-
-  // Add state for menu visibility
-  const [showClientReporting, setShowClientReporting] = useState(true);
-  const [showAllPosts, setShowAllPosts] = useState(true);
-  const [showTopicAnalysis, setShowTopicAnalysis] = useState(true);
-  const [showCompetitors, setShowCompetitors] = useState(true);
+  const hasBusinesses = Boolean(clientDetails?.businesses && clientDetails.businesses.length > 0);
 
   // Save state to localStorage when it changes
   const toggleCollapsed = (): void => {
@@ -245,33 +145,64 @@ export default function Sidebar() {
     localStorage.setItem("sidebarCollapsed", JSON.stringify(newState));
   };
 
-  // Function to check if a route is active
+  // Function to check if a route is active (simplified)
   const isActive = (path: string): boolean => {
-    if (
-      path.includes("[clientId]") &&
-      path.includes("[businessId]") &&
-      currentClientId &&
-      currentBusinessId
-    ) {
-      const dynamicPath = path
-        .replace("[clientId]", currentClientId)
-        .replace("[businessId]", currentBusinessId);
-
-      // Special handling for client-reporting path
-      if (dynamicPath.includes("client-reporting")) {
-        // If the path includes a tab parameter, check for exact match
-        if (path.includes("?")) {
-          return (
-            pathname +
-              (searchParams.toString() ? `?${searchParams.toString()}` : "") ===
-            dynamicPath
-          );
-        }
-        // If no tab parameter, only match the base path
-        return pathname === dynamicPath.split("?")[0];
+    // For monthly-kpis, check both pathname and level parameter
+    if (path.includes("monthly-kpis")) {
+      const isMonthlyKpisPath = pathname.includes('/monthly-kpis');
+      if (!isMonthlyKpisPath) return false;
+      
+      // Get the current level from URL - check if window exists first
+      let currentLevel = 'business'; // default
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        currentLevel = urlParams.get('level') || 'business';
+      } else {
+        // Fallback to searchParams hook for SSR
+        currentLevel = searchParams.get('level') || 'business';
       }
-
-      return pathname === dynamicPath;
+      
+      // Debug logging (remove in production)
+      if (typeof window !== 'undefined') {
+        console.log('isActive debug:', {
+          path,
+          currentLevel,
+          isClientPath: path.includes("client-monthly-kpis"),
+          isBusinessPath: path.includes("business-monthly-kpis"),
+          shouldBeActive: path.includes("client-monthly-kpis") ? currentLevel === 'client' : currentLevel === 'business'
+        });
+      }
+      
+      // Determine which level this menu item represents and match correctly
+      if (path.includes("client-monthly-kpis")) {
+        // This is the BRAND section Monthly KPIs - should be active when level=client
+        return currentLevel === 'client';
+      } else if (path.includes("business-monthly-kpis")) {
+        // This is the BUSINESS section Monthly KPIs - should be active when level=business
+        return currentLevel === 'business';
+      }
+      
+      return false;
+    }
+    
+    // Simple pathname matching for other routes
+    if (path.includes("[clientId]/business-overview")) {
+      return pathname === `/${effectiveClientId}/business-overview`;
+    }
+    if (path.includes("[clientId]/[businessId]/business-reporting")) {
+      return pathname === `/${effectiveClientId}/${effectiveBusinessId}/business-reporting`;
+    }
+    if (path.includes("[clientId]/[businessId]/dashboard")) {
+      return pathname === `/${effectiveClientId}/${effectiveBusinessId}/dashboard`;
+    }
+    if (path.includes("[clientId]/[businessId]/posts")) {
+      return pathname === `/${effectiveClientId}/${effectiveBusinessId}/posts`;
+    }
+    if (path.includes("[clientId]/[businessId]/topic-analysis")) {
+      return pathname === `/${effectiveClientId}/${effectiveBusinessId}/topic-analysis`;
+    }
+    if (path.includes("[clientId]/[businessId]/competitors")) {
+      return pathname === `/${effectiveClientId}/${effectiveBusinessId}/competitors`;
     }
     return pathname === path;
   };
@@ -279,36 +210,17 @@ export default function Sidebar() {
   // Handle click on disabled menu items
   const handleDisabledClick = (e: React.MouseEvent): void => {
     e.preventDefault();
-    // console.log("Please select a business first");
   };
 
-  // Get current business name
-  const currentBusiness = hasBusiness
-    ? clientDetails?.businesses?.find(
-        (biz) => biz.business_id === effectiveBusinessId
-      )
-    : null;
-
-  // Build destination URLs based on effective IDs
-  const getDashboardUrl = () => {
-    return `/${effectiveClientId}/${effectiveBusinessId}/dashboard`;
-  };
-
-  const getClientReportingUrl = () => {
-    return `/${effectiveClientId}/${effectiveBusinessId}/client-reporting?tab=brand-overview`;
-  };
-
-  const getPostsUrl = () => {
-    return `/${effectiveClientId}/${effectiveBusinessId}/posts`;
-  };
-
-  const getCompetitorsUrl = () => {
-    return `/${effectiveClientId}/${effectiveBusinessId}/competitors`;
-  };
-
-  const getAnalyticsUrl = () => {
-    return `/${effectiveClientId}/${effectiveBusinessId}/topic-analysis`;
-  };
+  // Build destination URLs
+  const getClientOverviewUrl = () => `/${effectiveClientId}/business-overview`;
+  const getBusinessReportingUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/business-reporting`;
+  const getClientMonthlyKPIsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/monthly-kpis?level=client`;
+  const getBusinessMonthlyKPIsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/monthly-kpis?level=business`;
+  const getDashboardUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/dashboard`;
+  const getPostsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/posts`;
+  const getCompetitorsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/competitors`;
+  const getAnalyticsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/topic-analysis`;
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -324,11 +236,10 @@ export default function Sidebar() {
   return (
     <>
       <aside
-        className={`bg-[#F1F2F7] border-r border-gray-200 fixed top-0 bottom-0 left-0 flex flex-col ${
-          collapsed ? "w-20 overflow-visible" : "w-60"
-        } transition-all duration-300 z-10`}
+        className={`bg-[#F1F2F7] border-r border-gray-200 fixed top-0 bottom-0 left-0 flex flex-col ${collapsed ? "w-20" : "w-60"
+          } transition-all duration-300 z-10`}
       >
-        {/* Top:  Logo */}
+        {/* Top: Logo */}
         <div className="h-20 border-b border-gray-200 flex items-center">
           {collapsed ? (
             <div className="p-4 flex justify-center w-full">
@@ -347,152 +258,148 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* Middle: Menu Section with scrolling */}
-        <div
-          className={`flex-1 ${
-            collapsed ? "" : "overflow-y-auto overflow-x-hidden"
-          }`}
-        >
-          <div>
-            {/* Reporting submenu */}
-            {isActive("/[clientId]/[businessId]/client-reporting") &&
-              !collapsed &&
-              showClientReporting && (
-                <div className="pl-8 space-y-2 py-2">
-                  <Link
-                    href={`/${effectiveClientId}/${effectiveBusinessId}/client-reporting?tab=brand-overview`}
-                    className={`flex items-center p-2 rounded-md text-sm ${
-                      currentTab === "brand-overview"
-                        ? "text-[#5A67BA] font-bold"
-                        : "text-gray-700/60 hover:bg-[#5A67BA]/10 font-normal"
-                    }`}
-                  >
-                    Brand Overview
-                  </Link>
-
-                  <Link
-                    href={`/${effectiveClientId}/${effectiveBusinessId}/client-reporting?tab=monthly-kpis`}
-                    className={`flex items-center p-2 rounded-md text-sm ${
-                      currentTab === "monthly-kpis"
-                        ? "text-[#5A67BA] font-bold"
-                        : "text-gray-700/60 hover:bg-[#5A67BA]/10 font-normal"
-                    }`}
-                  >
-                    Monthly KPIs
-                  </Link>
-
-                  <Link
-                    href={`/${effectiveClientId}/${effectiveBusinessId}/client-reporting?tab=business-reporting`}
-                    className={`flex items-center p-2 rounded-md text-sm ${
-                      currentTab === "business-reporting"
-                        ? "text-[#5A67BA] font-bold"
-                        : "text-gray-700/60 hover:bg-[#5A67BA]/10 font-normal"
-                    }`}
-                  >
-                    Business Reporting
-                  </Link>
-                </div>
-              )}
-          </div>
+        {/* Middle: Menu Section - removed scrolling */}
+        <div className="flex-1">
           <div className="p-4">
-            {!collapsed && (
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 pl-2">
-                {t("sidebar.menu")}
-              </div>
+            {/* Brand Section */}
+            {canViewClientReporting && (
+              <>
+                {!collapsed && (
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 pl-2">
+                    BRAND
+                  </div>
+                )}
+                <nav className="space-y-2">
+                  <MenuItem
+                    href={getClientOverviewUrl()}
+                    icon={<FiBarChart />}
+                    label="Brand Overview"
+                    isActive={isActive("/[clientId]/business-overview")}
+                    disabled={!effectiveClientId}
+                    collapsed={collapsed}
+                    onClick={!effectiveClientId ? handleDisabledClick : undefined}
+                  />
+
+                  <MenuItem
+                    href={getClientMonthlyKPIsUrl()}
+                    icon={<FiTrendingUp />}
+                    label="Monthly KPIs"
+                    isActive={isActive("/[clientId]/[businessId]/client-monthly-kpis")}
+                    disabled={!hasBusiness && needsBusinessSelection}
+                    collapsed={collapsed}
+                    onClick={(!hasBusiness && needsBusinessSelection) ? handleDisabledClick : undefined}
+                  />
+
+                  <MenuItem
+                    href={getBusinessReportingUrl()}
+                    icon={<TbReportAnalytics />}
+                    label="Business Reporting"
+                    isActive={isActive("/[clientId]/[businessId]/business-reporting")}
+                    disabled={!hasBusiness && needsBusinessSelection}
+                    collapsed={collapsed}
+                    onClick={(!hasBusiness && needsBusinessSelection) ? handleDisabledClick : undefined}
+                  />
+                </nav>
+              </>
             )}
-            <nav className="space-y-2">
-              {canViewBusinessReporting && (
-                <MenuItem
-                  href={getDashboardUrl()}
-                  icon={<FiGrid />}
-                  label={t("sidebar.dashboard")}
-                  isActive={isActive("/[clientId]/[businessId]/dashboard")}
-                  disabled={!hasBusiness && !isSettingsPage}
-                  collapsed={collapsed}
-                  onClick={!hasBusiness ? handleDisabledClick : undefined}
-                />
-              )}
 
-              {showClientReporting && (
-                <MenuItem
-                  href={getClientReportingUrl()}
-                  icon={<TbReportAnalytics />}
-                  label={t("sidebar.report")}
-                  isActive={isActive(
-                    "/[clientId]/[businessId]/client-reporting"
-                  )}
-                  disabled={!hasBusiness && !isSettingsPage}
-                  collapsed={collapsed}
-                  onClick={!hasBusiness ? handleDisabledClick : undefined}
-                />
-              )}
+            {/* Business Section */}
+            {canViewBusinessReporting && (
+              <>
+                {!collapsed && (
+                  <div className={`text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 pl-2 ${canViewClientReporting ? 'mt-6' : ''}`}>
+                    BUSINESS
+                  </div>
+                )}
+                <nav className="space-y-2">
+                  <MenuItem
+                    href={getDashboardUrl()}
+                    icon={<FiGrid />}
+                    label="Dashboard"
+                    isActive={isActive("/[clientId]/[businessId]/dashboard")}
+                    disabled={!hasBusiness}
+                    collapsed={collapsed}
+                    onClick={!hasBusiness ? handleDisabledClick : undefined}
+                  />
 
-              <MenuItem
-                href={getPostsUrl()}
-                icon={<FiList />}
-                label={t("sidebar.post")}
-                isActive={isActive("/[clientId]/[businessId]/posts")}
-                disabled={!hasBusiness && !isSettingsPage}
-                collapsed={collapsed}
-                onClick={!hasBusiness ? handleDisabledClick : undefined}
-              />
-              <MenuItem
-                href={getAnalyticsUrl()}
-                icon={<IoAnalyticsOutline />}
-                label={t("sidebar.analysis")}
-                isActive={isActive("/[clientId]/[businessId]/topic-analysis")}
-                disabled={!hasBusiness && !isSettingsPage}
-                collapsed={collapsed}
-                onClick={!hasBusiness ? handleDisabledClick : undefined}
-              />
+                  {/* Add Monthly KPIs to Business section as well */}
+                  <MenuItem
+                    href={getBusinessMonthlyKPIsUrl()}
+                    icon={<FiTrendingUp />}
+                    label="Monthly KPIs"
+                    isActive={isActive("/[clientId]/[businessId]/business-monthly-kpis")}
+                    disabled={!hasBusiness}
+                    collapsed={collapsed}
+                    onClick={!hasBusiness ? handleDisabledClick : undefined}
+                  />
+                  
+                  <MenuItem
+                    href={getPostsUrl()}
+                    icon={<FiList />}
+                    label="All Posts"
+                    isActive={isActive("/[clientId]/[businessId]/posts")}
+                    disabled={!hasBusiness}
+                    collapsed={collapsed}
+                    onClick={!hasBusiness ? handleDisabledClick : undefined}
+                  />
 
-              <MenuItem
-                href={getCompetitorsUrl()}
-                icon={<FiUsers />}
-                label={t("sidebar.competitors")}
-                isActive={isActive("/[clientId]/[businessId]/competitors")}
-                disabled={!hasBusiness && !isSettingsPage}
-                collapsed={collapsed}
-                onClick={!hasBusiness ? handleDisabledClick : undefined}
-              />
-            </nav>
+                  <MenuItem
+                    href={getAnalyticsUrl()}
+                    icon={<IoAnalyticsOutline />}
+                    label="Analysis"
+                    isActive={isActive("/[clientId]/[businessId]/topic-analysis")}
+                    disabled={!hasBusiness}
+                    collapsed={collapsed}
+                    onClick={!hasBusiness ? handleDisabledClick : undefined}
+                  />
+
+                  <MenuItem
+                    href={getCompetitorsUrl()}
+                    icon={<FiUsers />}
+                    label="Competitors"
+                    isActive={isActive("/[clientId]/[businessId]/competitors")}
+                    disabled={!hasBusiness}
+                    collapsed={collapsed}
+                    onClick={!hasBusiness ? handleDisabledClick : undefined}
+                  />
+
+                </nav>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Bottom: Others Section - fixed at bottom */}
+        {/* Bottom: Others Section */}
         <div className="border-t border-gray-200 p-4">
           {!collapsed && (
             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 pl-2">
-              {t("sidebar.others")}
+              OTHERS
             </div>
           )}
           <nav className="space-y-2">
             <MenuItem
               href="/settings"
               icon={<FiSettings />}
-              label={t("sidebar.setting")}
+              label="Settings"
               isActive={isActive("/settings")}
               collapsed={collapsed}
             />
 
             <div
               onClick={handleLogout}
-              className={`flex items-center cursor-pointer p-2 rounded-md ${
-                collapsed ? "justify-center" : ""
-              } text-gray-700/60 hover:bg-[#5A67BA]/10`}
+              className={`flex items-center cursor-pointer p-2 rounded-md ${collapsed ? "justify-center" : ""
+                } text-gray-700/60 hover:bg-[#5A67BA]/10`}
             >
               <span className="flex items-center relative group">
                 <span className="inline-flex items-center justify-center w-6 h-6">
                   <FiLogOut />
                 </span>
                 {!collapsed && (
-                  <span className="ml-3 text-sm font-medium">
-                    {t("sidebar.logout")}
-                  </span>
+                  <span className="ml-3 text-sm font-medium">Logout</span>
                 )}
                 {collapsed && (
                   <div className="absolute left-full ml-2 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover:block z-50 w-max">
-                    {t("sidebar.logout")}
+                    Logout
                   </div>
                 )}
               </span>
@@ -500,32 +407,7 @@ export default function Sidebar() {
           </nav>
         </div>
 
-        {/* Change Business Link - only when a business is selected */}
-        {hasBusiness && !collapsed && (
-          <div className="border-t border-gray-200 p-4">
-            <Link
-              href="/businesses"
-              className="flex items-center justify-between text-gray-800/60 hover:bg-[#5A67BA]/10 p-2 rounded-md text-sm font-medium"
-            >
-              <span>{t("sidebar.changebusiness")}</span>
-              <FiChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
-        )}
-
-        {/* Change Business Icon - when collapsed */}
-        {hasBusiness && collapsed && (
-          <div className="border-t border-gray-200 p-4 flex justify-center">
-            <Link href="/businesses" className="relative group">
-              <FiChevronRight className="text-blue-600" />
-              <div className="absolute left-full ml-2 whitespace-nowrap bg-[#5A67BA]/10 text-white text-xs rounded py-1 px-2 hidden group-hover:block z-50 w-max">
-                {t("sidebar.changebusiness")}
-              </div>
-            </Link>
-          </div>
-        )}
-
-        {/* Middle: Collapse/Expand Control */}
+        {/* Collapse/Expand Control */}
         <div className="absolute -right-3 top-1/2 transform -translate-y-1/2">
           <button
             onClick={toggleCollapsed}
@@ -540,10 +422,14 @@ export default function Sidebar() {
           </button>
         </div>
       </aside>
+
+      {/* Logout Modal */}
       {showLogoutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md text-center">
-            <h3 className="mb-5 text-lg font-normal text-gray-700">Logout?</h3>
+            <h3 className="mb-5 text-lg font-normal text-gray-700">
+              Logout?
+            </h3>
             <p className="text-sm text-gray-500 mb-7">
               Are you sure you want to logout?
             </p>

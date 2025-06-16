@@ -121,10 +121,13 @@ const SharedFilter: FC<SharedFilterProps> = ({
 
   // Select sentiment Data
   const sentimentData = [
+    { value: "Highly Positive", label: t("post.sentimentdata.highly_positive") },
     { value: "Positive", label: t("post.sentimentdata.positive") },
-    { value: "Negative", label: t("post.sentimentdata.negative") },
     { value: "Neutral", label: t("post.sentimentdata.neutral") },
+    { value: "Negative", label: t("post.sentimentdata.negative") },
+    { value: "Highly Negative", label: t("post.sentimentdata.highly_negative") },
   ];
+
 
   const handleSentiment = (data: string) => {
     setSentiment(data);
