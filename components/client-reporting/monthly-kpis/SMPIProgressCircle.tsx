@@ -104,7 +104,7 @@ export default function SMPIProgressCircle({ selectedMonth, lastMonthStr, monthl
     }
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-md w-full h-full flex flex-col justify-center" ref={containerRef}>
+        <div className="bg-white p-6 rounded-lg shadow-md w-full h-full flex flex-col justify-center relative" ref={containerRef}>
             {/* Title and date, always left-aligned */}
             <div className="w-full">
                 <h2 className="text-base font-medium text-gray-800 mb-2 text-left">Social Media Performance Index (SMPI)</h2>
@@ -112,6 +112,19 @@ export default function SMPIProgressCircle({ selectedMonth, lastMonthStr, monthl
                     {format(parseISO(selectedMonth + '-01'), 'MMM yyyy')}
                 </div>
             </div>
+            
+            {/* SMPI calculation link in bottom right corner */}
+            <div className="absolute bottom-6 right-6">
+                <a 
+                    href="https://www.hyprdata.ai/smpi" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-gray-600 italic hover:text-blue-600 transition-colors"
+                >
+                    How is this calculated?
+                </a>
+            </div>
+            
             {/* Progress circle and details, centered */}
             <div className="flex flex-col items-center justify-center w-full h-full">
                 <div>
