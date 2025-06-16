@@ -113,6 +113,7 @@ export async function GET(request: NextRequest) {
 
     // Build query conditions for business_posts
     const whereConditions: any = {
+      business_id: businessId,
       note_id: {
         [Op.in]: noteIds
       },
