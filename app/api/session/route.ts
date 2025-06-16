@@ -72,17 +72,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Email is required" }, { status: 400 });
   }
 
-  // look up user
+  // FIXED: Include is_active in the attributes to fetch it
   const userRec = await ClientUsersModel.findOne({
     where: { registered_email: email },
-    attributes: ["id"],
+    attributes: ["id", "is_active"], // ← Added "is_active" here
   });
   if (!userRec) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
   if (!userRec.is_active) {
     return NextResponse.json(
-      { error: "This user is disabled" },
+      { error: "Your account is no longer active. Please contact administrators for assistance." },
       { status: 403 }
     );
   }
