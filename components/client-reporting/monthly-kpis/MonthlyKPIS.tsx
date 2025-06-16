@@ -171,7 +171,7 @@ export default function MonthlyReporting({ clientId, businessId, level = 'client
                 onChange={(e) => setSelectedView(e.target.value as 'client' | 'business')}
                 className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="client">Client Level (All Businesses)</option>
+                <option value="client">Brand Level (All Businesses)</option>
                 <option value="business">Business Level</option>
               </select>
               
