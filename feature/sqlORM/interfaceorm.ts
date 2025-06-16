@@ -83,6 +83,7 @@ export interface ClientUsersInstance extends Model {
   registered_email: string;
   can_view_client_reporting: boolean;
   can_view_business_reporting: boolean;
+  is_active: boolean;
 }
 
 export interface ActiveSessionsInstance extends Model {
