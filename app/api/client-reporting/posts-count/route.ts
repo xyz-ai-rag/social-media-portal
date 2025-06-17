@@ -106,29 +106,71 @@ export async function GET(request: NextRequest) {
       col: 'note_id'
     });
     
-    const sentimentTotals: Record<string, number> = {};
-    const SENTIMENTS = ['Positive', 'Highly Positive', 'Negative', 'Highly Negative', 'Neutral'];
-    
+    // Improved toSnakeCase function to handle case-insensitive conversion
     function toSnakeCase(str: string | null) {
       if (!str) return '';
       return str.toLowerCase().replace(/\s+/g, '_');
     }
     
+    // Normalize sentiment function to handle various case formats
+    function normalizeSentiment(sentiment: string | null): string {
+      if (!sentiment) return '';
+      // Convert to lowercase, then to proper case for matching
+      const normalized = sentiment.toLowerCase();
+      
+      // Map common variations to standardized format
+      const sentimentMap: Record<string, string> = {
+        'highly positive': 'Highly Positive',
+        'positive': 'Positive',
+        'neutral': 'Neutral',
+        'negative': 'Negative',
+        'highly negative': 'Highly Negative'
+      };
+      
+      return sentimentMap[normalized] || sentiment;
+    }
+    
+    const sentimentTotals: Record<string, number> = {};
+    const SENTIMENTS = ['Positive', 'Highly Positive', 'Negative', 'Highly Negative', 'Neutral'];
+    
+    // Calculate totals using case-insensitive matching
     for (const sentiment of SENTIMENTS) {
-      sentimentTotals[toSnakeCase(sentiment)] = await BusinessPostModel.count({
-        where: { ...whereCondition, english_sentiment: sentiment },
+      const snakeKey = toSnakeCase(sentiment);
+      
+      // Use case-insensitive matching for sentiment totals
+      sentimentTotals[snakeKey] = await BusinessPostModel.count({
+        where: { 
+          ...whereCondition, 
+          [Op.and]: [
+            fn('LOWER', col('english_sentiment')), 
+            sentiment.toLowerCase()
+          ]
+        },
         distinct: true,
         col: 'note_id'
       });
     }
 
     const monthly: Record<string, any> = {};
+    
+    // Process monthly sentiment data with case normalization
     monthlySentimentRows.forEach((row: any) => {
       const month = row.get('month');
       const sentiment = row.get('english_sentiment');
       const count = parseInt(row.get('count'));
+      
       if (!monthly[month]) monthly[month] = { sentiments: {}, total: 0, criticism: 0 };
-      monthly[month].sentiments[toSnakeCase(sentiment)] = count;
+      
+      // Normalize the sentiment before converting to snake_case
+      const normalizedSentiment = normalizeSentiment(sentiment);
+      const sentimentKey = toSnakeCase(normalizedSentiment);
+      
+      // If this sentiment key already exists, add to it (handles duplicates from case variations)
+      if (monthly[month].sentiments[sentimentKey]) {
+        monthly[month].sentiments[sentimentKey] += count;
+      } else {
+        monthly[month].sentiments[sentimentKey] = count;
+      }
     });
     
     monthlyTotalRows.forEach((row: any) => {

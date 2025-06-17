@@ -116,7 +116,7 @@ const SharedFilter: FC<SharedFilterProps> = ({
   };
 
   // Select sentiment Data
-  const sentimentData = ["Highly Positive","Positive", "Negative", "Neutral","Highly Negative"];
+  const sentimentData = ["Highly Positive","Positive", "Neutral","Negative","Highly Negative"];
 
   const handleSentiment = (data: string) => {
     setSentiment(data);
