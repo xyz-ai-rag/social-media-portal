@@ -3,16 +3,19 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { FiChevronDown } from "react-icons/fi";
-import { useRouter, useParams, usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { useBusinessSelection } from "@/hooks/useBusinesSelction";
 
 export default function Header() {
   const { user, clientDetails } = useAuth();
   const router = useRouter();
-  const params = useParams();
   const pathname = usePathname();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Use the shared business selection hook
+  const { selectedBusinessId, updateSelectedBusiness } = useBusinessSelection();
 
   // Force re-render when pathname changes and listen for URL changes
   useEffect(() => {
@@ -78,8 +81,8 @@ export default function Header() {
     );
   }, [pathname, forceUpdate]); // Re-compute when pathname or forceUpdate changes
 
-  // Get the current business ID from params
-  const currentBusinessId = params.businessId as string;
+  // Use selectedBusinessId from the hook
+  const currentBusinessId = selectedBusinessId;
 
   // Find current business name
   const currentBusiness = clientDetails?.businesses?.find(
@@ -90,6 +93,9 @@ export default function Header() {
   // Handle business selection
   const handleBusinessSelect = (businessId: string) => {
     if (businessId && clientDetails?.id) {
+      // Update the shared business selection
+      updateSelectedBusiness(businessId);
+      
       // Get the current path segments
       const pathSegments = pathname.split("/");
 
