@@ -10,7 +10,7 @@ import { PostData } from "@/components/business-posts/SharedFilter";
 import PostPreviewCard from "@/components/business-posts/PostPreviewCard"; // Use original PostPreviewCard
 import TopicPostTrendChart from "./TopicPostsTrendChart";
 import { IoArrowBack } from "react-icons/io5";
-
+import Link from "next/link";
 interface TopicPostsProps {
   clientId: string;
   businessId: string;
@@ -36,7 +36,12 @@ interface AppliedFilters {
   sortOrder: string;
 }
 
-const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicType }) => {
+const TopicPosts: FC<TopicPostsProps> = ({
+  clientId,
+  businessId,
+  topic,
+  topicType,
+}) => {
   const [posts, setPosts] = useState<PostData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,14 +77,14 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
       return savedFilters
         ? JSON.parse(savedFilters)
         : {
-          platform: "",
-          sentiment: "",
-          relevance: "",
-          hasCriticism: "",
-          search: "",
-          sortOrder: "desc",
-          page: 1,
-        };
+            platform: "",
+            sentiment: "",
+            relevance: "",
+            hasCriticism: "",
+            search: "",
+            sortOrder: "desc",
+            page: 1,
+          };
     }
     return {
       platform: "",
@@ -97,38 +102,39 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
   }, [filters, title]);
 
   // Setting default date range
-  const [dateRange, setDateRange] = useState<{startDate: string, endDate: string}>({
+  const [dateRange, setDateRange] = useState<{
+    startDate: string;
+    endDate: string;
+  }>({
     startDate: "",
-    endDate: ""
+    endDate: "",
   });
 
   useEffect(() => {
     if (noteIds.length > 0) {
       // Find the earliest date in the noteIds
       let earliestDate = new Date(noteIds[0].last_update_time);
-      
-      noteIds.forEach(note => {
+
+      noteIds.forEach((note) => {
         const noteDate = new Date(note.last_update_time);
         if (noteDate < earliestDate) {
           earliestDate = noteDate;
         }
       });
-      
+
       // Format date as YYYY-MM-DD
-      const formattedEarliestDate = earliestDate.toISOString().split('T')[0];
-      
+      const formattedEarliestDate = earliestDate.toISOString().split("T")[0];
+
       // Get yesterday's date for the end date
       const today = new Date();
       const yesterday = new Date(today);
       yesterday.setDate(today.getDate() - 1);
-      const formattedYesterday = yesterday.toISOString().split('T')[0];
-      
+      const formattedYesterday = yesterday.toISOString().split("T")[0];
+
       setDateRange({
         startDate: formattedEarliestDate,
-        endDate: formattedYesterday
+        endDate: formattedYesterday,
       });
-      
-
     }
   }, [noteIds]);
 
@@ -190,7 +196,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
         }
 
         const data = await response.json();
-        
+
         return {
           posts: data.posts || [],
           pagination: data.pagination,
@@ -271,7 +277,12 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
     if ((isModalOpen || isPreviewModalOpen) && pagination.totalPages > 1) {
       fetchAdjacentPages();
     }
-  }, [isModalOpen, isPreviewModalOpen, pagination.currentPage, fetchAdjacentPages]);
+  }, [
+    isModalOpen,
+    isPreviewModalOpen,
+    pagination.currentPage,
+    fetchAdjacentPages,
+  ]);
 
   // Handle opening the modal - same as original BusinessPosts
   const openModal = (row: any) => {
@@ -410,11 +421,13 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`/api/businesses/getTopicPostsTrend?businessId=${businessId}&topic=${topic}`);
+        const response = await fetch(
+          `/api/businesses/getTopicPostsTrend?businessId=${businessId}&topic=${topic}`
+        );
         const res = await response.json();
         setNoteIds(res.postRows || []);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       }
     };
     fetchData();
@@ -425,27 +438,26 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
       {/* Title */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">
-          {`${decodeURIComponent(topic)} Posts`}        
+          {`${decodeURIComponent(topic)} Posts`}
         </h1>
       </div>
-      
+
       {/* Back button */}
       <div className="flex items-center">
-        <a
+        <Link
           href={`/${clientId}/${businessId}/topic-analysis?topic_type=${topicType}`}
           className="flex items-center text-gray-600 hover:text-gray-800"
         >
           <IoArrowBack className="h-5 w-5 mr-1" />
-          {`Back to Topic Analysis ${topicType == undefined ? "" : `: ${topicType}`}`}
-        </a>
+          {`Back to Topic Analysis ${
+            topicType == undefined ? "" : `: ${topicType}`
+          }`}
+        </Link>
       </div>
 
       {/* Trend Chart */}
       {topicType !== "General" && (
-        <TopicPostTrendChart
-          businessId={businessId}
-          noteIds={noteIds}
-        />
+        <TopicPostTrendChart businessId={businessId} noteIds={noteIds} />
       )}
 
       {/* Filters */}
