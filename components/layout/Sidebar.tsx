@@ -238,19 +238,19 @@ export default function Sidebar() {
         {/* Top: Logo */}
         <div className="h-20 border-b border-gray-200 flex items-center">
           {collapsed ? (
-            <div className="p-4 flex justify-center w-full">
+            <Link href="/businesses" className="p-4 flex justify-center w-full hover:bg-gray-100 transition-colors duration-150">
               <img
                 src="/hyprdata_icon_transparent.svg"
-                className="h-10 object-contain"
+                className="h-10 object-contain cursor-pointer"
               />
-            </div>
+            </Link>
           ) : (
-            <div className="flex items-center p-4">
+            <Link href="/businesses" className="flex items-center p-4 w-full hover:bg-gray-100 transition-colors duration-150">
               <img
                 src="/hyprdata_logo_transparent.svg"
-                className="h-10 object-contain px-2"
+                className="h-10 object-contain px-2 cursor-pointer"
               />
-            </div>
+            </Link>
           )}
         </div>
 
