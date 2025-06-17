@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { DateRangeProvider } from "@/context/DateRangeContext";
 import DateRangePicker from "./DateRangePicker";
 import GroupedBarChart from "@/components/dashboard/GroupedBarChart/GroupedBarChart";
+import PostTypeChart from "@/components/dashboard/PostTypeRing/PostTypeRingChart";
 import PieChartComponent from "./PieChart/PieChart";
 import HashtagChart from "./HotHashtags/HotHashtags";
 import LineGraph from "./SimilarBusinesses/LineGraph";
@@ -77,7 +78,7 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           </div>
 
           {/* Row 2 */}
-          <div className="md:col-span-1">
+          <div className="md:col-span-1 h-[404px]">
             <HashtagChart clientId={clientId} businessId={businessId} />
           </div>
           <div className="md:col-span-2">
@@ -93,6 +94,11 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           </div>
           <div className="md:col-span-1">
             <TopUsers clientId={clientId} businessId={businessId} />
+          </div>
+
+          {/* Row 4 */}
+          <div className="md:col-span-1">
+            <PostTypeChart clientId={clientId} businessId={businessId} />
           </div>
         </div>
       </div>
