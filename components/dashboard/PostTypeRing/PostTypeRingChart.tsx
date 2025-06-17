@@ -74,10 +74,8 @@ export default function PostTypeRingChart({
       setIsLoading(true);
 
       try {
-        // Build URL with appropriate business ID parameter
-        let url;
         // If specific businessId is provided, use business_id parameter
-        url = `/api/client-reporting/category-chart?business_id=${encodeURIComponent(
+        const url = `/api/client-reporting/category-chart?business_id=${encodeURIComponent(
           businessId
         )}&start_date=${encodeURIComponent(
           startDateProcessed
