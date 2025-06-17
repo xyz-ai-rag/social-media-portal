@@ -74,7 +74,7 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           </div>
 
           {/* Row 2 */}
-          <div className="md:col-span-1">
+          <div className="md:col-span-1 h-[404px]">
             <HashtagChart clientId={clientId} businessId={businessId} />
           </div>
           <div className="md:col-span-2">
