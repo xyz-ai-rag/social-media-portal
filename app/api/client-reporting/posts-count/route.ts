@@ -114,21 +114,46 @@ export async function GET(request: NextRequest) {
       return str.toLowerCase().replace(/\s+/g, '_');
     }
     
+    // Calculate totals using case-insensitive matching for sentiments
     for (const sentiment of SENTIMENTS) {
-      sentimentTotals[toSnakeCase(sentiment)] = await BusinessPostModel.count({
-        where: { ...whereCondition, english_sentiment: sentiment },
+      const snakeKey = toSnakeCase(sentiment);
+      
+      // Use ILIKE for case-insensitive matching (PostgreSQL)
+      sentimentTotals[snakeKey] = await BusinessPostModel.count({
+        where: { 
+          ...whereCondition, 
+          english_sentiment: {
+            [Op.iLike]: sentiment // Case-insensitive LIKE
+          }
+        },
         distinct: true,
         col: 'note_id'
       });
     }
 
     const monthly: Record<string, any> = {};
+    
+    // Process monthly sentiment data with case normalization
     monthlySentimentRows.forEach((row: any) => {
       const month = row.get('month');
       const sentiment = row.get('english_sentiment');
       const count = parseInt(row.get('count'));
+      
       if (!monthly[month]) monthly[month] = { sentiments: {}, total: 0, criticism: 0 };
-      monthly[month].sentiments[toSnakeCase(sentiment)] = count;
+      
+      // Find the matching sentiment from our standard list (case-insensitive)
+      const standardSentiment = SENTIMENTS.find(s => 
+        s.toLowerCase() === sentiment.toLowerCase()
+      ) || sentiment;
+      
+      const sentimentKey = toSnakeCase(standardSentiment);
+      
+      // If this sentiment key already exists, add to it (handles duplicates from case variations)
+      if (monthly[month].sentiments[sentimentKey]) {
+        monthly[month].sentiments[sentimentKey] += count;
+      } else {
+        monthly[month].sentiments[sentimentKey] = count;
+      }
     });
     
     monthlyTotalRows.forEach((row: any) => {
