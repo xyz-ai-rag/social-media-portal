@@ -17,6 +17,7 @@ import { TbReportAnalytics } from "react-icons/tb";
 import { IoAnalyticsOutline } from "react-icons/io5";
 
 import { useAuth } from "@/context/AuthContext";
+import { useBusinessSelection } from "@/hooks/useBusinesSelction";
 
 type MenuItemProps = {
   href: string;
@@ -98,6 +99,9 @@ export default function Sidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
+  // Use the shared business selection hook
+  const { selectedBusinessId } = useBusinessSelection();
+  
   // Force re-render when URL changes by including pathname in dependency
   const [currentPath, setCurrentPath] = useState(pathname);
   const [forceUpdate, setForceUpdate] = useState(0);
@@ -108,17 +112,9 @@ export default function Sidebar() {
     setForceUpdate(prev => prev + 1);
   }, [pathname, searchParams]);
 
-  // Get client and business IDs directly from clientDetails instead of parsing URL
+  // Get client and business IDs using the shared hook
   const effectiveClientId = clientDetails?.id || null;
-  
-  // Get the first business ID (alphabetically sorted) as default
-  let effectiveBusinessId = null;
-  if (clientDetails?.businesses && clientDetails.businesses.length > 0) {
-    const sortedBusinesses = [...clientDetails.businesses].sort((a, b) => 
-      a.business_name.localeCompare(b.business_name)
-    );
-    effectiveBusinessId = sortedBusinesses[0].business_id;
-  }
+  const effectiveBusinessId = selectedBusinessId; // Use selected business from hook
 
   // Check if we're on special pages
   const isBusinessSelectionPage = pathname === "/businesses";
