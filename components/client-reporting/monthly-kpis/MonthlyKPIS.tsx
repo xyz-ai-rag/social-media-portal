@@ -220,13 +220,21 @@ export default function MonthlyReporting({ clientId, businessId, level = 'client
         </div>
         <div className="md:col-span-2 w-full h-full flex items-stretch">
           <LineGraph
-            clientId={clientId}
-            businessId={level === 'business' ? businessId : selectedBusinessId}
-            earliestDate={startDate}
-            latestDate={endDate}
-            allBusinessIds={allBusinessIds}
-            level="daily"
-          />
+              clientId={clientId}
+              // Only pass businessId when showing business-level data
+              businessId={
+                level === 'business' ? businessId : 
+                selectedView === 'business' ? selectedBusinessId : 
+                undefined  // Don't pass businessId for client-level view
+              }
+              earliestDate={startDate}
+              latestDate={endDate}
+              // Only pass allBusinessIds when showing client-level data
+              allBusinessIds={
+                level === 'client' || selectedView === 'client' ? allBusinessIds : undefined
+              }
+              date_level="daily"
+            />
         </div>
 
         {/* Platform comparison charts */}
