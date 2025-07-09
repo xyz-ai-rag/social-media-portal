@@ -13,6 +13,8 @@ import PostPreviewCard from "../PostPreviewCard";
 import { FaSync } from "react-icons/fa";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import { useDateRange } from "@/context/DateRangeContext";
+import CompetitorVsBusinessChart from "./CompetitorVsBusinessChart";
+import CompetitorComparisonStats from "./CompetitorComparisonStats";
 
 interface CompetitorPostsProps {
   clientId: string;
@@ -519,55 +521,41 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     handleFilterChange({ sortOrder: order });
   };
 
-  // Competitor dropdown component
-  const CompetitorFilter = (
-    <Select
-      id="competitor"
-      required
-      value={competitorId}
-      onChange={(e) => handleCompetitorChange(e.target.value)}
-      className="min-w-40"
-      disabled={loadingCompetitors || competitors.length === 0}
-    >
-      {loadingCompetitors ? (
-        <option value="">Loading...</option>
-      ) : competitors.length === 0 ? (
-        <option value="">No competitors available</option>
-      ) : (
-        <>
-          <option value="">Select Competitor</option>
-          {competitors.map((comp) => (
-            <option key={comp.id} value={comp.id}>
-              {comp.name}
-            </option>
-          ))}
-        </>
-      )}
-    </Select>
-  );
-
   return (
     <>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">
           {competitorName}
         </h1>
+        
+        {/* Moved competitor and date selectors to top right */}
+        <div className="flex flex-col sm:flex-row gap-3 items-end">
+          <Select
+            id="competitor"
+            required
+            value={competitorId}
+            onChange={(e) => handleCompetitorChange(e.target.value)}
+            className="min-w-40"
+            disabled={loadingCompetitors || competitors.length === 0}
+          >
+            {loadingCompetitors ? (
+              <option value="">Loading...</option>
+            ) : competitors.length === 0 ? (
+              <option value="">No competitors available</option>
+            ) : (
+              <>
+                <option value="">Select Competitor</option>
+                {competitors.map((comp) => (
+                  <option key={comp.id} value={comp.id}>
+                    {comp.name}
+                  </option>
+                ))}
+              </>
+            )}
+          </Select>
+          <DateRangePicker page="competitor_posts" businessId={businessId} />
+        </div>
       </div>
-      {/* Filters */}
-      <SharedFilter
-        title="competitor_page"
-        clientId={clientId}
-        businessId={businessId}
-        competitorId={competitorId}
-        additionalFilters={CompetitorFilter}
-        isLoading={isLoading}
-        // Don't pass the "No competitor selected" error to the filter
-        error={error === "No competitor selected" ? null : error}
-        appliedFilters={appliedFilters}
-        onFilterChange={handleFilterChange}
-        onRefresh={fetchCompetitorPosts}
-        onSortOrderChange={handleSortOrderChange}
-      />
 
       {/* Tabs Section */}
       <div className="mt-6">
@@ -610,25 +598,31 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         {/* Tab content */}
         <div className="tab-content">
           {activeTab === 0 && (
-            // Overview Tab Content
+            // Overview Tab Content - NEW DESIGN
             <>
               {!competitorId ? (
                 <div className="bg-white rounded-lg shadow p-6 mb-6">
                   <div className="text-center p-8 text-gray-500">
                     <p className="mb-2 text-lg">
                       Select a competitor from the dropdown above to view
-                      comparison statistics.
+                      comparison analytics.
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="mb-6">
-                  <CompetitorStatsCard
+                <div className="space-y-6">
+                  {/* Competitor vs Business Chart */}
+                  <CompetitorVsBusinessChart 
+                    businessId={businessId}
                     competitorId={competitorId}
                     competitorName={competitorName}
+                  />
+                  
+                  {/* Competitor Comparison Stats */}
+                  <CompetitorComparisonStats
                     businessId={businessId}
-                    startDate={dateRangeOfPosts.startDate}
-                    endDate={dateRangeOfPosts.endDate}
+                    competitorId={competitorId}
+                    competitorName={competitorName}
                   />
                 </div>
               )}
@@ -637,33 +631,50 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
 
           {activeTab === 1 && (
             // Competitor Posts Tab Content
-            <div>
-              {!competitorId ? (
-                <div className="bg-white rounded-lg shadow p-6">
-                  <div className="text-center p-8 text-gray-500">
-                    <p className="mb-2 text-lg">
-                      Select a competitor from the dropdown above to view their
-                      posts.
-                    </p>
+            <>
+              {/* Filters - only show on Competitor Posts tab */}
+              <SharedFilter
+                title="competitor_page"
+                clientId={clientId}
+                businessId={businessId}
+                competitorId={competitorId}
+                isLoading={isLoading}
+                // Don't pass the "No competitor selected" error to the filter
+                error={error === "No competitor selected" ? null : error}
+                appliedFilters={appliedFilters}
+                onFilterChange={handleFilterChange}
+                onRefresh={fetchCompetitorPosts}
+                onSortOrderChange={handleSortOrderChange}
+              />
+
+              <div className="mt-6">
+                {!competitorId ? (
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <div className="text-center p-8 text-gray-500">
+                      <p className="mb-2 text-lg">
+                        Select a competitor from the dropdown above to view their
+                        posts.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <SharedPostTable
-                  listData={posts}
-                  isLoading={isLoading}
-                  postCardComponent={CompetitorPostCard}
-                  pagination={{
-                    currentPage: pagination.currentPage,
-                    totalPages: pagination.totalPages,
-                    onPageChange: handlePageChange,
-                  }}
-                  sortOrder={filters.sortOrder}
-                  onSortOrderChange={handleSortOrderChange}
-                  openModal={openModal}
-                  openPreviewModal={openPreviewModal}
-                />
-              )}
-            </div>
+                ) : (
+                  <SharedPostTable
+                    listData={posts}
+                    isLoading={isLoading}
+                    postCardComponent={CompetitorPostCard}
+                    pagination={{
+                      currentPage: pagination.currentPage,
+                      totalPages: pagination.totalPages,
+                      onPageChange: handlePageChange,
+                    }}
+                    sortOrder={filters.sortOrder}
+                    onSortOrderChange={handleSortOrderChange}
+                    openModal={openModal}
+                    openPreviewModal={openPreviewModal}
+                  />
+                )}
+              </div>
+            </>
           )}
         </div>
       </div>
