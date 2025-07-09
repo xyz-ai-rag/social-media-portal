@@ -15,6 +15,7 @@ import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import { useDateRange } from "@/context/DateRangeContext";
 import CompetitorVsBusinessChart from "./CompetitorVsBusinessChart";
 import CompetitorComparisonStats from "./CompetitorComparisonStats";
+import { CompetitorsTierBanner } from "@/components/TierBanner";
 
 interface CompetitorPostsProps {
   clientId: string;
@@ -130,12 +131,6 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   // Get date range from context.
   const { dateRange } = useDateRange();
 
-  // setting default date
-  const [dateRangeOfPosts, setDateRangeOfPosts] = useState({
-    startDate: "",
-    endDate: "",
-  });
-
   // Process dates using helper functions from timeUtils.
   const startDateProcessed = useMemo(
     () => dateRange.startDate.split("T")[0],
@@ -145,12 +140,12 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     () => dateRange.endDate.split("T")[0],
     [dateRange.endDate]
   );
-  useEffect(() => {
-    setDateRangeOfPosts({
-      startDate: startDateProcessed,
-      endDate: endDateProcessed,
-    });
-  }, [startDateProcessed, endDateProcessed]);
+
+  // FIXED: Replace state with useMemo to prevent infinite loops
+  const dateRangeOfPosts = useMemo(() => ({
+    startDate: startDateProcessed,
+    endDate: endDateProcessed,
+  }), [startDateProcessed, endDateProcessed]);
 
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
@@ -357,10 +352,10 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     setAdjacentPagesLoading(false);
   }, [pagination, fetchPostsForPage]);
 
-  // Fetch posts when competitorId or filters change
+  // FIXED: More stable dependency array to prevent infinite loops
   useEffect(() => {
     fetchCompetitorPosts();
-  }, [fetchCompetitorPosts]);
+  }, [competitorId, filters.page, dateRangeOfPosts.startDate, dateRangeOfPosts.endDate]);
 
   // Fetch adjacent pages when modal is opened or current page changes
   useEffect(() => {
@@ -482,7 +477,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     setIsPreviewModalOpen(false);
   };
 
-  // Handle filter changes from the SharedPostList component
+  // FIXED: Simplified handleFilterChange without dateRangeOfPosts setter
   const handleFilterChange = (newFilters: any) => {
     // Ensure we never send a date after yesterday
     if (
@@ -491,16 +486,11 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     ) {
       newFilters.endDate = yesterday;
     }
-    // Extract startDate / endDate and save to local dateRange
+    // Extract startDate / endDate - dates are now handled via context
     const { startDate, endDate, ...otherFilters } = newFilters;
 
-    if (endDate || startDate) {
-      setDateRangeOfPosts((prevdate: object) => ({
-        ...prevdate,
-        ...(startDate && { startDate: startDate }),
-        ...(endDate && { endDate: endDate }),
-      }));
-    }
+    // If dates are provided, they should be handled by the DateRangePicker component
+    // which will update the context directly
 
     // Pass non-date fields to context management
     setFilters((prev: any) => ({
@@ -527,7 +517,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">
           {competitorName}
         </h1>
-        
+
         {/* Moved competitor and date selectors to top right */}
         <div className="flex flex-col sm:flex-row gap-3 items-end">
           <Select
@@ -553,10 +543,12 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
               </>
             )}
           </Select>
-          <DateRangePicker page="competitor_posts" businessId={businessId} />
+          {/* Only show DateRangePicker on Overview tab (activeTab === 0) */}
+          {activeTab === 0 && <DateRangePicker page="competitor_posts" businessId={businessId}  />}
         </div>
       </div>
-
+      {/* Tier-aware banner - positioned under title for better alignment */}
+      <CompetitorsTierBanner />
       {/* Tabs Section */}
       <div className="mt-6">
         <div className="mb-4 border-b border-gray-200">

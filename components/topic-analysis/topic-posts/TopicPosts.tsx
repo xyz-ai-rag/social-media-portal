@@ -11,6 +11,7 @@ import PostPreviewCard from "@/components/business-posts/PostPreviewCard"; // Us
 import TopicPostTrendChart from "./TopicPostsTrendChart";
 import { IoArrowBack } from "react-icons/io5";
 import Link from "next/link";
+import { TopicAnalysisDrillDownTierBanner } from "@/components/TierBanner";
 interface TopicPostsProps {
   clientId: string;
   businessId: string;
@@ -441,7 +442,7 @@ const TopicPosts: FC<TopicPostsProps> = ({
           {`${decodeURIComponent(topic)} Posts`}
         </h1>
       </div>
-
+      <TopicAnalysisDrillDownTierBanner/>
       {/* Back button */}
       <div className="flex items-center">
         <Link

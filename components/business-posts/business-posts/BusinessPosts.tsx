@@ -9,7 +9,7 @@ import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "../SharedFilter";
 import PostPreviewCard from "../PostPreviewCard";
 import { useDateRange } from "@/context/DateRangeContext";
-
+import { BusinessPostsTierBanner } from "@/components/TierBanner";
 interface BusinessPostsProps {
   clientId: string;
   businessId: string;
@@ -425,6 +425,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
           {`Posts for ${businessName || "Business"}`}
         </h1>
       </div>
+      <BusinessPostsTierBanner/>
       {/* Filters */}
       <SharedFilter
         title="business_page"

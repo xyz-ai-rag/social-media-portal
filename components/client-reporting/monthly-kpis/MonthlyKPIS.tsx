@@ -7,7 +7,7 @@ import BusinessSelector from '../BusinessSelector';
 import LineGraph from "@/components/client-reporting/monthly-kpis/LineGraph";
 import ComparisonBarChart from './ComparisonBarChart';
 import SMPIProgressCircle from './SMPIProgressCircle';
-
+import { MonthlyKPIsTierBanner } from '@/components/TierBanner';
 interface MonthlyReportingProps {
   clientId: string;
   businessId: string;
@@ -161,6 +161,7 @@ export default function MonthlyReporting({ clientId, businessId, level = 'client
           <h1 className="text-[34px] font-bold text-[#5D5FEF]">{pageTitle}</h1>
           <h1 className="text-[24px] font-bold text-[#5D5FEF]">{format(parseISO(selectedMonth + '-01'), 'MMMM yyyy')}</h1>
         </div>
+        
         <div className="flex flex-col items-end gap-2">
           {/* Only show view controls at client level */}
           {level === 'client' && (
@@ -193,7 +194,7 @@ export default function MonthlyReporting({ clientId, businessId, level = 'client
               )}
             </>
           )}
-          
+        
           {/* Month selector - always visible */}
           <select
             value={selectedMonth}
@@ -208,7 +209,7 @@ export default function MonthlyReporting({ clientId, businessId, level = 'client
           </select>
         </div>
       </div>
-
+      <MonthlyKPIsTierBanner/>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch min-h-[340px]">
         <div className="md:col-span-1 w-full h-full flex flex-col justify-center">
           <SMPIProgressCircle
