@@ -8,15 +8,13 @@ import CompetitorPostCard from "./CompetitorsPostCard";
 import { useAuth } from "@/context/AuthContext";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "../SharedFilter";
-import CompetitorStatsCard from "./CompetitorStatsCard";
 import PostPreviewCard from "../PostPreviewCard";
-import { FaSync } from "react-icons/fa";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import { useDateRange } from "@/context/DateRangeContext";
 import CompetitorVsBusinessChart from "./CompetitorVsBusinessChart";
 import CompetitorComparisonStats from "./CompetitorComparisonStats";
 import { CompetitorsTierBanner } from "@/components/TierBanner";
-
+import { useBusinessTier } from '@/context/BusinessTierContext';
 interface CompetitorPostsProps {
   clientId: string;
   businessId: string;
@@ -52,7 +50,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
 }) => {
   // Get auth context to access similar businesses
   const { clientDetails } = useAuth();
-
+  const { isFreeTier } = useBusinessTier();
   // Add state for active tab
   const [activeTab, setActiveTab] = useState(0);
 
@@ -158,7 +156,38 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
       try {
         if (!clientDetails || !businessId) return;
 
-        // Find the current business
+        setLoadingCompetitors(true);
+
+        // Check if current business is free tier
+        if (isFreeTier) {
+          // Simulate competitor data for free tier
+          const simulatedCompetitors = [
+            {
+              id: "6d5c4b3a-2e1f-09a8-b7c6-5d4e3f2a1b0c",
+              name: "Sample Competitor 3"
+            },
+            {
+              id: "3b4c5d6e-7f8a-90b1-c2d3-e4f5a6b7c8d9",
+              name: "Sample Competitor 2"
+            },
+            {
+              id: "8d9e0f1a-2b3c-4e5f-6a7b-8c9d0e1f2a3b",
+              name: "Sample Competitor 1"
+            }
+          ];
+
+          setCompetitors(simulatedCompetitors);
+
+          // Set the first competitor as default if no competitor is selected yet
+          if (!competitorId) {
+            setCompetitorId(simulatedCompetitors[0].id);
+          }
+          
+          setLoadingCompetitors(false);
+          return;
+        }
+
+        // For paid tier, use real competitor data
         const currentBusiness = clientDetails.businesses.find(
           (b) => b.business_id === businessId
         );
@@ -168,11 +197,9 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
           !currentBusiness.similar_businesses ||
           currentBusiness.similar_businesses.length === 0
         ) {
-          // console.log("No similar businesses found");
+          setLoadingCompetitors(false);
           return;
         }
-
-        setLoadingCompetitors(true);
 
         // Fetch competitor details using the batch API
         const response = await fetch(
@@ -213,7 +240,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     };
 
     fetchCompetitors();
-  }, [clientDetails, businessId, competitorId]);
+  }, [clientDetails, businessId, competitorId, isFreeTier]);
 
   // Get the competitor name directly from the state without showing loading
   const competitorName = useMemo(() => {
@@ -230,9 +257,16 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
       }
 
       try {
+        // Check if current business is free tier and override competitorId
+        // For free tier, use the competitor ID directly (since they're already sample IDs)
+        // For paid tier, use the actual competitor ID
+        let effectiveCompetitorId = competitorId;
+        
+        // Note: For free tier, competitorId is already a sample ID from the simulated list
+        // so we don't need to override it like we did for business post
         // Build query parameters
         const queryParams = new URLSearchParams();
-        queryParams.append("businessId", competitorId); // Use competitorId as businessId for API
+        queryParams.append("businessId", effectiveCompetitorId); // Use competitorId as businessId for API
         const endDate =
           new Date(dateRangeOfPosts.endDate) > new Date(yesterday)
             ? yesterday
