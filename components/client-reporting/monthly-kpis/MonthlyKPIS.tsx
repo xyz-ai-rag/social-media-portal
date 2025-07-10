@@ -1,26 +1,32 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { format, subMonths, startOfMonth, endOfMonth, parseISO } from 'date-fns';
+import { format, subMonths, startOfMonth, endOfMonth, parseISO, isSameMonth } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';
 import BusinessSelector from '../BusinessSelector';
-import LineGraph from "@/components/client-reporting/monthly-kpis/LineGraph";
+import HistoricalSMPI from "@/components/client-reporting/monthly-kpis/HistoricalSMPI";
 import ComparisonBarChart from './ComparisonBarChart';
 import SMPIProgressCircle from './SMPIProgressCircle';
 import { MonthlyKPIsTierBanner } from '@/components/TierBanner';
+
 interface MonthlyReportingProps {
   clientId: string;
   businessId: string;
-  level?: 'client' | 'business'; // Add level prop to determine context
+  level?: 'client' | 'business';
 }
 
 export default function MonthlyReporting({ clientId, businessId, level = 'client' }: MonthlyReportingProps) {
-  const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
+  // Get the last complete month as default (previous month)
+  const lastCompleteMonth = useMemo(() => {
+    return format(subMonths(new Date(), 1), 'yyyy-MM');
+  }, []);
+
+  const [selectedMonth, setSelectedMonth] = useState<string>(lastCompleteMonth);
   const [earliestDate, setEarliestDate] = useState<string>("2024-06-01");
   const [startDate, setStartDate] = useState<string>(format(subMonths(new Date(), 1), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
-  const [selectedView, setSelectedView] = useState<'client' | 'business'>('client'); // New state for view selection
-  const [selectedBusinessId, setSelectedBusinessId] = useState<string>(businessId); // Track selected business internally
+  const [selectedView, setSelectedView] = useState<'client' | 'business'>('client');
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string>(businessId);
   const { clientDetails } = useAuth();
   const [monthlyData, setMonthlyData] = useState<any>(null);
   const [totalData, setTotalData] = useState<any>(null);
@@ -45,7 +51,6 @@ export default function MonthlyReporting({ clientId, businessId, level = 'client
     if (level === 'business') {
       return `Monthly KPIs: ${businessName}`;
     } else {
-      // Client level
       if (selectedView === 'client') {
         return `Monthly KPIs: ${clientName} (All Businesses)`;
       } else {
@@ -67,19 +72,16 @@ export default function MonthlyReporting({ clientId, businessId, level = 'client
   useEffect(() => {
     const fetchDateRange = async () => {
       try {
-        // Use the currently selected business for date range
         const businessIdToUse = level === 'business' ? businessId : selectedBusinessId;
         const response = await fetch(`/api/charts/dateRange?business_id=${businessIdToUse}`);
         const data = await response.json();
         if (data.earliest_date && data.latest_date) {
           setEarliestDate(data.earliest_date);
 
-          // Set the selected month to the latest month
-          const latestMonth = format(new Date(), 'yyyy-MM');
-          setSelectedMonth(latestMonth);
+          // Always set to last complete month, not current month
+          setSelectedMonth(lastCompleteMonth);
 
-          // Set the start and end dates for the selected month
-          const [year, month] = latestMonth.split('-').map(Number);
+          const [year, month] = lastCompleteMonth.split('-').map(Number);
           const date = new Date(year, month - 1);
           setStartDate(format(startOfMonth(date), 'yyyy-MM-dd'));
           setEndDate(format(endOfMonth(date), 'yyyy-MM-dd'));
@@ -89,60 +91,100 @@ export default function MonthlyReporting({ clientId, businessId, level = 'client
       }
     };
     fetchDateRange();
-  }, [businessId, selectedBusinessId, level]); // Updated dependencies
+  }, [businessId, selectedBusinessId, level, lastCompleteMonth]);
 
   useEffect(() => {
     const fetchMonthlyData = async () => {
       try {
-        // Determine which parameters to send based on level and selected view
         let url = `/api/client-reporting/posts-count?`;
         
         if (level === 'business') {
-          // Business level always uses businessId
           url += `businessId=${businessId}&level=business`;
         } else {
-          // Client level
           if (selectedView === 'client') {
-            // Show aggregated data for all businesses under client
             url += `businessIds=${allBusinessIds}&level=client`;
           } else {
-            // Show specific business data using selectedBusinessId
             url += `businessId=${selectedBusinessId}&level=business`;
           }
         }
 
+        console.log(`[MonthlyKPIS] Fetching data from: ${url}`);
+
         const calculateResponse = await fetch(url, { method: 'GET' });
 
         if (!calculateResponse.ok) {
-          throw new Error('Failed to calculate SMPI');
+          console.warn(`[MonthlyKPIS] API returned ${calculateResponse.status}, using empty data`);
+          // Don't throw error, just use empty data
+          setMonthlyData({});
+          setTotalData({
+            totalPosts: 0,
+            criticism: 0,
+            highly_positive: 0,
+            positive: 0,
+            neutral: 0,
+            negative: 0,
+            highly_negative: 0,
+            countMonths: 1
+          });
+          return;
         }
 
         const calculatedData = await calculateResponse.json();
-        console.log(`[MonthlyKPIS] Calculated data: ${JSON.stringify(calculatedData)}`);
-        setMonthlyData(calculatedData.monthly);
-        setTotalData(calculatedData.totals);
+        console.log(`[MonthlyKPIS] Calculated data:`, calculatedData);
+        
+        // Ensure we have data structure even if empty
+        setMonthlyData(calculatedData.monthly || {});
+        setTotalData(calculatedData.totals || {
+          totalPosts: 0,
+          criticism: 0,
+          highly_positive: 0,
+          positive: 0,
+          neutral: 0,
+          negative: 0,
+          highly_negative: 0,
+          countMonths: 1
+        });
       } catch (error) {
         console.error('Error fetching monthly data:', error);
+        // Set default empty data structure
+        setMonthlyData({});
+        setTotalData({
+          totalPosts: 0,
+          criticism: 0,
+          highly_positive: 0,
+          positive: 0,
+          neutral: 0,
+          negative: 0,
+          highly_negative: 0,
+          countMonths: 1
+        });
       }
     };
     fetchMonthlyData();
-  }, [businessId, selectedBusinessId, allBusinessIds, level, selectedView]); // Updated dependencies
+  }, [businessId, selectedBusinessId, allBusinessIds, level, selectedView]);
 
-  // Generate month options for dropdown
+  // Generate month options for dropdown - exclude current month
   const monthOptions = useMemo(() => {
     const options = [];
     const now = new Date();
-    const thisMonthStr = format(now, 'yyyy-MM');
-    let currentDate = parseISO(thisMonthStr + '-01');
+    const currentMonth = format(now, 'yyyy-MM');
+    
+    // Start from last month, not current month
+    let currentDate = subMonths(now, 1);
     const startDateObj = parseISO(earliestDate);
 
     while (currentDate >= startDateObj) {
       const monthStr = format(currentDate, 'yyyy-MM');
       const monthLabel = format(currentDate, 'MMM yyyy');
-      options.push({
-        value: monthStr,
-        label: monthLabel
-      });
+      
+      // Only add complete months (not current month)
+      if (monthStr !== currentMonth) {
+        options.push({
+          value: monthStr,
+          label: monthLabel
+        });
+      }
+      
       currentDate = new Date(currentDate.setMonth(currentDate.getMonth() - 1));
     }
 
@@ -150,9 +192,7 @@ export default function MonthlyReporting({ clientId, businessId, level = 'client
   }, [earliestDate]);
 
   const lastMonthStr = format(subMonths(parseISO(selectedMonth + '-01'), 1), 'yyyy-MM');
-  const nowMonthStr = format(new Date(), 'yyyy-MM');
-  const prevMonthStr = format(subMonths(new Date(), 1), 'yyyy-MM');
-  const sMPIForMonth = selectedMonth === nowMonthStr ? prevMonthStr : selectedMonth;
+  const sMPIForMonth = selectedMonth; // Use selected month directly since we're excluding current month
 
   return (
     <div className="container mx-auto px-4">
@@ -163,10 +203,8 @@ export default function MonthlyReporting({ clientId, businessId, level = 'client
         </div>
         
         <div className="flex flex-col items-end gap-2">
-          {/* Only show view controls at client level */}
           {level === 'client' && (
             <>
-              {/* View selector dropdown for client level - always visible */}
               <select
                 value={selectedView}
                 onChange={(e) => setSelectedView(e.target.value as 'client' | 'business')}
@@ -176,7 +214,6 @@ export default function MonthlyReporting({ clientId, businessId, level = 'client
                 <option value="business">Business Level</option>
               </select>
               
-              {/* Custom business selector - only show when viewing specific business */}
               {selectedView === 'business' && (
                 <select
                   value={selectedBusinessId}
@@ -195,7 +232,7 @@ export default function MonthlyReporting({ clientId, businessId, level = 'client
             </>
           )}
         
-          {/* Month selector - always visible */}
+          {/* Month selector - only complete months */}
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
@@ -210,38 +247,35 @@ export default function MonthlyReporting({ clientId, businessId, level = 'client
         </div>
       </div>
       <MonthlyKPIsTierBanner/>
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch min-h-[340px]">
         <div className="md:col-span-1 w-full h-full flex flex-col justify-center">
           <SMPIProgressCircle
             selectedMonth={sMPIForMonth}
-            lastMonthStr={format(subMonths(parseISO(sMPIForMonth + '-01'), 1), 'yyyy-MM')}
+            lastMonthStr={lastMonthStr}
             monthlyData={monthlyData}
             totalData={totalData}
           />
         </div>
         <div className="md:col-span-2 w-full h-full flex items-stretch">
-          <LineGraph
-              clientId={clientId}
-              // Only pass businessId when showing business-level data
-              businessId={
-                level === 'business' ? businessId : 
-                selectedView === 'business' ? selectedBusinessId : 
-                undefined  // Don't pass businessId for client-level view
-              }
-              earliestDate={startDate}
-              latestDate={endDate}
-              // Only pass allBusinessIds when showing client-level data
-              allBusinessIds={
-                level === 'client' || selectedView === 'client' ? allBusinessIds : undefined
-              }
-              date_level="daily"
-            />
+          <HistoricalSMPI
+            clientId={clientId}
+            businessId={
+              level === 'business' ? businessId : 
+              selectedView === 'business' ? selectedBusinessId : 
+              undefined
+            }
+            allBusinessIds={
+              level === 'client' && selectedView === 'client' ? allBusinessIds : undefined
+            }
+            level={level === 'business' ? 'business' : selectedView}
+            selectedMonth={selectedMonth}
+          />
         </div>
 
         {/* Platform comparison charts */}
         {monthlyData && (
           <>
-          {/* line 1 */}
             <div className="md:col-span-1 min-h-64 flex items-stretch">
               <ComparisonBarChart
                 title="Total Posts vs Last Month vs Average"
@@ -269,7 +303,7 @@ export default function MonthlyReporting({ clientId, businessId, level = 'client
                 monthlyAvgData={(totalData?.neutral || 0)/(totalData?.countMonths || 1)}
               />
             </div>
-            {/* line 2 */}
+            
             <div className="md:col-span-1 min-h-64 flex items-stretch">
               <ComparisonBarChart
                 title="Highly Positive Posts vs Last Month vs Average"
@@ -290,7 +324,6 @@ export default function MonthlyReporting({ clientId, businessId, level = 'client
             </div>
             <div className="md:col-span-1 min-h-64 flex items-stretch"></div>
 
-            {/* line 3 */}
             <div className="md:col-span-1 min-h-64 flex items-stretch">
               <ComparisonBarChart
                 title="Highly Negative Posts vs Last Month vs Average"
