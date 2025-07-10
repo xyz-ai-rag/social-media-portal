@@ -15,77 +15,83 @@ interface BusinessTierContextType {
   isFreeTier: boolean;
   shouldShowBanner: boolean;
   loading: boolean;
-  updateBusinessTier: (businessId: string) => Promise<void>;
 }
 
 const BusinessTierContext = createContext<BusinessTierContextType | undefined>(undefined);
 
-interface BusinessTierProviderProps {
-  children: ReactNode;
-  businessId?: string; // Optional - can be passed from page level
-}
+const CACHE_KEY_PREFIX = 'business_tier_';
 
-export function BusinessTierProvider({ children, businessId }: BusinessTierProviderProps) {
+// Simple localStorage helper
+const getBusinessTierFromStorage = (businessId: string): BusinessTierInfo | null => {
+  try {
+    const item = localStorage.getItem(`${CACHE_KEY_PREFIX}${businessId}`);
+    return item ? JSON.parse(item) : null;
+  } catch {
+    return null;
+  }
+};
+
+export function BusinessTierProvider({ children, businessId }: { children: ReactNode; businessId?: string }) {
   const { clientDetails } = useAuth();
   const [currentBusinessTier, setCurrentBusinessTier] = useState<BusinessTierInfo | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Fetch business tier information
-  const fetchBusinessTier = async (id: string) => {
-    if (!id) return;
-    
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/businesses/getBusinessTier?businessId=${encodeURIComponent(id)}`);
-      if (!response.ok) throw new Error('Failed to fetch business tier');
-      
-      const data = await response.json();
-      
-      setCurrentBusinessTier({
-        businessId: data.business_id,
-        businessName: data.business_name,
-        isFreeTier: data.is_free_tier || false,
-        lastUpdated: data.last_updated || null
-      });
-    } catch (error) {
-      console.error('Error fetching business tier:', error);
-      // Fallback to free tier if API fails (safer default)
-      const fallbackName = clientDetails?.businesses?.find(
-        b => b.business_id === id
-      )?.business_name || 'Unknown Business';
-      
-      setCurrentBusinessTier({
-        businessId: id,
-        businessName: fallbackName,
-        isFreeTier: true
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Update business tier (can be called from components)
-  const updateBusinessTier = async (id: string) => {
-    await fetchBusinessTier(id);
-  };
-
-  // Fetch tier info when businessId changes
+  // Initialize immediately from localStorage - NO API call, NO async operations
   useEffect(() => {
-    if (businessId) {
-      fetchBusinessTier(businessId);
+    if (!businessId) return;
+
+    // Try localStorage first (synchronous - no refreshing!)
+    const cachedTier = getBusinessTierFromStorage(businessId);
+    
+    if (cachedTier) {
+      // Set immediately from cache - banner shows instantly, no refresh
+      setCurrentBusinessTier(cachedTier);
+      return;
     }
+
+    // Only if no localStorage data, then fetch from API
+    const fetchTier = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/businesses/getBusinessTier?businessId=${encodeURIComponent(businessId)}`);
+        if (!response.ok) throw new Error('Failed to fetch');
+        
+        const data = await response.json();
+        const tierInfo = {
+          businessId: data.business_id,
+          businessName: data.business_name,
+          isFreeTier: data.is_free_tier || false,
+          lastUpdated: data.last_updated || null
+        };
+
+        // Save to localStorage for next time
+        localStorage.setItem(`${CACHE_KEY_PREFIX}${businessId}`, JSON.stringify(tierInfo));
+        setCurrentBusinessTier(tierInfo);
+      } catch (error) {
+        // Fallback
+        const fallbackName = clientDetails?.businesses?.find(b => b.business_id === businessId)?.business_name || 'Unknown';
+        const fallback = {
+          businessId,
+          businessName: fallbackName,
+          isFreeTier: true
+        };
+        setCurrentBusinessTier(fallback);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTier();
   }, [businessId, clientDetails]);
 
-  // Computed values
-  const isFreeTier = currentBusinessTier?.isFreeTier ?? true; // Default to free tier for safety
+  const isFreeTier = currentBusinessTier?.isFreeTier ?? true;
   const shouldShowBanner = isFreeTier && currentBusinessTier !== null;
 
   const value = useMemo(() => ({
     currentBusinessTier,
     isFreeTier,
     shouldShowBanner,
-    loading,
-    updateBusinessTier
+    loading
   }), [currentBusinessTier, isFreeTier, shouldShowBanner, loading]);
 
   return (
@@ -103,14 +109,13 @@ export function useBusinessTier() {
   return context;
 }
 
-// Hook for easy banner integration in components
 export function useTierBanner() {
   const { shouldShowBanner, currentBusinessTier, loading } = useBusinessTier();
   
   return {
     shouldShow: shouldShowBanner,
     businessName: currentBusinessTier?.businessName,
-    lastUpdated: currentBusinessTier?.lastUpdated, // Add lastUpdated
+    lastUpdated: currentBusinessTier?.lastUpdated,
     loading
   };
 }
