@@ -260,7 +260,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         // Check if current business is free tier and override competitorId
         // For free tier, use the competitor ID directly (since they're already sample IDs)
         // For paid tier, use the actual competitor ID
-        let effectiveCompetitorId = competitorId;
+        const effectiveCompetitorId = competitorId;
         
         // Note: For free tier, competitorId is already a sample ID from the simulated list
         // so we don't need to override it like we did for business post
