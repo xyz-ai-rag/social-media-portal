@@ -8,7 +8,7 @@ import CirclePacking from './CirclePacking';
 import TabSection from './TabSection';
 import BarChart from './BarChart';
 import { useSearchParams } from "next/navigation";
-
+import { TopicAnalysisOverviewTierBanner } from "@/components/TierBanner";
 interface AnalysisProps {
   clientId: string;
   businessId: string;
@@ -162,9 +162,11 @@ const TopicAnalysis: FC<AnalysisProps> = ({
     <div className="container mx-auto px-4">
 
       <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-4">
-        {`Analysis for ${businessName || "Business"}`}
+        {`Topic Analysis for ${businessName || "Business"}`}
       </h1>
 
+      {/* Tier-aware banner - positioned under title for better alignment */}
+      <TopicAnalysisOverviewTierBanner />
       {/* Tab Section */}
       <TabSection
         activeTab={activeTab}

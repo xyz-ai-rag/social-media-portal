@@ -4,7 +4,7 @@
 import MonthlyReporting from "@/components/client-reporting/monthly-kpis/MonthlyKPIS";
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-
+import { BusinessTierProvider } from "@/context/BusinessTierContext";
 export default function MonthlyKPIsPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -20,13 +20,16 @@ export default function MonthlyKPIsPage() {
 
   return (
     <div className="container mx-auto px-4">
-      <Suspense>
-        <MonthlyReporting 
-          clientId={clientId} 
-          businessId={businessId} 
-          level={level}
-        />
-      </Suspense>
+      <BusinessTierProvider businessId={businessId}>
+        <Suspense>
+          <MonthlyReporting 
+            clientId={clientId} 
+            businessId={businessId} 
+            level={level}
+          />
+        </Suspense>
+      </BusinessTierProvider>
+      
     </div>
   );
 }

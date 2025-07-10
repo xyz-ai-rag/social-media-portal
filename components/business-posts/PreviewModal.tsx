@@ -3,7 +3,7 @@
 import React, { ReactNode, useRef, useEffect } from "react";
 import { Modal, Spinner } from "flowbite-react";
 import { PostData } from "./SharedFilter";
-
+import { BusinessPostsModalTierBanner } from "../TierBanner";
 // Base interface for shared post data
 export interface PreviewModalProps {
   isOpen: boolean;
@@ -108,6 +108,7 @@ const PreviewModal = ({
             <Modal.Header>
               <div className="flex items-center">
                 {title}
+                
                 {/* Show competitor badge if specified */}
                 {showCompetitorBadge && (
                   <span className="ml-3 bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
@@ -115,8 +116,9 @@ const PreviewModal = ({
                   </span>
                 )}
               </div>
+              <BusinessPostsModalTierBanner/>
             </Modal.Header>
-
+            
             {/* Modal.Body */}
             <Modal.Body className="overflow-auto">
               {/* Optional leading content */}
