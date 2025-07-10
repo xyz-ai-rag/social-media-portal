@@ -52,7 +52,7 @@ export default function BrandOverview({ clientId }: BrandOverviewProps) {
     <div className="container mx-auto px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">
-          Overview
+          Brand Portfolio Overview
         </h1>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">

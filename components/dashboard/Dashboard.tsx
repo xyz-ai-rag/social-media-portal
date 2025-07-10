@@ -11,6 +11,7 @@ import TopCitiesMap from "./TopCities/TopCities";
 import ContentType from "./ContentType/ContentType";
 import TopUsers from "./TopUsers/TopUsers";
 import { useAuth } from "@/context/AuthContext";
+import { DashboardTierBanner } from "@/components/TierBanner";
 
 interface DashboardProps {
   clientId: string;
@@ -58,6 +59,10 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           </h1>
           <DateRangePicker page="dashboard" businessId={businessId} />
         </div>
+
+        {/* Tier-aware banner - positioned under title for better alignment */}
+        <DashboardTierBanner />
+
         <div className="flex flex-col items-end gap-2">
           <h2 className="text-base font-light text-gray-600 italic">
             Last Update: {getFormattedTimestamp(lastCrawlTime)}

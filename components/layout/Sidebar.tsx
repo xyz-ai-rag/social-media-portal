@@ -95,6 +95,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
 export default function Sidebar() {
   // Use localStorage to persist the collapsed state
   const [collapsed, setCollapsed] = useState<boolean>(false);
+  const [isClient, setIsClient] = useState(false);
   const { logout, clientDetails } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -112,6 +113,14 @@ export default function Sidebar() {
     setForceUpdate(prev => prev + 1);
   }, [pathname, searchParams]);
 
+  // Handle client-side hydration and localStorage
+  useEffect(() => {
+    setIsClient(true);
+    const savedState = localStorage.getItem("sidebarCollapsed");
+    if (savedState) {
+      setCollapsed(JSON.parse(savedState));
+    }
+  }, []);
   // Get client and business IDs using the shared hook
   const effectiveClientId = clientDetails?.id || null;
   const effectiveBusinessId = selectedBusinessId; // Use selected business from hook
@@ -262,7 +271,7 @@ export default function Sidebar() {
               <>
                 {!collapsed && (
                   <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 pl-2">
-                    BRAND
+                    Brand Portfolio
                   </div>
                 )}
                 <nav className="space-y-2">
@@ -286,15 +295,18 @@ export default function Sidebar() {
                     onClick={(!hasBusiness && needsBusinessSelection) ? handleDisabledClick : undefined}
                   />
 
-                  <MenuItem
-                    href={getBusinessReportingUrl()}
-                    icon={<TbReportAnalytics />}
-                    label="Business Reporting"
-                    isActive={isActive("/[clientId]/[businessId]/business-reporting")}
-                    disabled={!hasBusiness && needsBusinessSelection}
-                    collapsed={collapsed}
-                    onClick={(!hasBusiness && needsBusinessSelection) ? handleDisabledClick : undefined}
-                  />
+                  {/* Hide Business Reporting when can_view_business_reporting is true */}
+                  {!canViewBusinessReporting && (
+                    <MenuItem
+                      href={getBusinessReportingUrl()}
+                      icon={<TbReportAnalytics />}
+                      label="Business Reporting"
+                      isActive={isActive("/[clientId]/[businessId]/business-reporting")}
+                      disabled={!hasBusiness && needsBusinessSelection}
+                      collapsed={collapsed}
+                      onClick={(!hasBusiness && needsBusinessSelection) ? handleDisabledClick : undefined}
+                    />
+                  )}
                 </nav>
               </>
             )}
@@ -318,6 +330,16 @@ export default function Sidebar() {
                     onClick={!hasBusiness ? handleDisabledClick : undefined}
                   />
 
+                  <MenuItem
+                    href={getAnalyticsUrl()}
+                    icon={<IoAnalyticsOutline />}
+                    label="Topic Analysis"
+                    isActive={isActive("/[clientId]/[businessId]/topic-analysis")}
+                    disabled={!hasBusiness}
+                    collapsed={collapsed}
+                    onClick={!hasBusiness ? handleDisabledClick : undefined}
+                  />
+                  
                   {/* Add Monthly KPIs to Business section as well */}
                   <MenuItem
                     href={getBusinessMonthlyKPIsUrl()}
@@ -334,16 +356,6 @@ export default function Sidebar() {
                     icon={<FiList />}
                     label="All Posts"
                     isActive={isActive("/[clientId]/[businessId]/posts")}
-                    disabled={!hasBusiness}
-                    collapsed={collapsed}
-                    onClick={!hasBusiness ? handleDisabledClick : undefined}
-                  />
-
-                  <MenuItem
-                    href={getAnalyticsUrl()}
-                    icon={<IoAnalyticsOutline />}
-                    label="Analysis"
-                    isActive={isActive("/[clientId]/[businessId]/topic-analysis")}
                     disabled={!hasBusiness}
                     collapsed={collapsed}
                     onClick={!hasBusiness ? handleDisabledClick : undefined}

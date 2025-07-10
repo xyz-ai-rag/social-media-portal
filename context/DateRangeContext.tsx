@@ -57,7 +57,7 @@ export const DATE_PRESETS = {
     label: 'Last 7 days',
     getRange: () => {
       const yesterday = subDays(new Date(), 1);
-      const start = subDays(yesterday, 6); // 7 days ending with yesterday
+      const start = subDays(yesterday, 6);
       const startStr = format(start, 'yyyy-MM-dd');
       const endStr = format(yesterday, 'yyyy-MM-dd');
       return {
@@ -72,7 +72,7 @@ export const DATE_PRESETS = {
     label: 'Last 30 days',
     getRange: () => {
       const yesterday = subDays(new Date(), 1);
-      const start = subDays(yesterday, 29); // 30 days ending with yesterday
+      const start = subDays(yesterday, 29);
       const startStr = format(start, 'yyyy-MM-dd');
       const endStr = format(yesterday, 'yyyy-MM-dd');
       return {
@@ -87,7 +87,7 @@ export const DATE_PRESETS = {
     label: 'Last 60 days',
     getRange: () => {
       const yesterday = subDays(new Date(), 1);
-      const start = subDays(yesterday, 59); // 60 days ending with yesterday
+      const start = subDays(yesterday, 59);
       const startStr = format(start, 'yyyy-MM-dd');
       const endStr = format(yesterday, 'yyyy-MM-dd');
       return {
@@ -102,7 +102,7 @@ export const DATE_PRESETS = {
     label: 'Last 90 days', 
     getRange: () => {
       const yesterday = subDays(new Date(), 1);
-      const start = subDays(yesterday, 89); // 90 days ending with yesterday
+      const start = subDays(yesterday, 89);
       const startStr = format(start, 'yyyy-MM-dd');
       const endStr = format(yesterday, 'yyyy-MM-dd');
       return {
@@ -117,7 +117,7 @@ export const DATE_PRESETS = {
     label: 'Last 120 days',
     getRange: () => {
       const yesterday = subDays(new Date(), 1);
-      const start = subDays(yesterday, 119); // 120 days ending with yesterday
+      const start = subDays(yesterday, 119);
       const startStr = format(start, 'yyyy-MM-dd');
       const endStr = format(yesterday, 'yyyy-MM-dd');
       return {
@@ -150,8 +150,6 @@ export const DATE_PRESETS = {
           aggregationType = 'monthly';
         }
       }
-      
-      console.log("Final aggregation type:", aggregationType);
       
       return {
         startDate: setStartOfDay(startStr),
@@ -197,7 +195,6 @@ export const DATE_PRESETS = {
   custom: {
     label: 'Custom range',
     getRange: (startDate?: string, endDate?: string) => {
-      // If no dates provided, default to last 7 days.
       if (!startDate || !endDate) {
         return DATE_PRESETS.last7Days.getRange();
       }
@@ -230,14 +227,14 @@ interface DateRangeProviderProps {
 }
 
 export function DateRangeProvider({ children }: DateRangeProviderProps) {
-  // Initialize with Last 30 Days as default (computed only once on mount)
+  // Initialize with Last 30 Days as default
   const initialRange = useMemo(() => DATE_PRESETS.last30Days.getRange(), []);
   const [dateRange, setDateRange] = useState<DateRange>(initialRange);
 
-  // Wrap updateDateRange with useCallback and only update if values change.
+  // Fixed updateDateRange function
   const updateDateRange = useCallback((preset: string, customStartDate?: string, customEndDate?: string) => {
-    
     let newRange: DateRange;
+    
     if (preset === 'custom' && customStartDate && customEndDate) {
       newRange = DATE_PRESETS.custom.getRange(customStartDate, customEndDate);
     } else if (preset === 'everything' && customStartDate && customEndDate) {
@@ -248,7 +245,8 @@ export function DateRangeProvider({ children }: DateRangeProviderProps) {
     } else {
       return;
     }    
-    // Update only if the range values are actually different from current state
+    
+    // Use functional update to avoid dependency issues
     setDateRange(prev => {
       if (
         prev.startDate === newRange.startDate &&
@@ -256,13 +254,13 @@ export function DateRangeProvider({ children }: DateRangeProviderProps) {
         prev.aggregationType === newRange.aggregationType &&
         prev.label === newRange.label
       ) {
-        return prev;
+        return prev; // Return same reference if no changes
       }
       return newRange;
     });
-  }, []);
+  }, []); // Empty dependency array since we're using functional updates
 
-  // Memoize the context value to avoid unnecessary re-renders.
+  // Memoize the context value
   const value = useMemo(() => ({
     dateRange,
     setDateRange,
