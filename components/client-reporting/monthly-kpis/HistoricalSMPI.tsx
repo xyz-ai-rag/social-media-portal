@@ -346,15 +346,24 @@ export default function HistoricalSMPI({
         type: "category",
         data: sortedMonths,
         axisLabel: {
-          fontSize: 11,
+          fontSize: 12,
+          color: '#374151', // Darker color for better visibility
           formatter: (value: string) => {
             const date = parseISO(value + '-01');
             return format(date, 'MMM yy');
           },
         },
         axisLine: {
+          show: true,
           lineStyle: {
-            color: '#e5e7eb'
+            color: '#6b7280', // Darker gray for better visibility
+            width: 2
+          }
+        },
+        axisTick: {
+          show: true,
+          lineStyle: {
+            color: '#6b7280'
           }
         }
       },
@@ -365,18 +374,27 @@ export default function HistoricalSMPI({
         splitLine: { 
           lineStyle: { 
             type: "dashed",
-            color: '#f3f4f6'
+            color: '#e5e7eb'
           } 
         },
         axisLabel: {
-          fontSize: 11,
+          fontSize: 12,
+          color: '#374151', // Darker color for better visibility
           formatter: function(value: number) {
             return Math.round(value).toString();
           }
         },
         axisLine: {
+          show: true,
           lineStyle: {
-            color: '#e5e7eb'
+            color: '#6b7280', // Darker gray for better visibility
+            width: 2
+          }
+        },
+        axisTick: {
+          show: true,
+          lineStyle: {
+            color: '#6b7280'
           }
         }
       },
