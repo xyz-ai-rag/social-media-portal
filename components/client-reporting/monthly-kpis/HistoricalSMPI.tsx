@@ -462,19 +462,15 @@ export default function HistoricalSMPI({
       <div className="text-xs text-gray-500 mb-4 flex flex-wrap gap-4">
         <span className="flex items-center">
           <span className="w-3 h-3 bg-red-400 rounded-full mr-1"></span>
-          0-25: Poor
+          0-49: Needs attention
         </span>
         <span className="flex items-center">
-          <span className="w-3 h-3 bg-orange-400 rounded-full mr-1"></span>
-          25-50: Below Average
-        </span>
-        <span className="flex items-center">
-          <span className="w-3 h-3 bg-yellow-400 rounded-full mr-1"></span>
-          50-75: Good
+          <span className="w-3 h-3 bg-blue-400 rounded-full mr-1"></span>
+          50-70: Acceptable
         </span>
         <span className="flex items-center">
           <span className="w-3 h-3 bg-green-400 rounded-full mr-1"></span>
-          75-100: Excellent
+          71-100: Strong performance
         </span>
       </div>
 
