@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTierBanner } from '@/context/BusinessTierContext';
 import InfoBanner from '@/utils/InfoBanner';
 import { 
@@ -15,19 +15,25 @@ interface TierBannerProps {
   pageType: keyof typeof import('@/constants/bannerInfo').BANNER_MESSAGES | BannerPageType;
   className?: string;
   customConfig?: Partial<BannerConfig>;
-  isModal?: boolean; // Add this prop to handle modal styling
+  isModal?: boolean;
 }
 
 export default function TierBanner({ 
   pageType,
   className = '',
   customConfig,
-  isModal = false // Default to false for backward compatibility
+  isModal = false
 }: TierBannerProps) {
   const { shouldShow, businessName, lastUpdated, loading } = useTierBanner();
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Don't render anything if shouldn't show or still loading
-  if (!shouldShow || loading) {
+  // Only render after hydration to prevent SSR mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Don't render anything during SSR, while loading, or if shouldn't show
+  if (!isMounted || loading || !shouldShow) {
     return null;
   }
 
@@ -70,9 +76,6 @@ export default function TierBanner({
     effectiveVariant = finalConfig.variant as 'info' | 'warning' | 'success' | 'error'; // Keep original variant for Dashboard
   }
   
-  // Add debugging
-  console.log('TierBanner pageType:', pageType, 'shouldUseInfoIcon:', shouldUseInfoIcon, 'effectiveVariant:', effectiveVariant);
-  
   return (
     <div className={`${modalClasses} ${className}`}>
       <InfoBanner
@@ -80,7 +83,7 @@ export default function TierBanner({
         title={finalConfig.title}
         message={renderedMessage}
         isModal={isModal}
-        forceInfoIcon={shouldUseInfoIcon} // Pass flag to force info icon
+        forceInfoIcon={shouldUseInfoIcon}
       />
     </div>
   );
@@ -136,8 +139,8 @@ export function BusinessPostsModalTierBanner(props?: { className?: string }) {
   return (
     <TierBanner
       pageType="BUSINESS_POSTS_MODAL"
-      className={`mt-3 ${props?.className || ''}`} // Add top margin by default
-      isModal={true} // Set modal flag to true
+      className={`mt-3 ${props?.className || ''}`}
+      isModal={true}
     />
   );
 }
