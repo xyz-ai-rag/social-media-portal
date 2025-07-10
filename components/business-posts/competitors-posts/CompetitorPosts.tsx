@@ -174,7 +174,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
               id: "8d9e0f1a-2b3c-4e5f-6a7b-8c9d0e1f2a3b",
               name: "Sample Competitor 1"
             }
-          ];
+          ].sort((a, b) => a.name.localeCompare(b.name));
 
           setCompetitors(simulatedCompetitors);
 
@@ -223,7 +223,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         const fetchedCompetitors = data.businesses.map((business: any) => ({
           id: business.business_id,
           name: business.business_name,
-        }));
+        })).sort((a: Competitor, b: Competitor) => a.name.localeCompare(b.name));
 
         setCompetitors(fetchedCompetitors);
 
