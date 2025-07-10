@@ -12,6 +12,7 @@ import TopicPostTrendChart from "./TopicPostsTrendChart";
 import { IoArrowBack } from "react-icons/io5";
 import Link from "next/link";
 import { TopicAnalysisDrillDownTierBanner } from "@/components/TierBanner";
+import { useBusinessTier } from '@/context/BusinessTierContext';
 interface TopicPostsProps {
   clientId: string;
   businessId: string;
@@ -43,6 +44,7 @@ const TopicPosts: FC<TopicPostsProps> = ({
   topic,
   topicType,
 }) => {
+  const { isFreeTier } = useBusinessTier();
   const [posts, setPosts] = useState<PostData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -158,10 +160,25 @@ const TopicPosts: FC<TopicPostsProps> = ({
             ? yesterday
             : dateRange.endDate;
 
+        // Check if current business is free tier and use sample businessId
+        let effectiveBusinessId = businessId;
+        let apiEndpoint = `/api/businesses/getBusinessPostsByTopic`;
+        
+        if (isFreeTier) {
+          // For free tier, use sample business ID and regular business posts endpoint
+          effectiveBusinessId = 'a7b6c5d4-e3f2-1a0b-9c8d-7e6f5a4b3c2d';
+          apiEndpoint = `/api/businesses/getBusinessPosts`;
+        }
+
         // Build query parameters
         const queryParams = new URLSearchParams();
-        queryParams.append("businessId", businessId);
-        queryParams.append("topic", topic);
+  
+        queryParams.append("businessId", effectiveBusinessId);
+        
+        // Only add topic parameter if not free tier
+        if (!isFreeTier) {
+          queryParams.append("topic", topic);
+        }
 
         if (dateRange.startDate)
           queryParams.append("startDate", dateRange.startDate);
@@ -181,7 +198,7 @@ const TopicPosts: FC<TopicPostsProps> = ({
         // Make the API call
         const response = await fetch(
           constructVercelURL(
-            `/api/businesses/getBusinessPostsByTopic?${queryParams.toString()}`
+            `${apiEndpoint}?${queryParams.toString()}`
           ),
           {
             method: "GET",
@@ -455,7 +472,14 @@ const TopicPosts: FC<TopicPostsProps> = ({
           }`}
         </Link>
       </div>
-
+      {/* Add this after the back button */}
+      {/* {isFreeTier && (
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+          <div className="text-blue-600 text-sm">
+            <strong>Demo Mode:</strong> Showing sample restaurant posts for demonstration purposes
+          </div>
+        </div>
+      )} */}
       {/* Trend Chart */}
       {topicType !== "General" && (
         <TopicPostTrendChart businessId={businessId} noteIds={noteIds} />
