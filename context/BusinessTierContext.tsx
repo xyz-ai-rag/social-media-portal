@@ -60,6 +60,7 @@ const markFreshLoadedInSession = (businessId: string): void => {
     // Ignore errors
   }
 };
+
 const getBusinessTierFromStorage = (businessId: string): BusinessTierInfo | null => {
   try {
     const item = localStorage.getItem(`${CACHE_KEY_PREFIX}${businessId}`);
@@ -202,7 +203,7 @@ export function BusinessTierProvider({ children, businessId }: { children: React
     }
   };
 
-  // Main initialization logic - BACK TO ORIGINAL SMOOTH BEHAVIOR
+  // Main initialization logic - Updated with page refresh detection
   useEffect(() => {
     if (!businessId) {
       // console.log('⚠️ No businessId provided');
@@ -211,20 +212,20 @@ export function BusinessTierProvider({ children, businessId }: { children: React
 
     // console.log('🚀 Initializing BusinessTierProvider for:', businessId);
 
-    // ORIGINAL BEHAVIOR: Try localStorage first (smooth, no flashing)
     const cachedTier = getBusinessTierFromStorage(businessId);
     
-    if (cachedTier) {
+    // Check if this is a page refresh
+    const isRefresh = isPageRefresh();
+    
+    if (cachedTier && !isRefresh) {
+      // Normal navigation - use cache smoothly
       // console.log('📦 Found cached data, using it immediately (no flash)');
-      // Set immediately from cache - banner shows instantly, smoothly
       setCurrentBusinessTier(cachedTier);
-      
-      // No background refresh needed since cache expires in 3 seconds anyway
       return;
     }
 
-    // console.log('📭 No cache found, fetching from API');
-    // No cache available or cache expired (after 3 seconds), fetch from API
+    // Page refresh OR no cache - fetch fresh data
+    // console.log('📭 Page refresh detected or no cache found, fetching from API');
     fetchTierFromAPI(true);
   }, [businessId, clientDetails]);
 

@@ -459,7 +459,7 @@ const TopicPosts: FC<TopicPostsProps> = ({
           {`${decodeURIComponent(topic)} Posts`}
         </h1>
       </div>
-      <TopicAnalysisDrillDownTierBanner/>
+
       {/* Back button */}
       <div className="flex items-center">
         <Link
@@ -472,6 +472,8 @@ const TopicPosts: FC<TopicPostsProps> = ({
           }`}
         </Link>
       </div>
+      <TopicAnalysisDrillDownTierBanner/>
+      
       {/* Add this after the back button */}
       {/* {isFreeTier && (
         <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
