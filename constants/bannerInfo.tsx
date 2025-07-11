@@ -8,7 +8,7 @@ export interface BannerConfig {
   isDynamic?: boolean; // Flag to indicate if message needs dynamic data
 }
 
-// Helper function to create dynamic message with bold text (no italics)
+// Helper function to create dynamic message with bold text and upgrade link
 const createDynamicMessage = (
   firstPart: string,
   lastUpdatedPrefix: string = "Last update was ",
@@ -18,12 +18,20 @@ const createDynamicMessage = (
     <>
       {parseMarkdownBold(firstPart)}{" "}
       {lastUpdatedPrefix}
-      {lastUpdated || "May 5, 2025"}. {upgradePart}
+      {lastUpdated || "May 5, 2025"}.{" "}
+      <a 
+        href="https://www.hyprdata.ai/upgrade" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="text-blue-600 hover:text-blue-800 underline font-medium"
+      >
+        {upgradePart}
+      </a>
     </>
   );
 };
 
-// Helper function to parse **text** into <strong>text</strong>
+// Helper function to parse **text** into <strong>text</strong> and add upgrade links
 const parseMarkdownBold = (text: string): React.ReactNode => {
   const parts = text.split(/(\*\*.*?\*\*)/);
   
@@ -41,7 +49,35 @@ const parseMarkdownBold = (text: string): React.ReactNode => {
   );
 };
 
-export const BANNER_MESSAGES = {
+// Helper function to add upgrade link to static messages
+const addUpgradeLink = (text: string): React.ReactNode => {
+  // Split the text at "Upgrade to" to make the upgrade sentence a link
+  const upgradeIndex = text.lastIndexOf('Upgrade to');
+  
+  if (upgradeIndex === -1) {
+    // No "Upgrade to" found, just parse bold text
+    return parseMarkdownBold(text);
+  }
+  
+  const beforeUpgrade = text.substring(0, upgradeIndex);
+  const upgradeText = text.substring(upgradeIndex);
+  
+  return (
+    <>
+      {parseMarkdownBold(beforeUpgrade)}
+      <a 
+        href="https://www.hyprdata.ai/upgrade" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="text-blue-600 hover:text-blue-800 underline font-medium"
+      >
+        {upgradeText}
+      </a>
+    </>
+  );
+};
+
+export const BANNER_MESSAGES: Record<string, BannerConfig> = {
   // Dashboard page banner
   DASHBOARD: {
     variant: 'info' as const,
@@ -101,7 +137,7 @@ export const BANNER_MESSAGES = {
     message: "The data displayed below is **sample data**. Monthly KPIs are not available in the Free tier. Upgrade to view full monthly and historical KPIs for this business.",
     isDynamic: false
   }
-} as const;
+};
 
 // Helper function to get banner config by page type
 export const getBannerConfig = (pageType: keyof typeof BANNER_MESSAGES): BannerConfig => {
@@ -124,23 +160,22 @@ export const getBannerConfigByEnum = (pageType: BannerPageType): BannerConfig =>
   return BANNER_MESSAGES[pageType];
 };
 
-// Updated helper function to render message with dynamic data and bold parsing
+// Updated helper function to render message with dynamic data, bold parsing, and upgrade links
 export const renderBannerMessage = (
   config: BannerConfig,
   lastUpdated?: string
 ): React.ReactNode => {
   if (config.isDynamic && typeof config.message === 'function') {
     // For dynamic messages (Dashboard and Topic Analysis Overview)
-    const dynamicMessage = config.message(lastUpdated);
-    
-    // Since our createDynamicMessage function returns JSX with string content,
-    // and we need to parse ** in the first part, let's handle it differently
-    // We'll modify createDynamicMessage to handle bold parsing internally
-    return dynamicMessage;
-  } else if (typeof config.message === 'string' && config.message.includes('**')) {
-    // For static messages with ** bold formatting
-    return parseMarkdownBold(config.message);
+    // These already have upgrade links built-in via createDynamicMessage
+    return config.message(lastUpdated);
+  } 
+  
+  if (typeof config.message === 'string') {
+    // For static messages, add upgrade links and parse bold formatting
+    return addUpgradeLink(config.message);
   }
   
-  return config.message as string;
+  // This should never happen based on our interface, but TypeScript needs it
+  return null;
 };
