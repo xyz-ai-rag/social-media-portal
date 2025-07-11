@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';
 import { useDateRange } from '@/context/DateRangeContext';
+import { useBusinessTier } from '@/context/BusinessTierContext';
 import { setStartOfDay, setEndOfDay } from '@/utils/timeUtils';
 import { constructVercelURL } from '@/utils/generateURL';
 import CompetitorComparisonBarChart from './CompetitorComparisonBarChart';
@@ -37,16 +38,21 @@ export default function CompetitorComparisonStats({
   const [error, setError] = useState<string | null>(null);
 
   const { clientDetails } = useAuth();
+  const { isFreeTier } = useBusinessTier();
   const { dateRange } = useDateRange();
 
-  // Get business name
+  // Get business name - use sample name for free tier
   const businessName = useMemo(() => {
+    if (isFreeTier) {
+      return "Sample Business"; // Use generic sample name for free tier
+    }
+    
     if (!clientDetails?.businesses) return "Your Business";
     const currentBiz = clientDetails.businesses.find(
       (biz) => biz.business_id === businessId
     );
     return currentBiz?.business_name || "Your Business";
-  }, [clientDetails, businessId]);
+  }, [clientDetails, businessId, isFreeTier]);
 
   // Process dates for API query
   const startDateProcessed = useMemo(

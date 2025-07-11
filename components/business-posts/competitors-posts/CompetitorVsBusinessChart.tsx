@@ -14,6 +14,7 @@ import { format } from "date-fns";
 
 import { useAuth } from "@/context/AuthContext";
 import { useDateRange } from "@/context/DateRangeContext";
+import { useBusinessTier } from '@/context/BusinessTierContext';
 import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
 import { constructVercelURL } from "@/utils/generateURL";
 
@@ -62,6 +63,8 @@ export default function CompetitorVsBusinessChart({
 
   // Get global client details from AuthContext.
   const { clientDetails } = useAuth();
+  // Get business tier context
+  const { isFreeTier } = useBusinessTier();
   // Get date range from DateRangeContext.
   const { dateRange } = useDateRange();
 
@@ -83,14 +86,18 @@ export default function CompetitorVsBusinessChart({
     [dateRange.endDate]
   );
 
-  // Get current business name
+  // Get current business name - use sample name for free tier
   const currentBusinessName = useMemo(() => {
+    if (isFreeTier) {
+      return "Sample Business"; // Use generic sample name for free tier
+    }
+    
     if (!clientDetails?.businesses) return "Your Business";
     const currentBiz = clientDetails.businesses.find(
       (biz) => biz.business_id === businessId
     );
     return currentBiz?.business_name || "Your Business";
-  }, [clientDetails, businessId]);
+  }, [clientDetails, businessId, isFreeTier]);
 
   // Fetch data from the API route.
   useEffect(() => {
@@ -255,11 +262,16 @@ export default function CompetitorVsBusinessChart({
     );
   }
 
+  // Update the title to show sample names for free tier
+  const chartTitle = isFreeTier 
+    ? `${currentBusinessName} vs ${competitorName}`
+    : `Your Business vs ${competitorName}`;
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md h-full">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-base font-medium text-gray-800">
-          Your Business vs {competitorName}
+          {chartTitle}
         </h2>
       </div>
       <div className="text-sm text-gray-600 mb-4">
