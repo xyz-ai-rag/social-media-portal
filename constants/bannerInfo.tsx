@@ -1,4 +1,5 @@
 // constants/bannerInfo.tsx
+import React from 'react';
 
 export interface BannerConfig {
   variant: 'info' | 'warning' | 'success' | 'error';
@@ -7,19 +8,35 @@ export interface BannerConfig {
   isDynamic?: boolean; // Flag to indicate if message needs dynamic data
 }
 
-// Helper function to create italic text with dynamic date
+// Helper function to create dynamic message with bold text (no italics)
 const createDynamicMessage = (
   firstPart: string,
-  lastUpdatedPrefix: string = "Last update time was ",
-  upgradePart: string = "Upgrade to get live data, updated daily."
+  lastUpdatedPrefix: string = "Last update was ",
+  upgradePart: string = "Upgrade to get daily updates to your data."
 ) => {
   return (lastUpdated?: string) => (
     <>
-      {firstPart}{" "}
-      <em>
-        {lastUpdatedPrefix}
-        {lastUpdated || "June 30, 2025"}. {upgradePart}
-      </em>
+      {parseMarkdownBold(firstPart)}{" "}
+      {lastUpdatedPrefix}
+      {lastUpdated || "May 5, 2025"}. {upgradePart}
+    </>
+  );
+};
+
+// Helper function to parse **text** into <strong>text</strong>
+const parseMarkdownBold = (text: string): React.ReactNode => {
+  const parts = text.split(/(\*\*.*?\*\*)/);
+  
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          // Remove the ** and wrap in <strong>
+          const boldText = part.slice(2, -2);
+          return <strong key={index}>{boldText}</strong>;
+        }
+        return part;
+      })}
     </>
   );
 };
@@ -30,17 +47,17 @@ export const BANNER_MESSAGES = {
     variant: 'info' as const,
     title: undefined,
     message: createDynamicMessage(
-      "Data is updated daily for paid tiers. Data is updated every three days for free tier."
+      "Data below is updated **once a week** for the Free tier."
     ),
     isDynamic: true
   },
 
   // Topic Analysis Overview page
   TOPIC_ANALYSIS_OVERVIEW: {
-    variant: 'error' as const,
+    variant: 'info' as const,
     title: undefined,
     message: createDynamicMessage(
-      "Data is updated daily for paid tiers. Data is updated every 3-7 days for free tier."
+      "Data below is updated **once a week** for the Free tier."
     ),
     isDynamic: true
   },
@@ -49,7 +66,7 @@ export const BANNER_MESSAGES = {
   TOPIC_ANALYSIS_DRILL_DOWN: {
     variant: 'error' as const,
     title: undefined,
-    message: "Note - the data displayed below is sample data. Upgrade to get full Topic Analysis posts for this business",
+    message: "The data displayed below is **sample data**. Full topic analysis is not available in the Free tier. Upgrade to view all translated posts for each topic.",
     isDynamic: false
   },
 
@@ -57,7 +74,7 @@ export const BANNER_MESSAGES = {
   COMPETITORS: {
     variant: 'error' as const,
     title: undefined,
-    message: "Note - the data displayed below is sample data. Upgrade to view Competitor Analysis and Competitor Posts.",
+    message: "The data displayed below is **sample data**. Competitor comparison and analysis are not available in the Free tier. Upgrade to select and view competitor data.",
     isDynamic: false
   },
 
@@ -65,7 +82,7 @@ export const BANNER_MESSAGES = {
   BUSINESS_POSTS: {
     variant: 'error' as const,
     title: undefined,
-    message: "Note - the data displayed below is sample data. Upgrade to get translations, sentiment and relevance for all posts for this business.",
+    message: "The data displayed below is **sample data**. Post translations, sentiment analysis and critical feedback are not available in the Free tier. Upgrade to view all translated posts for this business.",
     isDynamic: false
   },
 
@@ -73,7 +90,7 @@ export const BANNER_MESSAGES = {
   BUSINESS_POSTS_MODAL: {
     variant: 'error' as const,
     title: undefined,
-    message: "Note - the data displayed below is sample data. Upgrade to get translations for all posts for your business.",
+    message: "The data displayed below is **sample data**. Post translations are not available in the Free tier. Upgrade to view all translated posts for this business.",
     isDynamic: false
   },
 
@@ -81,7 +98,7 @@ export const BANNER_MESSAGES = {
   MONTHLY_KPIS: {
     variant: 'error' as const,
     title: undefined,
-    message: "Note - the data displayed below is sample data. Upgrade to get Monthly and Historical KPIs for this business.",
+    message: "The data displayed below is **sample data**. Monthly KPIs are not available in the Free tier. Upgrade to view full monthly and historical KPIs for this business.",
     isDynamic: false
   }
 } as const;
@@ -107,13 +124,23 @@ export const getBannerConfigByEnum = (pageType: BannerPageType): BannerConfig =>
   return BANNER_MESSAGES[pageType];
 };
 
-// Helper function to render message with dynamic data
+// Updated helper function to render message with dynamic data and bold parsing
 export const renderBannerMessage = (
   config: BannerConfig,
   lastUpdated?: string
 ): React.ReactNode => {
   if (config.isDynamic && typeof config.message === 'function') {
-    return config.message(lastUpdated);
+    // For dynamic messages (Dashboard and Topic Analysis Overview)
+    const dynamicMessage = config.message(lastUpdated);
+    
+    // Since our createDynamicMessage function returns JSX with string content,
+    // and we need to parse ** in the first part, let's handle it differently
+    // We'll modify createDynamicMessage to handle bold parsing internally
+    return dynamicMessage;
+  } else if (typeof config.message === 'string' && config.message.includes('**')) {
+    // For static messages with ** bold formatting
+    return parseMarkdownBold(config.message);
   }
+  
   return config.message as string;
 };
