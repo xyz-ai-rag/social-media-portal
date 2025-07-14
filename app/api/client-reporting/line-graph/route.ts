@@ -75,6 +75,9 @@ export async function GET(request: NextRequest) {
         where: {
           business_id: bizId,
           is_relevant: true,
+          description: {
+            [Op.ne]: "nan",
+          },
           last_update_time: { 
             [Op.gte]: startDateTime,
             [Op.lte]: endDateTime 

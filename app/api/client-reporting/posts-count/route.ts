@@ -28,6 +28,9 @@ export async function GET(request: NextRequest) {
     // Build where condition based on level
     const whereCondition: any = {
       is_relevant: true,
+      description: {
+              [Op.ne]: "nan",
+            },
     };
 
     if (level === 'client') {
