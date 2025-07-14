@@ -13,6 +13,7 @@ import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import { useDateRange } from "@/context/DateRangeContext";
 import CompetitorVsBusinessChart from "./CompetitorVsBusinessChart";
 import CompetitorComparisonStats from "./CompetitorComparisonStats";
+import CompetitorDistributionCharts from "./CompetitorDistributionCharts";
 import { CompetitorsTierBanner } from "@/components/TierBanner";
 import { useBusinessTier } from '@/context/BusinessTierContext';
 interface CompetitorPostsProps {
@@ -639,6 +640,13 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
                 <div className="space-y-6">
                   {/* Competitor vs Business Chart */}
                   <CompetitorVsBusinessChart 
+                    businessId={businessId}
+                    competitorId={competitorId}
+                    competitorName={competitorName}
+                  />
+                  
+                   {/* Competitor Distriobuton Chart */}
+                  <CompetitorDistributionCharts
                     businessId={businessId}
                     competitorId={competitorId}
                     competitorName={competitorName}

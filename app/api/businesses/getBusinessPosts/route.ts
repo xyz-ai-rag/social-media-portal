@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
     const totalCount = await BusinessPostModel.count({
       where: whereConditions,
     });
-
+    console.log("getBusinessPost/route.ts total counts of posts",totalCount)
     const totalPages = Math.ceil(totalCount / pageSize);
     const adjustedPage =
       page > totalPages && totalPages > 0 ? totalPages : page;
@@ -175,11 +175,19 @@ export async function GET(request: NextRequest) {
         "negative_feedback_summary",
         "note_url",
         "post_category",
+        "type", // Added type field for content type analysis
       ],
       order: [["last_update_time", sortOrder === "asc" ? "ASC" : "DESC"]],
       limit: pageSize,
       offset: offset,
     });
+
+    // Type mapping for content type
+    const typeMapping: Record<string, string> = {
+      'video': 'Video',
+      'note': 'Text',
+      'normal': 'Text'
+    };
 
     const posts = rows.map((post) => {
       const postData = post.get({ plain: true });
@@ -225,6 +233,8 @@ export async function GET(request: NextRequest) {
         criticismSummary: postData.negative_feedback_summary,
         url: postData.note_url,
         postCategory: postData.post_category,
+        type: postData.type, // Raw type from database
+        contentType: typeMapping[postData.type] || 'Text', // Mapped content type
       };
     });
 
