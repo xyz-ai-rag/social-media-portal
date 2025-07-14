@@ -25,13 +25,17 @@ export default function BrandOverview({ clientId }: BrandOverviewProps) {
     [clientDetails]
   );
 
-  // Fetch date range when component mounts
   useEffect(() => {
     const fetchDateRange = async () => {
+      // Don't fetch if we don't have business IDs yet
+      if (!allBusinessIds) {
+        console.log("No business IDs available yet, skipping date range fetch");
+        return;
+      }
 
       try {
         const response = await fetch(
-          `/api/charts/dateRange`
+          `/api/charts/dateRange?business_ids=${encodeURIComponent(allBusinessIds)}`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch date range");
@@ -47,7 +51,7 @@ export default function BrandOverview({ clientId }: BrandOverviewProps) {
     };
 
     fetchDateRange();
-  } );
+  }, [allBusinessIds]); // Add allBusinessIds as dependency
   return (
     <div className="container mx-auto px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
