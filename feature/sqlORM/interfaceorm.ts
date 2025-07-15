@@ -63,6 +63,7 @@ export interface BusinessInstance extends Model {
   similar_businesses: string[]; // Optional
   total_relevant_posts: number; // Optional
   last_crawled_time: Date;
+  is_free_tier:boolean
 }
 
 export interface ClientInstance extends Model {
@@ -83,6 +84,7 @@ export interface ClientUsersInstance extends Model {
   registered_email: string;
   can_view_client_reporting: boolean;
   can_view_business_reporting: boolean;
+  is_active: boolean;
 }
 
 export interface ActiveSessionsInstance extends Model {

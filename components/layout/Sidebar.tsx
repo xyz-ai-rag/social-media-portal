@@ -17,6 +17,7 @@ import { TbReportAnalytics } from "react-icons/tb";
 import { IoAnalyticsOutline } from "react-icons/io5";
 
 import { useAuth } from "@/context/AuthContext";
+import { useBusinessSelection } from "@/hooks/useBusinesSelction";
 
 type MenuItemProps = {
   href: string;
@@ -94,9 +95,13 @@ const MenuItem: React.FC<MenuItemProps> = ({
 export default function Sidebar() {
   // Use localStorage to persist the collapsed state
   const [collapsed, setCollapsed] = useState<boolean>(false);
+  const [isClient, setIsClient] = useState(false);
   const { logout, clientDetails } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  
+  // Use the shared business selection hook
+  const { selectedBusinessId } = useBusinessSelection();
   
   // Force re-render when URL changes by including pathname in dependency
   const [currentPath, setCurrentPath] = useState(pathname);
@@ -108,17 +113,17 @@ export default function Sidebar() {
     setForceUpdate(prev => prev + 1);
   }, [pathname, searchParams]);
 
-  // Get client and business IDs directly from clientDetails instead of parsing URL
+  // Handle client-side hydration and localStorage
+  useEffect(() => {
+    setIsClient(true);
+    const savedState = localStorage.getItem("sidebarCollapsed");
+    if (savedState) {
+      setCollapsed(JSON.parse(savedState));
+    }
+  }, []);
+  // Get client and business IDs using the shared hook
   const effectiveClientId = clientDetails?.id || null;
-  
-  // Get the first business ID (alphabetically sorted) as default
-  let effectiveBusinessId = null;
-  if (clientDetails?.businesses && clientDetails.businesses.length > 0) {
-    const sortedBusinesses = [...clientDetails.businesses].sort((a, b) => 
-      a.business_name.localeCompare(b.business_name)
-    );
-    effectiveBusinessId = sortedBusinesses[0].business_id;
-  }
+  const effectiveBusinessId = selectedBusinessId; // Use selected business from hook
 
   // Check if we're on special pages
   const isBusinessSelectionPage = pathname === "/businesses";
@@ -242,19 +247,19 @@ export default function Sidebar() {
         {/* Top: Logo */}
         <div className="h-20 border-b border-gray-200 flex items-center">
           {collapsed ? (
-            <div className="p-4 flex justify-center w-full">
+            <Link href="/businesses" className="p-4 flex justify-center w-full hover:bg-gray-100 transition-colors duration-150">
               <img
                 src="/hyprdata_icon_transparent.svg"
-                className="h-10 object-contain"
+                className="h-10 object-contain cursor-pointer"
               />
-            </div>
+            </Link>
           ) : (
-            <div className="flex items-center p-4">
+            <Link href="/businesses" className="flex items-center p-4 w-full hover:bg-gray-100 transition-colors duration-150">
               <img
                 src="/hyprdata_logo_transparent.svg"
-                className="h-10 object-contain px-2"
+                className="h-10 object-contain px-2 cursor-pointer"
               />
-            </div>
+            </Link>
           )}
         </div>
 
@@ -266,7 +271,7 @@ export default function Sidebar() {
               <>
                 {!collapsed && (
                   <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 pl-2">
-                    BRAND
+                    Brand Portfolio
                   </div>
                 )}
                 <nav className="space-y-2">
@@ -290,15 +295,18 @@ export default function Sidebar() {
                     onClick={(!hasBusiness && needsBusinessSelection) ? handleDisabledClick : undefined}
                   />
 
-                  <MenuItem
-                    href={getBusinessReportingUrl()}
-                    icon={<TbReportAnalytics />}
-                    label="Business Reporting"
-                    isActive={isActive("/[clientId]/[businessId]/business-reporting")}
-                    disabled={!hasBusiness && needsBusinessSelection}
-                    collapsed={collapsed}
-                    onClick={(!hasBusiness && needsBusinessSelection) ? handleDisabledClick : undefined}
-                  />
+                  {/* Hide Business Reporting when can_view_business_reporting is true */}
+                  {!canViewBusinessReporting && (
+                    <MenuItem
+                      href={getBusinessReportingUrl()}
+                      icon={<TbReportAnalytics />}
+                      label="Business Reporting"
+                      isActive={isActive("/[clientId]/[businessId]/business-reporting")}
+                      disabled={!hasBusiness && needsBusinessSelection}
+                      collapsed={collapsed}
+                      onClick={(!hasBusiness && needsBusinessSelection) ? handleDisabledClick : undefined}
+                    />
+                  )}
                 </nav>
               </>
             )}
@@ -323,20 +331,31 @@ export default function Sidebar() {
                   />
 
                   <MenuItem
-                    href={getPostsUrl()}
-                    icon={<FiList />}
-                    label="All Posts"
-                    isActive={isActive("/[clientId]/[businessId]/posts")}
+                    href={getAnalyticsUrl()}
+                    icon={<IoAnalyticsOutline />}
+                    label="Topic Analysis"
+                    isActive={isActive("/[clientId]/[businessId]/topic-analysis")}
                     disabled={!hasBusiness}
                     collapsed={collapsed}
                     onClick={!hasBusiness ? handleDisabledClick : undefined}
                   />
-
+                  
+                  {/* Add Monthly KPIs to Business section as well */}
                   <MenuItem
-                    href={getAnalyticsUrl()}
-                    icon={<IoAnalyticsOutline />}
-                    label="Analysis"
-                    isActive={isActive("/[clientId]/[businessId]/topic-analysis")}
+                    href={getBusinessMonthlyKPIsUrl()}
+                    icon={<FiTrendingUp />}
+                    label="Monthly KPIs"
+                    isActive={isActive("/[clientId]/[businessId]/business-monthly-kpis")}
+                    disabled={!hasBusiness}
+                    collapsed={collapsed}
+                    onClick={!hasBusiness ? handleDisabledClick : undefined}
+                  />
+                  
+                  <MenuItem
+                    href={getPostsUrl()}
+                    icon={<FiList />}
+                    label="All Posts"
+                    isActive={isActive("/[clientId]/[businessId]/posts")}
                     disabled={!hasBusiness}
                     collapsed={collapsed}
                     onClick={!hasBusiness ? handleDisabledClick : undefined}
@@ -352,16 +371,6 @@ export default function Sidebar() {
                     onClick={!hasBusiness ? handleDisabledClick : undefined}
                   />
 
-                  {/* Add Monthly KPIs to Business section as well */}
-                  <MenuItem
-                    href={getBusinessMonthlyKPIsUrl()}
-                    icon={<FiTrendingUp />}
-                    label="Monthly KPIs"
-                    isActive={isActive("/[clientId]/[businessId]/business-monthly-kpis")}
-                    disabled={!hasBusiness}
-                    collapsed={collapsed}
-                    onClick={!hasBusiness ? handleDisabledClick : undefined}
-                  />
                 </nav>
               </>
             )}

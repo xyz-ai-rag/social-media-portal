@@ -7,10 +7,12 @@ import SharedPostTable from "@/components/business-posts/SharedPostTable";
 import PostCard from "@/components/business-posts/business-posts/PostCard";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "@/components/business-posts/SharedFilter";
-import PostPreviewCard from "@/components/business-posts/PostPreviewCard";
+import PostPreviewCard from "@/components/business-posts/PostPreviewCard"; // Use original PostPreviewCard
 import TopicPostTrendChart from "./TopicPostsTrendChart";
 import { IoArrowBack } from "react-icons/io5";
-
+import Link from "next/link";
+import { TopicAnalysisDrillDownTierBanner } from "@/components/TierBanner";
+import { useBusinessTier } from '@/context/BusinessTierContext';
 interface TopicPostsProps {
   clientId: string;
   businessId: string;
@@ -36,7 +38,13 @@ interface AppliedFilters {
   sortOrder: string;
 }
 
-const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicType }) => {
+const TopicPosts: FC<TopicPostsProps> = ({
+  clientId,
+  businessId,
+  topic,
+  topicType,
+}) => {
+  const { isFreeTier } = useBusinessTier();
   const [posts, setPosts] = useState<PostData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +57,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
     pageSize: 10,
   });
 
-  // State for the modal
+  // State for the modal - same as original BusinessPosts
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [modalRowData, setModalRowData] = useState<any>({});
@@ -72,14 +80,14 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
       return savedFilters
         ? JSON.parse(savedFilters)
         : {
-          platform: "",
-          sentiment: "",
-          relevance: "",
-          hasCriticism: "",
-          search: "",
-          sortOrder: "desc",
-          page: 1,
-        };
+            platform: "",
+            sentiment: "",
+            relevance: "",
+            hasCriticism: "",
+            search: "",
+            sortOrder: "desc",
+            page: 1,
+          };
     }
     return {
       platform: "",
@@ -94,44 +102,44 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
 
   useEffect(() => {
     sessionStorage.setItem(`${title}_filters`, JSON.stringify(filters));
-  }, [filters]);
+  }, [filters, title]);
+
   // Setting default date range
-  const [dateRange, setDateRange] = useState<{startDate: string, endDate: string}>({
+  const [dateRange, setDateRange] = useState<{
+    startDate: string;
+    endDate: string;
+  }>({
     startDate: "",
-    endDate: ""
+    endDate: "",
   });
 
   useEffect(() => {
     if (noteIds.length > 0) {
       // Find the earliest date in the noteIds
       let earliestDate = new Date(noteIds[0].last_update_time);
-      
-      noteIds.forEach(note => {
+
+      noteIds.forEach((note) => {
         const noteDate = new Date(note.last_update_time);
         if (noteDate < earliestDate) {
           earliestDate = noteDate;
         }
       });
-      
+
       // Format date as YYYY-MM-DD
-      const formattedEarliestDate = earliestDate.toISOString().split('T')[0];
-      
+      const formattedEarliestDate = earliestDate.toISOString().split("T")[0];
+
       // Get yesterday's date for the end date
       const today = new Date();
       const yesterday = new Date(today);
       yesterday.setDate(today.getDate() - 1);
-      const formattedYesterday = yesterday.toISOString().split('T')[0];
-      
+      const formattedYesterday = yesterday.toISOString().split("T")[0];
+
       setDateRange({
         startDate: formattedEarliestDate,
-        endDate: formattedYesterday
+        endDate: formattedYesterday,
       });
-      
-      console.log(`Set date range: ${formattedEarliestDate} to ${formattedYesterday}`);
     }
   }, [noteIds]);
-
-
 
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
@@ -152,10 +160,25 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
             ? yesterday
             : dateRange.endDate;
 
+        // Check if current business is free tier and use sample businessId
+        let effectiveBusinessId = businessId;
+        let apiEndpoint = `/api/businesses/getBusinessPostsByTopic`;
+        
+        if (isFreeTier) {
+          // For free tier, use sample business ID and regular business posts endpoint
+          effectiveBusinessId = 'a7b6c5d4-e3f2-1a0b-9c8d-7e6f5a4b3c2d';
+          apiEndpoint = `/api/businesses/getBusinessPosts`;
+        }
+
         // Build query parameters
         const queryParams = new URLSearchParams();
-        queryParams.append("businessId", businessId);
-        queryParams.append("topic", topic);
+  
+        queryParams.append("businessId", effectiveBusinessId);
+        
+        // Only add topic parameter if not free tier
+        if (!isFreeTier) {
+          queryParams.append("topic", topic);
+        }
 
         if (dateRange.startDate)
           queryParams.append("startDate", dateRange.startDate);
@@ -175,7 +198,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
         // Make the API call
         const response = await fetch(
           constructVercelURL(
-            `/api/businesses/getBusinessPostsByTopic?${queryParams.toString()}`
+            `${apiEndpoint}?${queryParams.toString()}`
           ),
           {
             method: "GET",
@@ -191,7 +214,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
         }
 
         const data = await response.json();
-        setPosts(data.posts || []);
+
         return {
           posts: data.posts || [],
           pagination: data.pagination,
@@ -208,7 +231,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
   // Main fetch function for current page
   const fetchPosts = useCallback(async () => {
     if (!businessId) {
-      return { posts: [], pagination: null, appliedFilters: null };
+      return;
     }
 
     try {
@@ -219,7 +242,6 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
         filters.page
       );
 
-      // If no posts, the filters components should still have filters value and filters tag should be also display
       if (posts.length >= 0) {
         setPosts(posts);
         if (pagination) setPagination(pagination);
@@ -237,7 +259,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
     }
   }, [businessId, filters.page, fetchPostsForPage]);
 
-  // Function to fetch adjacent pages
+  // Function to fetch adjacent pages - same as original
   const fetchAdjacentPages = useCallback(async () => {
     if (pagination.totalPages <= 1) return;
 
@@ -273,9 +295,14 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
     if ((isModalOpen || isPreviewModalOpen) && pagination.totalPages > 1) {
       fetchAdjacentPages();
     }
-  }, [isModalOpen, isPreviewModalOpen, pagination.currentPage, fetchAdjacentPages]);
+  }, [
+    isModalOpen,
+    isPreviewModalOpen,
+    pagination.currentPage,
+    fetchAdjacentPages,
+  ]);
 
-  // Handle opening the modal
+  // Handle opening the modal - same as original BusinessPosts
   const openModal = (row: any) => {
     // Add contextual IDs to row data for the modal
     setModalRowData({
@@ -306,7 +333,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
     setIsPreviewModalOpen(false);
   };
 
-  // Add event listener to update the modal content without closing it
+  // Add event listener to update the modal content without closing it - same as original
   useEffect(() => {
     const handleUpdateModal = (event: CustomEvent<{ data: any }>) => {
       if (event.detail && event.detail.data) {
@@ -327,7 +354,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
     };
   }, []);
 
-  // Function to handle cross-page navigation
+  // Function to handle cross-page navigation - same as original BusinessPosts
   const handleCrossPageNavigation = useCallback(
     (direction: "prev" | "next") => {
       // Calculate the new page number
@@ -337,8 +364,8 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
             ? pagination.currentPage - 1
             : pagination.totalPages
           : pagination.currentPage < pagination.totalPages
-            ? pagination.currentPage + 1
-            : 1;
+          ? pagination.currentPage + 1
+          : 1;
 
       // Get posts from the appropriate page
       const newPagePosts = direction === "prev" ? prevPagePosts : nextPagePosts;
@@ -412,41 +439,52 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`/api/businesses/getTopicPostsTrend?businessId=${businessId}&topic=${topic}`);
+        const response = await fetch(
+          `/api/businesses/getTopicPostsTrend?businessId=${businessId}&topic=${topic}`
+        );
         const res = await response.json();
         setNoteIds(res.postRows || []);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       }
     };
     fetchData();
-  }, [topic]);
-
+  }, [topic, businessId]);
 
   return (
     <div className="flex flex-col gap-4">
       {/* Title */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">
-          {`${decodeURIComponent(topic)} Posts`}        </h1>
+          {`${decodeURIComponent(topic)} Posts`}
+        </h1>
       </div>
+
       {/* Back button */}
-      <div className="flex items-center">
-        <a
+      <div className="flex items-center -mt-4">
+        <Link
           href={`/${clientId}/${businessId}/topic-analysis?topic_type=${topicType}`}
           className="flex items-center text-gray-600 hover:text-gray-800"
         >
           <IoArrowBack className="h-5 w-5 mr-1" />
-          {`Back to Topic Analysis ${topicType == undefined ? "" : `: ${topicType}`}`}
-        </a>
+          {`Back to Topic Analysis ${
+            topicType == undefined ? "" : `: ${topicType}`
+          }`}
+        </Link>
       </div>
-
+      <TopicAnalysisDrillDownTierBanner/>
+      
+      {/* Add this after the back button */}
+      {/* {isFreeTier && (
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+          <div className="text-blue-600 text-sm">
+            <strong>Demo Mode:</strong> Showing sample restaurant posts for demonstration purposes
+          </div>
+        </div>
+      )} */}
       {/* Trend Chart */}
       {topicType !== "General" && (
-        <TopicPostTrendChart
-          businessId={businessId}
-          noteIds={noteIds}
-        />
+        <TopicPostTrendChart businessId={businessId} noteIds={noteIds} />
       )}
 
       {/* Filters */}
@@ -461,7 +499,6 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
         onRefresh={fetchPosts}
         onSortOrderChange={handleSortOrderChange}
       />
-
 
       {/* Posts Table */}
       <SharedPostTable
@@ -479,7 +516,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
         openPreviewModal={openPreviewModal}
       />
 
-      {/* Modals */}
+      {/* Modals - exactly same as original BusinessPosts */}
       <PostCard
         isOpen={isModalOpen}
         onClose={closeModal}

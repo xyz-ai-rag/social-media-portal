@@ -131,11 +131,16 @@ export const BusinessModel = sequelizeDbConnection.define<BusinessInstance>(
       type: DataTypes.DATE,
       allowNull: false,
     },
+    is_free_tier: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+    },
   },
   {
     tableName: "business",
     timestamps: false,
-  }
+  },
+  
 );
 
 export const ClientModel = sequelizeDbConnection.define<ClientInstance>(
@@ -207,6 +212,11 @@ export const ClientUsersModel =
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false,
+      },
+      is_active: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
       },
     },
     {

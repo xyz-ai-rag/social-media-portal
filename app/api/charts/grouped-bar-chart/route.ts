@@ -38,6 +38,9 @@ export async function GET(request: NextRequest) {
       where: {
         business_id,
         is_relevant: true,
+        description: {
+        [Op.ne]: "nan",
+      },
         last_update_time: {
           [Op.between]: [startDateTime, endDateTime]
         }

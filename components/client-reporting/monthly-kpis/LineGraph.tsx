@@ -38,16 +38,16 @@ interface BusinessLineData {
 
 // Updated API response structure
 interface LineGraphData {
-  businesses: BusinessLineData[]; // Updated from 'similar' to 'businesses'
+  businesses: BusinessLineData[];
 }
 
 interface LineGraphProps {
   clientId: string;
-  businessId: string; // Selected business id from the URL.
+  businessId?: string; // Optional single business ID
   earliestDate: string;
   latestDate: string;
-  allBusinessIds: string;
-  level: string;
+  allBusinessIds?: string; // Optional comma-separated business IDs
+  date_level: string;
 }
 
 export default function LineGraph({ 
@@ -56,7 +56,7 @@ export default function LineGraph({
   earliestDate, 
   latestDate, 
   allBusinessIds, 
-  level 
+  date_level 
 }: LineGraphProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [graphData, setGraphData] = useState<LineGraphData | null>(null);
@@ -72,12 +72,12 @@ export default function LineGraph({
     [latestDate]
   );
   const formattedStart = useMemo(
-    () => level === "daily" ? format(new Date(earliestDate), "MMM d") : format(new Date(earliestDate), "MMM yyyy"),
-    [earliestDate, level]
+    () => date_level === "daily" ? format(new Date(earliestDate), "MMM d") : format(new Date(earliestDate), "MMM yyyy"),
+    [earliestDate, date_level]
   );
   const formattedEnd = useMemo(
-    () => level === "daily" ? format(new Date(latestDate), "MMM d") : format(new Date(latestDate), "MMM yyyy"),
-    [latestDate, level]
+    () => date_level === "daily" ? format(new Date(latestDate), "MMM d") : format(new Date(latestDate), "MMM yyyy"),
+    [latestDate, date_level]
   );
 
   // Fetch data from the API route.
@@ -88,18 +88,35 @@ export default function LineGraph({
       setIsLoading(true);
 
       try {
-        // Use the updated client-level API call
-        const url = `/api/client-reporting/line-graph?client_id=${encodeURIComponent(
-          clientId
-        )}&business_ids=${encodeURIComponent(
-          allBusinessIds
-        )}&start_date=${encodeURIComponent(
-          startDateProcessed
-        )}&end_date=${encodeURIComponent(
-          endDateProcessed
-        )}&level=${encodeURIComponent(level)}`;
+        // Build URL with proper parameter handling
+        const params = new URLSearchParams({
+          client_id: clientId,
+          start_date: startDateProcessed,
+          end_date: endDateProcessed,
+          date_level: date_level // Fixed: was 'level' before
+        });
+
+        // Add business ID parameters based on what's provided
+        if (businessId) {
+          // Single business ID
+          params.append('business_id', businessId);
+          console.log(`[LineGraph Component] Using single businessId: ${businessId}`);
+        } else if (allBusinessIds) {
+          // Multiple business IDs
+          params.append('business_ids', allBusinessIds);
+          console.log(`[LineGraph Component] Using multiple businessIds: ${allBusinessIds}`);
+        }
+        // If neither is provided, API will fetch all businesses for the client
+
+        const url = `/api/client-reporting/line-graph?${params.toString()}`;
+        console.log(`[LineGraph Component] API URL: ${url}`);
 
         const res = await fetch(url);
+        
+        if (!res.ok) {
+          throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+        }
+        
         const data: LineGraphData = await res.json();
 
         // Sort businesses alphabetically by business_name before processing
@@ -132,6 +149,7 @@ export default function LineGraph({
         // Only update state if this is the current request
         if (isCurrent) {
           setGraphData(processedData);
+          console.log(`[LineGraph Component] Data loaded for ${processedData.businesses.length} businesses`);
         }
       } catch (err) {
         if (isCurrent) {
@@ -146,7 +164,7 @@ export default function LineGraph({
     }
 
     // Only fetch if we have the required data
-    if (clientId && allBusinessIds) {
+    if (clientId && (businessId || allBusinessIds || (!businessId && !allBusinessIds))) {
       fetchLineData();
     }
 
@@ -154,7 +172,7 @@ export default function LineGraph({
     return () => {
       isCurrent = false;
     };
-  }, [clientId, startDateProcessed, endDateProcessed, allBusinessIds, level]);
+  }, [clientId, businessId, allBusinessIds, startDateProcessed, endDateProcessed, date_level]);
 
   // Build and initialize the chart using ECharts.
   useEffect(() => {
@@ -277,11 +295,12 @@ export default function LineGraph({
     <div className="bg-white p-6 rounded-lg shadow-md w-full">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-base font-medium text-gray-800">
-          {level === "daily" ? "Monthly Posts" : "Total Posts"}
+          {date_level === "daily" ? "Daily Posts" : "Monthly Posts"}
         </h2>
       </div>
       <div className="text-sm text-gray-600 mb-4">
         Posts from {formattedStart} to {formattedEnd}
+        {graphData.businesses.length === 1 && ` for ${graphData.businesses[0].business_name}`}
       </div>
       <div className="h-80">
         <div ref={chartRef} style={{ width: "100%", height: "100%" }} />

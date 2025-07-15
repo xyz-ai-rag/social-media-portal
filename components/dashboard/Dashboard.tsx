@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { DateRangeProvider } from "@/context/DateRangeContext";
 import DateRangePicker from "./DateRangePicker";
 import GroupedBarChart from "@/components/dashboard/GroupedBarChart/GroupedBarChart";
+import PostTypeChart from "@/components/dashboard/PostTypeRing/PostTypeRingChart";
 import PieChartComponent from "./PieChart/PieChart";
 import HashtagChart from "./HotHashtags/HotHashtags";
 import LineGraph from "./SimilarBusinesses/LineGraph";
@@ -10,6 +11,7 @@ import TopCitiesMap from "./TopCities/TopCities";
 import ContentType from "./ContentType/ContentType";
 import TopUsers from "./TopUsers/TopUsers";
 import { useAuth } from "@/context/AuthContext";
+import { DashboardTierBanner } from "@/components/TierBanner";
 
 interface DashboardProps {
   clientId: string;
@@ -57,6 +59,10 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           </h1>
           <DateRangePicker page="dashboard" businessId={businessId} />
         </div>
+
+        {/* Tier-aware banner - positioned under title for better alignment */}
+        <DashboardTierBanner />
+
         <div className="flex flex-col items-end gap-2">
           <h2 className="text-base font-light text-gray-600 italic">
             Last Update: {getFormattedTimestamp(lastCrawlTime)}
@@ -73,7 +79,7 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           </div>
 
           {/* Row 2 */}
-          <div className="md:col-span-1">
+          <div className="md:col-span-1 h-[404px]">
             <HashtagChart clientId={clientId} businessId={businessId} />
           </div>
           <div className="md:col-span-2">
@@ -89,6 +95,11 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           </div>
           <div className="md:col-span-1">
             <TopUsers clientId={clientId} businessId={businessId} />
+          </div>
+
+          {/* Row 4 */}
+          <div className="md:col-span-1">
+            <PostTypeChart clientId={clientId} businessId={businessId} />
           </div>
         </div>
       </div>

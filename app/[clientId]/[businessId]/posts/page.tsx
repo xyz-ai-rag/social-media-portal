@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import BusinessPosts from "@/components/business-posts/business-posts/BusinessPosts";
 import { DateRangeProvider } from "@/context/DateRangeContext";
-
+import { BusinessTierProvider } from "@/context/BusinessTierContext";
 export default function PostsPage() {
   const params = useParams();
 
@@ -13,9 +13,12 @@ export default function PostsPage() {
 
   return (
     <div className="space-y-6">
-      <DateRangeProvider>
-        <BusinessPosts clientId={clientId} businessId={businessId} />
-      </DateRangeProvider>
+      <BusinessTierProvider businessId={businessId}>
+        <DateRangeProvider>
+          <BusinessPosts clientId={clientId} businessId={businessId} />
+        </DateRangeProvider>
+      </BusinessTierProvider>
+      
     </div>
   );
 }

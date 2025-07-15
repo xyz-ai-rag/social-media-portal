@@ -4,37 +4,15 @@ import { col, fn, Op, literal } from 'sequelize';
 import { BusinessPostModel, BusinessModel } from '@/feature/sqlORM/modelorm';
 import { format, addDays, addMonths } from 'date-fns';
 
-/**
- * Line Graph API Route - Client Level
- * 
- * This API endpoint provides data for rendering a line graph showing post counts over time
- * for ALL businesses under a client (client-level reporting).
- * 
- * Response Format:
- * {
- *   businesses: [
- *     {
- *       business_id: string,
- *       business_name: string,
- *       counts: [
- *         {
- *           date: string, // Format: YYYY-MM or YYYY-MM-DD
- *           count: number // Number of posts for this period
- *         }
- *       ]
- *     }
- *   ]
- * }
- */
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get("client_id");
+    const businessId = searchParams.get("business_id"); // Single business ID
     const businessIds = searchParams.get("business_ids"); // Comma-separated list
     const start_date = searchParams.get("start_date");
     const end_date = searchParams.get("end_date");
-    const level = searchParams.get("level") || "monthly";
+    const date_level = searchParams.get("date_level") || "monthly";
 
     if (!clientId || !start_date || !end_date) {
       return NextResponse.json(
@@ -60,17 +38,23 @@ export async function GET(request: NextRequest) {
     // Get all business IDs for this client
     let allBusinessIdsArray: string[] = [];
     
-    if (businessIds) {
-      // Use provided business IDs
+    if (businessId) {
+      // Single business ID provided - use it
+      allBusinessIdsArray = [businessId];
+      console.log(`[LineGraph] Using single businessId: ${businessId}`);
+    } else if (businessIds) {
+      // Multiple business IDs provided - use them
       allBusinessIdsArray = businessIds.split(',').map(id => id.trim()).filter(id => id);
+      console.log(`[LineGraph] Using multiple businessIds: ${allBusinessIdsArray}`);
     } else {
-      // If no business IDs provided, get all businesses for this client
+      // No business IDs provided - get all businesses for this client
       const businesses = await BusinessModel.findAll({
         where: { client_id: clientId },
         attributes: ['business_id'],
         raw: true
       });
       allBusinessIdsArray = businesses.map(b => b.business_id);
+      console.log(`[LineGraph] Fetched all businesses for client: ${allBusinessIdsArray}`);
     }
 
     if (allBusinessIdsArray.length === 0) {
@@ -91,6 +75,9 @@ export async function GET(request: NextRequest) {
         where: {
           business_id: bizId,
           is_relevant: true,
+          description: {
+            [Op.ne]: "nan",
+          },
           last_update_time: { 
             [Op.gte]: startDateTime,
             [Op.lte]: endDateTime 
@@ -179,8 +166,7 @@ export async function GET(request: NextRequest) {
       });
       
       if (businessRow) {
-        return  businessRow.getDataValue("business_name") ||
-               `Business ${bizId}`;
+        return businessRow.getDataValue("business_name") || `Business ${bizId}`;
       }
       return `Business ${bizId}`;
     }
@@ -188,7 +174,7 @@ export async function GET(request: NextRequest) {
     // Fetch all businesses' counts
     const businessesData = await Promise.all(allBusinessIdsArray.map(async (bizId) => {
       let counts;
-      if (level === "daily") {
+      if (date_level === "daily") {
         counts = await fetchDailyCounts(bizId);
       } else {
         counts = await fetchMonthlyCounts(bizId);

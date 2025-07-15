@@ -8,12 +8,14 @@ import CompetitorPostCard from "./CompetitorsPostCard";
 import { useAuth } from "@/context/AuthContext";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "../SharedFilter";
-import CompetitorStatsCard from "./CompetitorStatsCard";
 import PostPreviewCard from "../PostPreviewCard";
-import { FaSync } from "react-icons/fa";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import { useDateRange } from "@/context/DateRangeContext";
-
+import CompetitorVsBusinessChart from "./CompetitorVsBusinessChart";
+import CompetitorComparisonStats from "./CompetitorComparisonStats";
+import CompetitorDistributionCharts from "./CompetitorDistributionCharts";
+import { CompetitorsTierBanner } from "@/components/TierBanner";
+import { useBusinessTier } from '@/context/BusinessTierContext';
 interface CompetitorPostsProps {
   clientId: string;
   businessId: string;
@@ -49,7 +51,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
 }) => {
   // Get auth context to access similar businesses
   const { clientDetails } = useAuth();
-
+  const { isFreeTier } = useBusinessTier();
   // Add state for active tab
   const [activeTab, setActiveTab] = useState(0);
 
@@ -128,12 +130,6 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
   // Get date range from context.
   const { dateRange } = useDateRange();
 
-  // setting default date
-  const [dateRangeOfPosts, setDateRangeOfPosts] = useState({
-    startDate: "",
-    endDate: "",
-  });
-
   // Process dates using helper functions from timeUtils.
   const startDateProcessed = useMemo(
     () => dateRange.startDate.split("T")[0],
@@ -143,12 +139,12 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     () => dateRange.endDate.split("T")[0],
     [dateRange.endDate]
   );
-  useEffect(() => {
-    setDateRangeOfPosts({
-      startDate: startDateProcessed,
-      endDate: endDateProcessed,
-    });
-  }, [startDateProcessed, endDateProcessed]);
+
+  // FIXED: Replace state with useMemo to prevent infinite loops
+  const dateRangeOfPosts = useMemo(() => ({
+    startDate: startDateProcessed,
+    endDate: endDateProcessed,
+  }), [startDateProcessed, endDateProcessed]);
 
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
@@ -161,7 +157,38 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
       try {
         if (!clientDetails || !businessId) return;
 
-        // Find the current business
+        setLoadingCompetitors(true);
+
+        // Check if current business is free tier
+        if (isFreeTier) {
+          // Simulate competitor data for free tier
+          const simulatedCompetitors = [
+            {
+              id: "6d5c4b3a-2e1f-09a8-b7c6-5d4e3f2a1b0c",
+              name: "Sample Competitor 3"
+            },
+            {
+              id: "3b4c5d6e-7f8a-90b1-c2d3-e4f5a6b7c8d9",
+              name: "Sample Competitor 2"
+            },
+            {
+              id: "8d9e0f1a-2b3c-4e5f-6a7b-8c9d0e1f2a3b",
+              name: "Sample Competitor 1"
+            }
+          ].sort((a, b) => a.name.localeCompare(b.name));
+
+          setCompetitors(simulatedCompetitors);
+
+          // Set the first competitor as default if no competitor is selected yet
+          if (!competitorId) {
+            setCompetitorId(simulatedCompetitors[0].id);
+          }
+          
+          setLoadingCompetitors(false);
+          return;
+        }
+
+        // For paid tier, use real competitor data
         const currentBusiness = clientDetails.businesses.find(
           (b) => b.business_id === businessId
         );
@@ -171,11 +198,9 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
           !currentBusiness.similar_businesses ||
           currentBusiness.similar_businesses.length === 0
         ) {
-          // console.log("No similar businesses found");
+          setLoadingCompetitors(false);
           return;
         }
-
-        setLoadingCompetitors(true);
 
         // Fetch competitor details using the batch API
         const response = await fetch(
@@ -199,7 +224,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         const fetchedCompetitors = data.businesses.map((business: any) => ({
           id: business.business_id,
           name: business.business_name,
-        }));
+        })).sort((a: Competitor, b: Competitor) => a.name.localeCompare(b.name));
 
         setCompetitors(fetchedCompetitors);
 
@@ -216,7 +241,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     };
 
     fetchCompetitors();
-  }, [clientDetails, businessId, competitorId]);
+  }, [clientDetails, businessId, competitorId, isFreeTier]);
 
   // Get the competitor name directly from the state without showing loading
   const competitorName = useMemo(() => {
@@ -233,9 +258,16 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
       }
 
       try {
+        // Check if current business is free tier and override competitorId
+        // For free tier, use the competitor ID directly (since they're already sample IDs)
+        // For paid tier, use the actual competitor ID
+        const effectiveCompetitorId = competitorId;
+        
+        // Note: For free tier, competitorId is already a sample ID from the simulated list
+        // so we don't need to override it like we did for business post
         // Build query parameters
         const queryParams = new URLSearchParams();
-        queryParams.append("businessId", competitorId); // Use competitorId as businessId for API
+        queryParams.append("businessId", effectiveCompetitorId); // Use competitorId as businessId for API
         const endDate =
           new Date(dateRangeOfPosts.endDate) > new Date(yesterday)
             ? yesterday
@@ -355,10 +387,10 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     setAdjacentPagesLoading(false);
   }, [pagination, fetchPostsForPage]);
 
-  // Fetch posts when competitorId or filters change
+  // FIXED: More stable dependency array to prevent infinite loops
   useEffect(() => {
     fetchCompetitorPosts();
-  }, [fetchCompetitorPosts]);
+  }, [competitorId, filters.page, dateRangeOfPosts.startDate, dateRangeOfPosts.endDate]);
 
   // Fetch adjacent pages when modal is opened or current page changes
   useEffect(() => {
@@ -480,7 +512,7 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     setIsPreviewModalOpen(false);
   };
 
-  // Handle filter changes from the SharedPostList component
+  // FIXED: Simplified handleFilterChange without dateRangeOfPosts setter
   const handleFilterChange = (newFilters: any) => {
     // Ensure we never send a date after yesterday
     if (
@@ -489,16 +521,11 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     ) {
       newFilters.endDate = yesterday;
     }
-    // Extract startDate / endDate and save to local dateRange
+    // Extract startDate / endDate - dates are now handled via context
     const { startDate, endDate, ...otherFilters } = newFilters;
 
-    if (endDate || startDate) {
-      setDateRangeOfPosts((prevdate: object) => ({
-        ...prevdate,
-        ...(startDate && { startDate: startDate }),
-        ...(endDate && { endDate: endDate }),
-      }));
-    }
+    // If dates are provided, they should be handled by the DateRangePicker component
+    // which will update the context directly
 
     // Pass non-date fields to context management
     setFilters((prev: any) => ({
@@ -519,56 +546,44 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
     handleFilterChange({ sortOrder: order });
   };
 
-  // Competitor dropdown component
-  const CompetitorFilter = (
-    <Select
-      id="competitor"
-      required
-      value={competitorId}
-      onChange={(e) => handleCompetitorChange(e.target.value)}
-      className="min-w-40"
-      disabled={loadingCompetitors || competitors.length === 0}
-    >
-      {loadingCompetitors ? (
-        <option value="">Loading...</option>
-      ) : competitors.length === 0 ? (
-        <option value="">No competitors available</option>
-      ) : (
-        <>
-          <option value="">Select Competitor</option>
-          {competitors.map((comp) => (
-            <option key={comp.id} value={comp.id}>
-              {comp.name}
-            </option>
-          ))}
-        </>
-      )}
-    </Select>
-  );
-
   return (
     <>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">
           {competitorName}
         </h1>
-      </div>
-      {/* Filters */}
-      <SharedFilter
-        title="competitor_page"
-        clientId={clientId}
-        businessId={businessId}
-        competitorId={competitorId}
-        additionalFilters={CompetitorFilter}
-        isLoading={isLoading}
-        // Don't pass the "No competitor selected" error to the filter
-        error={error === "No competitor selected" ? null : error}
-        appliedFilters={appliedFilters}
-        onFilterChange={handleFilterChange}
-        onRefresh={fetchCompetitorPosts}
-        onSortOrderChange={handleSortOrderChange}
-      />
 
+        {/* Moved competitor and date selectors to top right */}
+        <div className="flex flex-col sm:flex-row gap-3 items-end">
+          <Select
+            id="competitor"
+            required
+            value={competitorId}
+            onChange={(e) => handleCompetitorChange(e.target.value)}
+            className="min-w-40"
+            disabled={loadingCompetitors || competitors.length === 0}
+          >
+            {loadingCompetitors ? (
+              <option value="">Loading...</option>
+            ) : competitors.length === 0 ? (
+              <option value="">No competitors available</option>
+            ) : (
+              <>
+                <option value="">Select Competitor</option>
+                {competitors.map((comp) => (
+                  <option key={comp.id} value={comp.id}>
+                    {comp.name}
+                  </option>
+                ))}
+              </>
+            )}
+          </Select>
+          {/* Only show DateRangePicker on Overview tab (activeTab === 0) */}
+          {activeTab === 0 && <DateRangePicker page="competitor_posts" businessId={businessId}  />}
+        </div>
+      </div>
+      {/* Tier-aware banner - positioned under title for better alignment */}
+      <CompetitorsTierBanner />
       {/* Tabs Section */}
       <div className="mt-6">
         <div className="mb-4 border-b border-gray-200">
@@ -610,25 +625,38 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
         {/* Tab content */}
         <div className="tab-content">
           {activeTab === 0 && (
-            // Overview Tab Content
+            // Overview Tab Content - NEW DESIGN
             <>
               {!competitorId ? (
                 <div className="bg-white rounded-lg shadow p-6 mb-6">
                   <div className="text-center p-8 text-gray-500">
                     <p className="mb-2 text-lg">
                       Select a competitor from the dropdown above to view
-                      comparison statistics.
+                      comparison analytics.
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="mb-6">
-                  <CompetitorStatsCard
+                <div className="space-y-6">
+                  {/* Competitor vs Business Chart */}
+                  <CompetitorVsBusinessChart 
+                    businessId={businessId}
                     competitorId={competitorId}
                     competitorName={competitorName}
+                  />
+                  
+                   {/* Competitor Distriobuton Chart */}
+                  <CompetitorDistributionCharts
                     businessId={businessId}
-                    startDate={dateRangeOfPosts.startDate}
-                    endDate={dateRangeOfPosts.endDate}
+                    competitorId={competitorId}
+                    competitorName={competitorName}
+                  />
+                  
+                  {/* Competitor Comparison Stats */}
+                  <CompetitorComparisonStats
+                    businessId={businessId}
+                    competitorId={competitorId}
+                    competitorName={competitorName}
                   />
                 </div>
               )}
@@ -637,33 +665,50 @@ const CompetitorPosts: FC<CompetitorPostsProps> = ({
 
           {activeTab === 1 && (
             // Competitor Posts Tab Content
-            <div>
-              {!competitorId ? (
-                <div className="bg-white rounded-lg shadow p-6">
-                  <div className="text-center p-8 text-gray-500">
-                    <p className="mb-2 text-lg">
-                      Select a competitor from the dropdown above to view their
-                      posts.
-                    </p>
+            <>
+              {/* Filters - only show on Competitor Posts tab */}
+              <SharedFilter
+                title="competitor_page"
+                clientId={clientId}
+                businessId={businessId}
+                competitorId={competitorId}
+                isLoading={isLoading}
+                // Don't pass the "No competitor selected" error to the filter
+                error={error === "No competitor selected" ? null : error}
+                appliedFilters={appliedFilters}
+                onFilterChange={handleFilterChange}
+                onRefresh={fetchCompetitorPosts}
+                onSortOrderChange={handleSortOrderChange}
+              />
+
+              <div className="mt-6">
+                {!competitorId ? (
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <div className="text-center p-8 text-gray-500">
+                      <p className="mb-2 text-lg">
+                        Select a competitor from the dropdown above to view their
+                        posts.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <SharedPostTable
-                  listData={posts}
-                  isLoading={isLoading}
-                  postCardComponent={CompetitorPostCard}
-                  pagination={{
-                    currentPage: pagination.currentPage,
-                    totalPages: pagination.totalPages,
-                    onPageChange: handlePageChange,
-                  }}
-                  sortOrder={filters.sortOrder}
-                  onSortOrderChange={handleSortOrderChange}
-                  openModal={openModal}
-                  openPreviewModal={openPreviewModal}
-                />
-              )}
-            </div>
+                ) : (
+                  <SharedPostTable
+                    listData={posts}
+                    isLoading={isLoading}
+                    postCardComponent={CompetitorPostCard}
+                    pagination={{
+                      currentPage: pagination.currentPage,
+                      totalPages: pagination.totalPages,
+                      onPageChange: handlePageChange,
+                    }}
+                    sortOrder={filters.sortOrder}
+                    onSortOrderChange={handleSortOrderChange}
+                    openModal={openModal}
+                    openPreviewModal={openPreviewModal}
+                  />
+                )}
+              </div>
+            </>
           )}
         </div>
       </div>

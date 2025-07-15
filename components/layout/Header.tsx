@@ -3,67 +3,32 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { FiChevronDown } from "react-icons/fi";
-import { useRouter, useParams, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useBusinessSelection } from "@/hooks/useBusinesSelction";
 
 export default function Header() {
   const { user, clientDetails } = useAuth();
   const router = useRouter();
-  const params = useParams();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [forceUpdate, setForceUpdate] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Force re-render when pathname changes and listen for URL changes
-  useEffect(() => {
-    const handleUrlChange = () => {
-      setForceUpdate(prev => prev + 1);
-    };
-    
-    // Listen for navigation events
-    window.addEventListener('popstate', handleUrlChange);
-    
-    // Also create a custom event listener for programmatic navigation
-    const intervalId = setInterval(() => {
-      setForceUpdate(prev => prev + 1);
-    }, 100); // Check every 100ms for URL changes
-    
-    return () => {
-      window.removeEventListener('popstate', handleUrlChange);
-      clearInterval(intervalId);
-    };
-  }, [pathname]);
-
-  // Additional effect to listen for hash/search changes
-  useEffect(() => {
-    const handleHashChange = () => {
-      setForceUpdate(prev => prev + 1);
-    };
-    
-    window.addEventListener('hashchange', handleHashChange);
-    
-    return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-    };
-  }, []);
+  
+  // Use the shared business selection hook
+  const { selectedBusinessId, updateSelectedBusiness } = useBusinessSelection();
 
   // Only show business selector on dashboard pages - using useMemo to make it reactive
   const showBusinessSelector = useMemo(() => {
     // For monthly-kpis, only show business selector when level=business (hide when level=client)
     if (pathname.includes("/monthly-kpis")) {
-      let level = 'business'; // default
-      if (typeof window !== 'undefined') {
-        const searchParams = new URLSearchParams(window.location.search);
-        level = searchParams.get('level') || 'business';
-        
-        // Debug logging
-        console.log('Header showBusinessSelector:', {
-          pathname,
-          level,
-          shouldShow: level === 'business',
-          forceUpdate
-        });
-      }
+      const level = searchParams.get('level') || 'business';
+      
+      // Debug logging
+      console.log('Header showBusinessSelector:', {
+        pathname,
+        level,
+        shouldShow: level === 'business'
+      });
       
       // Show header business selector ONLY when level=business
       return level === 'business';
@@ -74,13 +39,12 @@ export default function Header() {
       pathname.includes("/dashboard") ||
       pathname.includes("/posts") ||
       pathname.includes("/competitors") ||
-      pathname.includes("/topic-analysis") ||
-      pathname.includes("/business-reporting")
+      pathname.includes("/topic-analysis") 
     );
-  }, [pathname, forceUpdate]); // Re-compute when pathname or forceUpdate changes
+  }, [pathname, searchParams]); // Re-compute when pathname or searchParams changes
 
-  // Get the current business ID from params
-  const currentBusinessId = params.businessId as string;
+  // Use selectedBusinessId from the hook
+  const currentBusinessId = selectedBusinessId;
 
   // Find current business name
   const currentBusiness = clientDetails?.businesses?.find(
@@ -91,6 +55,9 @@ export default function Header() {
   // Handle business selection
   const handleBusinessSelect = (businessId: string) => {
     if (businessId && clientDetails?.id) {
+      // Update the shared business selection
+      updateSelectedBusiness(businessId);
+      
       // Get the current path segments
       const pathSegments = pathname.split("/");
 
@@ -99,7 +66,7 @@ export default function Header() {
       const currentPagePath = pathSegments.slice(3).join("/");
 
       // Get ALL current search parameters (including level, tab, etc.)
-      const searchParams = new URLSearchParams(window.location.search);
+      const currentSearchParams = new URLSearchParams(searchParams.toString());
 
       // Build the new URL with the same page type but new business ID
       let newPath = `/${clientDetails.id}/${businessId}/${
@@ -107,8 +74,8 @@ export default function Header() {
       }`;
 
       // Preserve ALL search parameters if they exist
-      if (searchParams.toString()) {
-        newPath += `?${searchParams.toString()}`;
+      if (currentSearchParams.toString()) {
+        newPath += `?${currentSearchParams.toString()}`;
       }
 
       router.push(newPath);
