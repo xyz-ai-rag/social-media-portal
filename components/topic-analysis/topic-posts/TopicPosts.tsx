@@ -461,7 +461,7 @@ const TopicPosts: FC<TopicPostsProps> = ({
       </div>
 
       {/* Back button */}
-      <div className="flex items-center">
+      <div className="flex items-center -mt-4">
         <Link
           href={`/${clientId}/${businessId}/topic-analysis?topic_type=${topicType}`}
           className="flex items-center text-gray-600 hover:text-gray-800"
