@@ -26,11 +26,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Business not found" }, { status: 404 });
   }
 
+  const topicType = searchParams.get("topic_type");
+  const where: any = { business_id: 'f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c' };
+  if (topicType) where.topic_type = topicType;
   const cityTopicCounts = await CityTopicsModelToUse.findAll({
-    where: {
-      business_id: 'f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c',
-      topic_type: 'Compliment',
-    },
+    where,
     attributes: [
       'topic',
       [fn('COUNT', col('id')), 'count']

@@ -22,7 +22,7 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
   // Get auth context to access similar businesses
   const { clientDetails } = useAuth();
   const searchParams = useSearchParams();
-  
+
   // Add a ref to track API requests
   const requestTracker = useRef(new Set());
 
@@ -35,6 +35,9 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
   // topics state
   const [topics, setTopics] = useState<any[]>([]);
   const [total, setTotal] = useState<number>(0);
+
+  const [complimentTopics, setComplimentTopics] = useState<any[]>([]);
+  const [criticismTopics, setCriticismTopics] = useState<any[]>([]);
 
   // Map tab index to topic type
   const getActiveTab = (topicType: string | null) => {
@@ -127,7 +130,7 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
         setTotal(data.total);
       } catch (error) {
         console.error("Error fetching city topics:", error);
-   setCity("");
+        setCity("");
         setTopics([]);
         setTotal(0);
       } finally {
@@ -136,6 +139,26 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
     };
     if (clientDetails && businessId) {
       fetchData();
+    }
+    return () => {
+      requestTracker.current.clear();
+    };
+    // eslint-disable-next-line
+  }, [clientDetails, businessId, activeTab]);
+
+  // 只在 City Overview tab 下请求两个 topic_type
+  useEffect(() => {
+    if (activeTab !== 0) return;
+    const fetchTopics = async (topicType: string, setter: (topics: any[]) => void) => {
+      const response = await fetch(
+        constructVercelURL(`/api/city-topics/getByBusiness?businessId=${businessId}&topic_type=${topicType}`)
+      );
+      const data = await response.json();
+      setter(data.topics || []);
+    };
+    if (clientDetails && businessId) {
+      fetchTopics("Compliment", setComplimentTopics);
+      fetchTopics("Criticism", setCriticismTopics);
     }
     return () => {
       requestTracker.current.clear();
@@ -176,25 +199,64 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
 
             <p className="text-gray-500">No posts with these topics found</p>
           </div>
+
         ) : (
-          <div className="flex flex-col items-center p-2 w-full">
-            <CirclePacking
-              topics={topics}
-              businessId={businessId}
-              clientId={clientId}
-              minCount={minCount}
-              maxTopics={topicLimit}
-              topicType={getTopicType(activeTab)}
-            />
-            <BarChart 
-              topics={topics} 
-              businessId={businessId} 
-              clientId={clientId} 
-              minCount={minCount}
-              maxTopics={topicLimit}
-              topicType={getTopicType(activeTab)}
-            />
+          <div className="flex flex-row gap-8 w-full">
+
+            <div className="flex-1 flex flex-col items-center">
+              <h2 className="text-lg font-bold mb-2">Compliments</h2>
+
+              <div className="w-full h-[600px] flex justify-center items-center">
+                <CirclePacking
+                  topics={complimentTopics}
+                  businessId={businessId}
+                  clientId={clientId}
+                  minCount={minCount}
+                  maxTopics={topicLimit}
+                  topicType="Compliment"
+                />
+              </div>
+              {/* Spacer to ensure no overlap */}
+              <div className="h-6" />
+              <div className="w-full">
+                <BarChart
+                  topics={complimentTopics}
+                  businessId={businessId}
+                  clientId={clientId}
+                  minCount={minCount}
+                  maxTopics={topicLimit}
+                  topicType="Compliment"
+                />
+              </div>
+            </div>
+
+            {/* Criticisms Section */}
+            <div className="flex-1 flex flex-col items-center">
+              <h2 className="text-lg font-bold mb-2">Criticisms</h2>
+              <div className="w-full h-[600px] flex justify-center items-center">
+                <CirclePacking
+                  topics={criticismTopics}
+                  businessId={businessId}
+                  clientId={clientId}
+                  minCount={minCount}
+                  maxTopics={topicLimit}
+                  topicType="Criticism"
+                />
+              </div>
+              <div className="h-6" />
+              <div className="w-full">
+                <BarChart
+                  topics={criticismTopics}
+                  businessId={businessId}
+                  clientId={clientId}
+                  minCount={minCount}
+                  maxTopics={topicLimit}
+                  topicType="Criticism"
+                />
+              </div>
+            </div>
           </div>
+
         )}
       </div>
     </div>
