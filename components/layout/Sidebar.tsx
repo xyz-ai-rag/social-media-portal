@@ -206,6 +206,9 @@ export default function Sidebar() {
     if (path.includes("[clientId]/[businessId]/topic-analysis")) {
       return pathname === `/${effectiveClientId}/${effectiveBusinessId}/topic-analysis`;
     }
+    if (path.includes("[clientId]/[businessId]/city-topic-analysis")) {
+      return pathname === `/${effectiveClientId}/${effectiveBusinessId}/city-topic-analysis`;
+    }
     if (path.includes("[clientId]/[businessId]/competitors")) {
       return pathname === `/${effectiveClientId}/${effectiveBusinessId}/competitors`;
     }
@@ -226,6 +229,7 @@ export default function Sidebar() {
   const getPostsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/posts`;
   const getCompetitorsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/competitors`;
   const getAnalyticsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/topic-analysis`;
+  const getCityAnalyticsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/city-topic-analysis`;
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -335,6 +339,16 @@ export default function Sidebar() {
                     icon={<IoAnalyticsOutline />}
                     label="Topic Analysis"
                     isActive={isActive("/[clientId]/[businessId]/topic-analysis")}
+                    disabled={!hasBusiness}
+                    collapsed={collapsed}
+                    onClick={!hasBusiness ? handleDisabledClick : undefined}
+                  />
+
+                  <MenuItem
+                    href={getCityAnalyticsUrl()}
+                    icon={<IoAnalyticsOutline />}
+                    label="City Topic Analysis"
+                    isActive={isActive("/[clientId]/[businessId]/city-topic-analysis")}
                     disabled={!hasBusiness}
                     collapsed={collapsed}
                     onClick={!hasBusiness ? handleDisabledClick : undefined}
