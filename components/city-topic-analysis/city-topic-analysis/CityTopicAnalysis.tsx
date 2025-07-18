@@ -9,7 +9,9 @@ import TabSection from './TabSection';
 import BarChart from './BarChart';
 import { useSearchParams } from "next/navigation";
 import { TopicAnalysisOverviewTierBanner } from "@/components/TierBanner";
-
+import GroupedBarChart from './GroupedBarChart/GroupedBarChart';
+import DateRangePicker from "./DateRangePicker";
+import CitySpecificAnalysis from './Tabs/Tab2/CityAnalysis';
 interface AnalysisProps {
   clientId: string;
   businessId: string;
@@ -200,12 +202,10 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
             <p className="text-gray-500">No posts with these topics found</p>
           </div>
 
-        ) : (
+        ) : activeTab === 0 ? (
           <div className="flex flex-row gap-8 w-full">
-
             <div className="flex-1 flex flex-col items-center">
               <h2 className="text-lg font-bold mb-2">Compliments</h2>
-
               <div className="w-full h-[600px] flex justify-center items-center">
                 <CirclePacking
                   topics={complimentTopics}
@@ -216,7 +216,6 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
                   topicType="Compliment"
                 />
               </div>
-              {/* Spacer to ensure no overlap */}
               <div className="h-6" />
               <div className="w-full">
                 <BarChart
@@ -229,8 +228,6 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
                 />
               </div>
             </div>
-
-            {/* Criticisms Section */}
             <div className="flex-1 flex flex-col items-center">
               <h2 className="text-lg font-bold mb-2">Criticisms</h2>
               <div className="w-full h-[600px] flex justify-center items-center">
@@ -256,11 +253,71 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
               </div>
             </div>
           </div>
-
+        ) : activeTab === 1 ? (
+          <CitySpecificAnalysis clientId={clientId} businessId={businessId} />
+        ) : activeTab === 2 ? (
+          <div className="flex flex-col items-center justify-center w-full min-h-[400px]">
+            <h2 className="text-2xl font-bold mb-4">Criticisms</h2>
+            <p className="text-gray-500">敬请期待，或在此处添加你的自定义图表组件！</p>
+          </div>
+        ) : activeTab === 3 ? (
+          <div className="flex flex-col items-center justify-center w-full min-h-[400px]">
+            <h2 className="text-2xl font-bold mb-4">Competitor</h2>
+            <p className="text-gray-500">敬请期待，或在此处添加你的自定义图表组件！</p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center w-full min-h-[400px]">
+            <h2 className="text-2xl font-bold mb-4">其它</h2>
+            <p className="text-gray-500">敬请期待，或在此处添加你的自定义图表组件！</p>
+          </div>
         )}
       </div>
     </div>
   );
 };
 
-export default CityTopicAnalysis; 
+export default CityTopicAnalysis;
+
+function CityGeneralBubble({ businessId, clientId }: { businessId: string; clientId: string }) {
+  const [bubbleData, setBubbleData] = useState<any[]>([]);
+  useEffect(() => {
+    async function fetchData() {
+      const url = `/api/city-topics/getCityTopicSMPI?businessId=${businessId}&type=City_General`;
+      const response = await fetch(url);
+      const { topics } = await response.json();
+      const totalCount = topics.reduce((sum: number, t: any) => sum + t.M, 0);
+      setBubbleData(topics.map((item: any) => ({
+        topic: item.topic,
+        count: item.M,
+        percentage: totalCount ? item.M / totalCount : 0
+      })));
+    }
+    fetchData();
+  }, [businessId]);
+  if (!bubbleData.length) return null;
+  return (
+    <>
+      <div className="w-full h-[600px] flex justify-center items-center">
+        <CirclePacking
+          topics={bubbleData}
+          businessId={businessId}
+          clientId={clientId}
+          minCount={1}
+          maxTopics={30}
+          topicType="City_General"
+        />
+      </div>
+      <div className="h-16" />
+      <div className="w-full">
+        <BarChart
+          topics={bubbleData}
+          businessId={businessId}
+          clientId={clientId}
+          minCount={1}
+          maxTopics={30}
+          topicType="City_General"
+        />
+      </div>
+    </>
+  );
+} 

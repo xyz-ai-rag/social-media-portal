@@ -54,7 +54,10 @@ const CirclePacking: FC<CirclePackingProps> = ({
   // Calculate dimensions based on the number of topics
   const baseSize = 600; // Base size
   const minSize = 200;  // Minimum size
-  const maxSize = 1000; // Maximum size
+  const maxSize = 1000; // 恢复原值
+  // const sizeScale = scaleSqrt()
+  // .domain([min, max])
+  // .range([BUBBLE_MIN_SIZE, BUBBLE_MAX_SIZE]);
   const size = Math.min(maxSize, Math.max(minSize, baseSize * Math.sqrt(filteredData.length / 10)));
   // const sizeScale = scaleSqrt()
   // .domain([min, max])
@@ -68,7 +71,7 @@ const CirclePacking: FC<CirclePackingProps> = ({
     .sum((d: any) => d.count)
     .sort((a: any, b: any) => b.count! - a.count!);
 
-  const packGenerator = d3.pack<Tree>().size([width, height]).padding(1);
+  const packGenerator = d3.pack<Tree>().size([width, height]).padding(8); // 恢复原值
   const root = packGenerator(hierarchy);
   const color = d3.scaleOrdinal(d3.schemeCategory10);
 
