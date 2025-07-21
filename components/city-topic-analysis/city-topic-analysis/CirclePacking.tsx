@@ -76,7 +76,19 @@ const CirclePacking: FC<CirclePackingProps> = ({
   const color = d3.scaleOrdinal(d3.schemeCategory10);
 
   function handleCircleClick(data: any): void {
-    router.push(`/${clientId}/${businessId}/city-topic-analysis/${encodeURIComponent(data.name)}?topic_type=${encodeURIComponent(topicType)}`);
+    try {
+      const encodedTopic = encodeURIComponent(data.name);
+      const encodedTopicType = encodeURIComponent(topicType);
+      const url = `/${clientId}/${businessId}/city-topic-analysis/${encodedTopic}?topic_type=${encodedTopicType}`;
+      console.log('[CirclePacking] Navigating to:', url);
+      router.push(url);
+    } catch (error) {
+      console.error('[CirclePacking] Navigation error:', error);
+      // Fallback: try without encoding
+      const url = `/${clientId}/${businessId}/city-topic-analysis/${data.name}?topic_type=${topicType}`;
+      console.log('[CirclePacking] Fallback navigation to:', url);
+      router.push(url);
+    }
   }
 
   const handleMouseEnter = (node: any) => {

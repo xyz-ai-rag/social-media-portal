@@ -1,15 +1,42 @@
 import { NextRequest } from "next/server";
-import { fn, col, literal } from "sequelize";
+import { fn, col, literal, where } from "sequelize";
 import { CityTopicsModel } from "@/feature/sqlORM/modelorm";
+import { parseISO, startOfMonth, endOfMonth } from 'date-fns';
+import { Op } from 'sequelize';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const businessId = "f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c";
     const type = searchParams.get("type");
+    const month = searchParams.get("month"); // 2025-06
+
+    console.log('[getCityTopicSMPI] 请求参数:', {
+      businessId,
+      type,
+      month,
+    });
+
     if (!businessId) {
       return new Response(JSON.stringify({ error: "Missing businessId" }), { status: 400 });
     }
+
+    let whereClause: any = { business_id: businessId };
+
+    if (type) {
+      whereClause.topic_type = type;
+    }
+
+    if (month) {
+      const startDate = startOfMonth(parseISO(month));
+      const endDate = endOfMonth(parseISO(month));
+      whereClause.created_at = {
+        [Op.gte]: startDate,
+        [Op.lte]: endDate,
+      };
+    }
+
+    console.log('[getCityTopicSMPI] SQL where条件:', whereClause);
 
     // 1. 按 topic 分组统计
     const topicRows = await CityTopicsModel.findAll({
@@ -23,7 +50,7 @@ export async function GET(request: NextRequest) {
         [fn('SUM', literal("CASE WHEN sentiment = 'Highly Negative' THEN 1 ELSE 0 END")), 'HN'],
         [fn('SUM', literal("CASE WHEN topic_type = 'Criticism' THEN 1 ELSE 0 END")), 'Crit'],
       ],
-      where: { business_id: businessId },
+      where: whereClause,
       group: ['topic', 'topic_type'],
       order: [[fn('COUNT', '*'), 'DESC']]
     });
@@ -48,7 +75,7 @@ export async function GET(request: NextRequest) {
       avg_Crit: total_Crit / topicCount,
     };
 
-    // 3. 组装返回，支持 type 过滤
+    // 3. 组装返回
     let result = topicRows.map((row: any) => ({
       topic: row.get('topic'),
       topic_type: row.get('topic_type'),
@@ -60,11 +87,17 @@ export async function GET(request: NextRequest) {
       Crit: Number(row.get('Crit')),
       ...avg
     }));
-    if (type) {
-      result = result.filter((item: any) => item.topic_type === type);
-    }
+
+    console.log('[getCityTopicSMPI] 返回数据:', {
+      topicsCount: result.length,
+      firstTopic: result[0],
+      whereClause,
+      month,
+    });
+
     return new Response(JSON.stringify({ topics: result }), { status: 200 });
   } catch (err) {
+    console.error('[getCityTopicSMPI] 错误:', err);
     return new Response(JSON.stringify({ error: String(err) }), { status: 500 });
   }
 } 

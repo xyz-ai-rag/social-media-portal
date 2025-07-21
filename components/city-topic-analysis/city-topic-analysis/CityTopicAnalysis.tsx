@@ -12,6 +12,7 @@ import { TopicAnalysisOverviewTierBanner } from "@/components/TierBanner";
 import GroupedBarChart from './GroupedBarChart/GroupedBarChart';
 import DateRangePicker from "./DateRangePicker";
 import CitySpecificAnalysis from './Tabs/Tab2/CityAnalysis';
+import Overview from './Tabs/Tab1/Overview';
 interface AnalysisProps {
   clientId: string;
   businessId: string;
@@ -40,6 +41,9 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
 
   const [complimentTopics, setComplimentTopics] = useState<any[]>([]);
   const [criticismTopics, setCriticismTopics] = useState<any[]>([]);
+
+  const [drillDownTopic, setDrillDownTopic] = useState<string | null>(null);
+
 
   // Map tab index to topic type
   const getActiveTab = (topicType: string | null) => {
@@ -203,56 +207,14 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
           </div>
 
         ) : activeTab === 0 ? (
-          <div className="flex flex-row gap-8 w-full">
-            <div className="flex-1 flex flex-col items-center">
-              <h2 className="text-lg font-bold mb-2">Compliments</h2>
-              <div className="w-full h-[600px] flex justify-center items-center">
-                <CirclePacking
-                  topics={complimentTopics}
-                  businessId={businessId}
-                  clientId={clientId}
-                  minCount={minCount}
-                  maxTopics={topicLimit}
-                  topicType="Compliment"
-                />
-              </div>
-              <div className="h-6" />
-              <div className="w-full">
-                <BarChart
-                  topics={complimentTopics}
-                  businessId={businessId}
-                  clientId={clientId}
-                  minCount={minCount}
-                  maxTopics={topicLimit}
-                  topicType="Compliment"
-                />
-              </div>
-            </div>
-            <div className="flex-1 flex flex-col items-center">
-              <h2 className="text-lg font-bold mb-2">Criticisms</h2>
-              <div className="w-full h-[600px] flex justify-center items-center">
-                <CirclePacking
-                  topics={criticismTopics}
-                  businessId={businessId}
-                  clientId={clientId}
-                  minCount={minCount}
-                  maxTopics={topicLimit}
-                  topicType="Criticism"
-                />
-              </div>
-              <div className="h-6" />
-              <div className="w-full">
-                <BarChart
-                  topics={criticismTopics}
-                  businessId={businessId}
-                  clientId={clientId}
-                  minCount={minCount}
-                  maxTopics={topicLimit}
-                  topicType="Criticism"
-                />
-              </div>
-            </div>
-          </div>
+          <Overview
+            complimentTopics={complimentTopics}
+            criticismTopics={criticismTopics}
+            businessId={businessId}
+            clientId={clientId}
+            minCount={minCount}
+            topicLimit={topicLimit}
+          />
         ) : activeTab === 1 ? (
           <CitySpecificAnalysis clientId={clientId} businessId={businessId} />
         ) : activeTab === 2 ? (
@@ -277,47 +239,3 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
 };
 
 export default CityTopicAnalysis;
-
-function CityGeneralBubble({ businessId, clientId }: { businessId: string; clientId: string }) {
-  const [bubbleData, setBubbleData] = useState<any[]>([]);
-  useEffect(() => {
-    async function fetchData() {
-      const url = `/api/city-topics/getCityTopicSMPI?businessId=${businessId}&type=City_General`;
-      const response = await fetch(url);
-      const { topics } = await response.json();
-      const totalCount = topics.reduce((sum: number, t: any) => sum + t.M, 0);
-      setBubbleData(topics.map((item: any) => ({
-        topic: item.topic,
-        count: item.M,
-        percentage: totalCount ? item.M / totalCount : 0
-      })));
-    }
-    fetchData();
-  }, [businessId]);
-  if (!bubbleData.length) return null;
-  return (
-    <>
-      <div className="w-full h-[600px] flex justify-center items-center">
-        <CirclePacking
-          topics={bubbleData}
-          businessId={businessId}
-          clientId={clientId}
-          minCount={1}
-          maxTopics={30}
-          topicType="City_General"
-        />
-      </div>
-      <div className="h-16" />
-      <div className="w-full">
-        <BarChart
-          topics={bubbleData}
-          businessId={businessId}
-          clientId={clientId}
-          minCount={1}
-          maxTopics={30}
-          topicType="City_General"
-        />
-      </div>
-    </>
-  );
-} 

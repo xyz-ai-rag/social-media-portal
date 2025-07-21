@@ -1,36 +1,50 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, FC } from "react";
 import CirclePacking from "../../CirclePacking";
 import BarChart from "../../BarChart";
 
 interface CityGeneralBubbleProps {
   businessId: string;
   clientId: string;
+  selectedMonth: string;
 }
 
-const CityGeneralBubble = ({ businessId, clientId }: CityGeneralBubbleProps) => {
+const CityGeneralBubble: FC<CityGeneralBubbleProps> = ({
+  businessId,
+  clientId,
+  selectedMonth,
+}) => {
   const [bubbleData, setBubbleData] = useState<any[]>([]);
 
   useEffect(() => {
     async function fetchData() {
-      const url = `/api/city-topics/getCityTopicSMPI?businessId=${businessId}&type=City_General`;
-      const response = await fetch(url);
-      const { topics } = await response.json();
+      try {
+        const url = `/api/city-topics/getCityTopicSMPI?businessId=${businessId}&type=City_General&month=${selectedMonth}`;
+        const response = await fetch(url);
+        const data = await response.json();
 
-      const totalCount = topics.reduce((sum: number, t: any) => sum + t.M, 0);
+        if (!data?.topics?.length) {
+          setBubbleData([]);
+          return;
+        }
 
-      const formatted = topics.map((item: any) => ({
-        topic: item.topic,
-        count: item.M,
-        percentage: totalCount ? item.M / totalCount : 0,
-      }));
+        const totalCount = data.topics.reduce((sum: number, t: any) => sum + t.M, 0);
 
-      setBubbleData(formatted);
+        const formatted = data.topics.map((item: any) => ({
+          topic: item.topic,
+          count: item.M,
+          percentage: totalCount ? item.M / totalCount : 0,
+        }));
+
+        setBubbleData(formatted);
+      } catch (error) {
+        setBubbleData([]);
+      }
     }
 
     fetchData();
-  }, [businessId]);
+  }, [businessId, selectedMonth]);
 
   if (!bubbleData.length) return null;
 

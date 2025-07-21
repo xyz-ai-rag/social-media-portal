@@ -28,6 +28,7 @@ echarts.use([
 interface GroupedBarChartProps {
   clientId: string;
   businessId: string;
+  selectedMonth: string;  // 新增
 }
 
 interface ChartRecord {
@@ -38,6 +39,7 @@ interface ChartRecord {
 export default function GroupedBarChart({
   clientId,
   businessId,
+  selectedMonth,
 }: GroupedBarChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,7 +73,7 @@ export default function GroupedBarChart({
       setIsLoading(true); // Set loading state when the request is made
 
       try {
-        const url = `/api/city-topics/getCityTopicSMPI?businessId=${businessId}`;
+        const url = `/api/city-topics/getCityTopicSMPI?businessId=${businessId}&month=${selectedMonth}`;
         const response = await fetch(url);
         const { topics } = await response.json();
         console.log('[GroupedBarChart] API返回 topics:', topics);
@@ -102,7 +104,7 @@ export default function GroupedBarChart({
     return () => {
       isCurrent = false;
     };
-  }, [businessId]);
+  }, [businessId, selectedMonth]);  // 添加 selectedMonth 依赖
 
   // Initialize and configure the chart once data is loaded.
   useEffect(() => {
@@ -208,7 +210,7 @@ export default function GroupedBarChart({
       ) : (
         <>
           <div className="h-64">
-            <div ref={chartRef} style={{ width: "100%", height: "100%" }} />
+            <div ref={chartRef} style={{ width: "100%", height: "100%", cursor: "default" }} />
           </div>
         </>
       )}

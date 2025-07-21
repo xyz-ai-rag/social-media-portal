@@ -220,6 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         "competitors",
         "posts",
         "topic-analysis",
+        "city-topic-analysis",
         "monthly-kpis",
         "business-reporting"
       ];
