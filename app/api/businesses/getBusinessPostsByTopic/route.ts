@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
 import { fn, col, literal, where, Op } from "sequelize";
-import { BusinessPostModel } from "@/feature/sqlORM/modelorm";
+import { BusinessPostModel, CityTopicsModel } from "@/feature/sqlORM/modelorm";
 import { parseISO, startOfDay, endOfDay } from 'date-fns';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const businessId = searchParams.get("businessId");
+    const businessId = "f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c"; // 使用硬编码的 businessId，与 getCriticismTrend 保持一致
     const topic = searchParams.get("topic");
     const topicType = searchParams.get("topicType");
     const startDate = searchParams.get("startDate");
@@ -29,31 +29,86 @@ export async function GET(request: NextRequest) {
       businessId, topic, topicType, startDate, endDate, platform, sentiment, relevance, hasCriticism, search, sortOrder, postCategory, page
     });
 
-    // 首先根据话题名称查找对应的 business_id
-    let actualBusinessId = businessId;
+    // 检查该 businessId 在 city_topics 表中是否有数据
+    const totalCityTopics = await CityTopicsModel.count({
+      where: {
+        business_id: businessId,
+      },
+    });
+    console.log('[getBusinessPostsByTopic] 该 businessId 在 city_topics 表中的总记录数:', totalCityTopics);
 
-    // 如果传入的 businessId 是硬编码的，则根据话题查找实际的 businessId
-    if (businessId === "f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c" || businessId === "a7b6c5d4-e3f2-1a0b-9c8d-7e6f5a4b3c2d") {
-      const topicBusiness = await BusinessPostModel.findOne({
+    // 根据话题名称和类型查找对应的 note_ids
+    let noteIds: string[] = [];
+    
+    try {
+      // 从 city_topics 表中查找匹配的 note_ids
+      const cityTopics = await CityTopicsModel.findAll({
         where: {
-          post_topic: topic
+          topic: topic,
+          topic_type: topicType === 'City_Criticisms' || topicType === 'Criticisms' ? 'Criticism' : topicType,
+          business_id: businessId
         },
-        attributes: ['business_id'],
+        attributes: ['note_id'],
         raw: true,
       });
 
-      if (topicBusiness) {
-        actualBusinessId = topicBusiness.business_id;
-        console.log('[getBusinessPostsByTopic] 找到话题对应的 businessId:', { topic, actualBusinessId });
-      } else {
-        console.log('[getBusinessPostsByTopic] 未找到话题对应的 businessId:', { topic });
+      noteIds = cityTopics.map((ct: any) => ct.note_id);
+      console.log('[getBusinessPostsByTopic] 查找条件:', {
+        topic,
+        topic_type: topicType === 'City_Criticisms' || topicType === 'Criticisms' ? 'Criticism' : topicType,
+        business_id: businessId
+      });
+      console.log('[getBusinessPostsByTopic] 找到的 note_ids:', noteIds);
+      console.log('[getBusinessPostsByTopic] city_topics 原始数据:', cityTopics);
+
+      // 如果没有找到数据，尝试查看数据库中有什么数据
+      if (cityTopics.length === 0) {
+        console.log('[getBusinessPostsByTopic] 没有找到数据，尝试查看数据库中的样本数据...');
+        const sampleCityTopics = await CityTopicsModel.findAll({
+          where: {
+            business_id: businessId
+          },
+          attributes: ['topic', 'topic_type', 'note_id'],
+          limit: 5,
+          raw: true,
+        });
+        console.log('[getBusinessPostsByTopic] 该 business_id 的样本数据:', sampleCityTopics);
       }
+    } catch (error) {
+      console.error('[getBusinessPostsByTopic] 查找 city_topics 失败:', error);
     }
 
-    // Build where clause - 只按 business_id 查询，不按话题过滤
-    let whereClause: any = {
-      business_id: actualBusinessId,
-    };
+    // Build where clause - 按 note_ids 查询
+    let whereClause: any = {};
+    
+    if (noteIds.length > 0) {
+      whereClause.note_id = {
+        [Op.in]: noteIds
+      };
+    } else {
+      // 如果没有找到 note_ids，返回空结果
+      console.log('[getBusinessPostsByTopic] 没有找到匹配的 note_ids，返回空结果');
+      return new Response(JSON.stringify({
+        posts: [],
+        pagination: {
+          totalCount: 0,
+          totalPages: 0,
+          currentPage: page,
+          pageSize,
+        },
+        appliedFilters: {
+          startDate: startDate || "",
+          endDate: endDate || "",
+          platform: platform || "",
+          sentiment: sentiment || "",
+          relevance: relevance || "",
+          hasCriticism: hasCriticism || "",
+          search: search || "",
+          sortOrder: sortOrder || "desc",
+          postCategory: postCategory || "",
+        },
+      }), { status: 200 });
+    }
 
     // 暂时不按 topic_type 过滤，因为可能字段为空
     // 如果需要按 topic_type 过滤，可以后续添加
@@ -107,7 +162,7 @@ export async function GET(request: NextRequest) {
     // 检查数据库中是否有匹配的数据
     const sampleData = await BusinessPostModel.findOne({
       where: whereClause,
-      attributes: ['note_id', 'business_id', 'post_topic', 'description'],
+      attributes: ['note_id', 'business_id', 'description'],
       raw: true,
     });
     console.log('[getBusinessPostsByTopic] 样本数据:', sampleData);
@@ -141,7 +196,6 @@ export async function GET(request: NextRequest) {
         "negative_feedback_summary",
         "note_url",
         "post_category",
-        "post_topic",
         "liked_count",
         "comment_count",
         "share_count",
@@ -184,16 +238,15 @@ export async function GET(request: NextRequest) {
         englishTagList: postData.english_tag_list,
         taglist: postData.english_tag_list || postData.tag_list,
         date: postData.create_time,
-        showDate: postData.create_time,
+        showDate: postData.create_time ? new Date(postData.create_time).toLocaleString() : 'Unknown date',
         sentiment: postData.english_sentiment || 'Not specified',
         nickname: postData.nickname || 'Anonymous',
-        relvance: postData.relevance_percentage || 0,
+        relvance: postData.relevance_percentage ? `${postData.relevance_percentage}%` : '0%',
         platform: displayPlatform,
         hasCriticism: postData.has_negative_or_criticism || false,
         criticismSummary: postData.negative_feedback_summary,
         url: postData.note_url,
         postCategory: postData.post_category || 'Null',
-        topic: postData.post_topic || '',
         likes: postData.liked_count || 0,
         comments: postData.comment_count || 0,
         shares: postData.share_count || 0,
@@ -227,6 +280,16 @@ export async function GET(request: NextRequest) {
       totalPages,
       currentPage: page,
       firstPost: transformedPosts[0],
+      samplePostFields: transformedPosts[0] ? {
+        id: transformedPosts[0].id,
+        post: transformedPosts[0].post,
+        title: transformedPosts[0].title,
+        platform: transformedPosts[0].platform,
+        nickname: transformedPosts[0].nickname,
+        showDate: transformedPosts[0].showDate,
+        sentiment: transformedPosts[0].sentiment,
+        relvance: transformedPosts[0].relvance,
+      } : null,
     });
 
     return new Response(JSON.stringify({
