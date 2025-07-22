@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     // 查询该话题的历史数据，按月分组
     const monthlyData = await CityTopicsModel.findAll({
       attributes: [
-        [fn('DATE_FORMAT', col('created_at'), '%Y-%m'), 'month'],
+        [fn('TO_CHAR', col('created_at'), 'YYYY-MM'), 'month'],
         [fn('COUNT', '*'), 'total'],
         [fn('SUM', literal("CASE WHEN sentiment = 'Highly Positive' THEN 1 ELSE 0 END")), 'highly_positive'],
         [fn('SUM', literal("CASE WHEN sentiment = 'Positive' THEN 1 ELSE 0 END")), 'positive'],
@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
         topic: topic,
         topic_type: type,
       },
-      group: [fn('DATE_FORMAT', col('created_at'), '%Y-%m')],
-      order: [[fn('DATE_FORMAT', col('created_at'), '%Y-%m'), 'ASC']]
+      group: [fn('TO_CHAR', col('created_at'), 'YYYY-MM')],
+      order: [[fn('TO_CHAR', col('created_at'), 'YYYY-MM'), 'ASC']]
     });
 
     // 计算历史平均值

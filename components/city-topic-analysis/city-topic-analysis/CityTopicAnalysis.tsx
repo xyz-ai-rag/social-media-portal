@@ -10,9 +10,9 @@ import BarChart from './BarChart';
 import { useSearchParams } from "next/navigation";
 import { TopicAnalysisOverviewTierBanner } from "@/components/TierBanner";
 import GroupedBarChart from './GroupedBarChart/GroupedBarChart';
-import DateRangePicker from "./DateRangePicker";
 import CitySpecificAnalysis from './Tabs/Tab2/CityAnalysis';
-import Overview from './Tabs/Tab1/Overview';
+import Overview from './Tabs/Tab1/CityOverview';
+import CityCriticisms from './Tabs/Tab3/CityCriticisms';
 interface AnalysisProps {
   clientId: string;
   businessId: string;
@@ -90,14 +90,34 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
   };
 
   // Add state for active tab
-  const [activeTab, setActiveTab] = useState(getActiveTab(searchParams.get("topic_type")) || 0);
+  const [activeTab, setActiveTabState] = useState(getActiveTab(searchParams.get("topic_type")) || 0);
+  
+  // Custom setActiveTab function with logging
+  const setActiveTab = (tab: number) => {
+    console.log('[CityTopicAnalysis] Tab change requested:', { from: activeTab, to: tab });
+    setActiveTabState(tab);
+  };
+  
+  // Debug: Log component re-renders
+  console.log('[CityTopicAnalysis] Component rendered with:', {
+    clientId,
+    businessId,
+    activeTab,
+    hasClientDetails: !!clientDetails,
+    clientDetailsLength: clientDetails?.businesses?.length,
+    searchParams: searchParams.toString()
+  });
+  
   useEffect(() => {
-    setActiveTab(getActiveTab(searchParams.get("topic_type")) || 0);
+    const newActiveTab = getActiveTab(searchParams.get("topic_type")) || 0;
+    if (newActiveTab !== activeTab) {
+      setActiveTabState(newActiveTab);
+    }
   }, [searchParams]);
 
   // Update business name when business ID changes
   useEffect(() => {
-    if (clientDetails && businessId) {
+    if (clientDetails && businessId && clientDetails.businesses?.length > 0) {
       const business = clientDetails.businesses.find(
         (b) => b.business_id === businessId
       );
@@ -112,18 +132,21 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
     const fetchData = async () => {
       try {
         if (!clientDetails || !businessId) return;
+        
         // Create a cache key based on the current request parameters
         const requestKey = `${businessId}_${getTopicType(activeTab)}`;
+        
         // Skip duplicate requests in the same render cycle
         if (requestTracker.current.has(requestKey)) {
           console.log('Skipping duplicate request:', requestKey);
           return;
         }
+        
         // Add to request tracker
         requestTracker.current.add(requestKey);
         setIsLoading(true);
+        
         // Fetch city topic data
-
         const response = await fetch(
           constructVercelURL(`/api/city-topics/getByBusiness?businessId=${businessId}`)
         );
@@ -143,9 +166,12 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
         setIsLoading(false);
       }
     };
-    if (clientDetails && businessId) {
+    
+    // Only fetch if we have all required data and they're stable
+    if (clientDetails && businessId && clientDetails.businesses?.length > 0) {
       fetchData();
     }
+    
     return () => {
       requestTracker.current.clear();
     };
@@ -155,17 +181,26 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
   // 只在 City Overview tab 下请求两个 topic_type
   useEffect(() => {
     if (activeTab !== 0) return;
+    
     const fetchTopics = async (topicType: string, setter: (topics: any[]) => void) => {
-      const response = await fetch(
-        constructVercelURL(`/api/city-topics/getByBusiness?businessId=${businessId}&topic_type=${topicType}`)
-      );
-      const data = await response.json();
-      setter(data.topics || []);
+      try {
+        const response = await fetch(
+          constructVercelURL(`/api/city-topics/getByBusiness?businessId=${businessId}&topic_type=${topicType}`)
+        );
+        const data = await response.json();
+        setter(data.topics || []);
+      } catch (error) {
+        console.error(`Error fetching ${topicType} topics:`, error);
+        setter([]);
+      }
     };
-    if (clientDetails && businessId) {
+    
+    // Only fetch if we have all required data and they're stable
+    if (clientDetails && businessId && clientDetails.businesses?.length > 0) {
       fetchTopics("Compliment", setComplimentTopics);
       fetchTopics("Criticism", setCriticismTopics);
     }
+    
     return () => {
       requestTracker.current.clear();
     };
@@ -218,10 +253,10 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
         ) : activeTab === 1 ? (
           <CitySpecificAnalysis clientId={clientId} businessId={businessId} />
         ) : activeTab === 2 ? (
-          <div className="flex flex-col items-center justify-center w-full min-h-[400px]">
-            <h2 className="text-2xl font-bold mb-4">Criticisms</h2>
-            <p className="text-gray-500">敬请期待，或在此处添加你的自定义图表组件！</p>
-          </div>
+          <CityCriticisms
+            businessId={businessId}
+            clientId={clientId}
+          />
         ) : activeTab === 3 ? (
           <div className="flex flex-col items-center justify-center w-full min-h-[400px]">
             <h2 className="text-2xl font-bold mb-4">Competitor</h2>

@@ -79,13 +79,28 @@ const CirclePacking: FC<CirclePackingProps> = ({
     try {
       const encodedTopic = encodeURIComponent(data.name);
       const encodedTopicType = encodeURIComponent(topicType);
-      const url = `/${clientId}/${businessId}/city-topic-analysis/${encodedTopic}?topic_type=${encodedTopicType}`;
+      
+      // 根据 topicType 决定跳转路径
+      let url;
+      if (topicType === 'Criticisms') {
+        // Tab3 的 Criticisms 跳转到简单的帖子页面
+        url = `/${clientId}/${businessId}/city-topic-posts/${encodedTopic}?topic_type=${encodedTopicType}`;
+      } else {
+        // Tab2 的 City_General 跳转到完整的 drill-down 页面
+        url = `/${clientId}/${businessId}/city-topic-analysis/${encodedTopic}?topic_type=${encodedTopicType}`;
+      }
+      
       console.log('[CirclePacking] Navigating to:', url);
       router.push(url);
     } catch (error) {
       console.error('[CirclePacking] Navigation error:', error);
       // Fallback: try without encoding
-      const url = `/${clientId}/${businessId}/city-topic-analysis/${data.name}?topic_type=${topicType}`;
+      let url;
+      if (topicType === 'Criticisms') {
+        url = `/${clientId}/${businessId}/city-topic-posts/${data.name}?topic_type=${topicType}`;
+      } else {
+        url = `/${clientId}/${businessId}/city-topic-analysis/${data.name}?topic_type=${topicType}`;
+      }
       console.log('[CirclePacking] Fallback navigation to:', url);
       router.push(url);
     }

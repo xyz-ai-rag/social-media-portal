@@ -21,10 +21,19 @@ export async function GET(request: NextRequest) {
       return new Response(JSON.stringify({ error: "Missing businessId" }), { status: 400 });
     }
 
+    // 添加缓存头
+    const response = new Response();
+    response.headers.set('Cache-Control', 'public, max-age=300'); // 缓存5分钟
+
     let whereClause: any = { business_id: businessId };
 
     if (type) {
-      whereClause.topic_type = type;
+      // 映射 topic_type
+      if (type === 'City_Criticisms' || type === 'Criticisms') {
+        whereClause.topic_type = 'Criticism';
+      } else {
+        whereClause.topic_type = type;
+      }
     }
 
     if (month) {
@@ -95,7 +104,12 @@ export async function GET(request: NextRequest) {
       month,
     });
 
-    return new Response(JSON.stringify({ topics: result }), { status: 200 });
+    return new Response(JSON.stringify({ topics: result }), { 
+      status: 200,
+      headers: {
+        'Cache-Control': 'public, max-age=300'
+      }
+    });
   } catch (err) {
     console.error('[getCityTopicSMPI] 错误:', err);
     return new Response(JSON.stringify({ error: String(err) }), { status: 500 });

@@ -18,7 +18,7 @@ export default function CityTopicDrillDownPage() {
 
   const clientId = params.clientId as string;
   const businessId = params.businessId as string;
-  const topic = params.topic as string;
+  const topic = decodeURIComponent(params.topic as string);
   const topicType = searchParams.get('topic_type');
 
   console.log('[DrillDown] Page params:', { clientId, businessId, topic, topicType });

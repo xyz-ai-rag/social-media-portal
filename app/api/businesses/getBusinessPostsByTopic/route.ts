@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { fn, col, literal, where, Op } from "sequelize";
-import { PostsModel } from "@/feature/sqlORM/modelorm";
+import { BusinessPostModel } from "@/feature/sqlORM/modelorm";
 import { parseISO, startOfDay, endOfDay } from 'date-fns';
 
 export async function GET(request: NextRequest) {
@@ -29,12 +29,37 @@ export async function GET(request: NextRequest) {
       businessId, topic, topicType, startDate, endDate, platform, sentiment, relevance, hasCriticism, search, sortOrder, postCategory, page
     });
 
-    // Build where clause
+    // 首先根据话题名称查找对应的 business_id
+    let actualBusinessId = businessId;
+
+    // 如果传入的 businessId 是硬编码的，则根据话题查找实际的 businessId
+    if (businessId === "f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c" || businessId === "a7b6c5d4-e3f2-1a0b-9c8d-7e6f5a4b3c2d") {
+      const topicBusiness = await BusinessPostModel.findOne({
+        where: {
+          [Op.or]: [
+            { post_topic: topic },
+            { topic: topic }
+          ]
+        },
+        attributes: ['business_id'],
+        raw: true,
+      });
+
+      if (topicBusiness) {
+        actualBusinessId = topicBusiness.business_id;
+        console.log('[getBusinessPostsByTopic] 找到话题对应的 businessId:', { topic, actualBusinessId });
+      } else {
+        console.log('[getBusinessPostsByTopic] 未找到话题对应的 businessId:', { topic });
+      }
+    }
+
+    // Build where clause - 只按 business_id 查询，不按话题过滤
     let whereClause: any = {
-      business_id: businessId,
-      topic: topic,
-      topic_type: topicType,
+      business_id: actualBusinessId,
     };
+
+    // 暂时不按 topic_type 过滤，因为可能字段为空
+    // 如果需要按 topic_type 过滤，可以后续添加
 
     // Date range filter
     if (startDate && endDate) {
@@ -72,48 +97,60 @@ export async function GET(request: NextRequest) {
     // Search filter
     if (search) {
       whereClause[Op.or] = [
-        { content: { [Op.iLike]: `%${search}%` } },
-        { title: { [Op.iLike]: `%${search}%` } },
-        { author: { [Op.iLike]: `%${search}%` } },
+        { english_desc: { [Op.iLike]: `%${search}%` } },
+        { english_title: { [Op.iLike]: `%${search}%` } },
+        { nickname: { [Op.iLike]: `%${search}%` } },
       ];
     }
 
     console.log('[getBusinessPostsByTopic] SQL where条件:', whereClause);
 
+    // 检查数据库中是否有匹配的数据
+    const sampleData = await BusinessPostModel.findOne({
+      where: whereClause,
+      attributes: ['note_id', 'business_id', 'post_topic', 'topic_type', 'description'],
+      raw: true,
+    });
+    console.log('[getBusinessPostsByTopic] 样本数据:', sampleData);
+
     // Get total count
-    const totalCount = await PostsModel.count({ where: whereClause });
+    const totalCount = await BusinessPostModel.count({ where: whereClause });
 
     // Calculate pagination
     const totalPages = Math.ceil(totalCount / pageSize);
     const offset = (page - 1) * pageSize;
 
     // Get posts with pagination
-    const posts = await PostsModel.findAll({
+    const posts = await BusinessPostModel.findAll({
       where: whereClause,
-      order: [['post_date', sortOrder.toUpperCase()]],
+      order: [['create_time', sortOrder.toUpperCase()]],
       limit: pageSize,
       offset: offset,
     });
 
-    // Transform posts data
-    const transformedPosts = posts.map((post: any) => ({
-      id: post.get('post_id'),
-      platform: post.get('platform'),
-      content: post.get('content'),
-      title: post.get('title'),
-      author: post.get('author'),
-      post_date: post.get('post_date'),
-      sentiment: post.get('sentiment'),
-      relevance: post.get('relevance'),
-      criticism: post.get('criticism'),
-      post_category: post.get('post_category'),
-      topic: post.get('topic'),
-      topic_type: post.get('topic_type'),
-      url: post.get('url'),
-      likes: post.get('likes'),
-      comments: post.get('comments'),
-      shares: post.get('shares'),
-    }));
+    // Transform posts data - 简化版本，只包含基本字段
+    const transformedPosts = posts.map((post: any) => {
+      console.log('[getBusinessPostsByTopic] 原始帖子数据:', post.toJSON());
+      
+      return {
+        id: post.get('note_id'),
+        platform: post.get('platform'),
+        post: post.get('english_desc') || post.get('description') || 'No content',
+        title: post.get('english_title') || post.get('title') || 'No title',
+        nickname: post.get('nickname') || 'Unknown',
+        showDate: post.get('create_time'),
+        sentiment: post.get('english_sentiment') || 'neutral',
+        relvance: post.get('relevance_percentage') || 0,
+        criticism: post.get('has_negative_or_criticism') || false,
+        postCategory: post.get('post_category') || '',
+        topic: post.get('post_topic') || '',
+        topic_type: post.get('topic_type') || '',
+        url: post.get('note_url') || '',
+        likes: post.get('liked_count') || 0,
+        comments: post.get('comment_count') || 0,
+        shares: post.get('share_count') || 0,
+      };
+    });
 
     // Build applied filters object
     const appliedFilters = {
