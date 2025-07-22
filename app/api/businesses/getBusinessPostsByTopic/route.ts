@@ -36,10 +36,7 @@ export async function GET(request: NextRequest) {
     if (businessId === "f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c" || businessId === "a7b6c5d4-e3f2-1a0b-9c8d-7e6f5a4b3c2d") {
       const topicBusiness = await BusinessPostModel.findOne({
         where: {
-          [Op.or]: [
-            { post_topic: topic },
-            { topic: topic }
-          ]
+          post_topic: topic
         },
         attributes: ['business_id'],
         raw: true,
@@ -63,7 +60,7 @@ export async function GET(request: NextRequest) {
 
     // Date range filter
     if (startDate && endDate) {
-      whereClause.post_date = {
+      whereClause.create_time = {
         [Op.gte]: startOfDay(parseISO(startDate)),
         [Op.lte]: endOfDay(parseISO(endDate)),
       };
@@ -76,17 +73,17 @@ export async function GET(request: NextRequest) {
 
     // Sentiment filter
     if (sentiment) {
-      whereClause.sentiment = sentiment;
+      whereClause.english_sentiment = sentiment;
     }
 
     // Relevance filter
     if (relevance) {
-      whereClause.relevance = relevance;
+      whereClause.relevance_percentage = relevance;
     }
 
     // Criticism filter
     if (hasCriticism) {
-      whereClause.criticism = hasCriticism === "true";
+      whereClause.has_negative_or_criticism = hasCriticism === "true";
     }
 
     // Post category filter
@@ -98,7 +95,9 @@ export async function GET(request: NextRequest) {
     if (search) {
       whereClause[Op.or] = [
         { english_desc: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } },
         { english_title: { [Op.iLike]: `%${search}%` } },
+        { title: { [Op.iLike]: `%${search}%` } },
         { nickname: { [Op.iLike]: `%${search}%` } },
       ];
     }
@@ -108,7 +107,7 @@ export async function GET(request: NextRequest) {
     // 检查数据库中是否有匹配的数据
     const sampleData = await BusinessPostModel.findOne({
       where: whereClause,
-      attributes: ['note_id', 'business_id', 'post_topic', 'topic_type', 'description'],
+      attributes: ['note_id', 'business_id', 'post_topic', 'description'],
       raw: true,
     });
     console.log('[getBusinessPostsByTopic] 样本数据:', sampleData);
@@ -123,32 +122,81 @@ export async function GET(request: NextRequest) {
     // Get posts with pagination
     const posts = await BusinessPostModel.findAll({
       where: whereClause,
+      attributes: [
+        "business_id",
+        "note_id",
+        "description",
+        "title",
+        "english_desc",
+        "english_preview_text",
+        "english_title",
+        "tag_list",
+        "english_tag_list",
+        "create_time",
+        "english_sentiment",
+        "nickname",
+        "relevance_percentage",
+        "platform",
+        "has_negative_or_criticism",
+        "negative_feedback_summary",
+        "note_url",
+        "post_category",
+        "post_topic",
+        "liked_count",
+        "comment_count",
+        "share_count",
+      ],
       order: [['create_time', sortOrder.toUpperCase()]],
       limit: pageSize,
       offset: offset,
     });
 
-    // Transform posts data - 简化版本，只包含基本字段
+    // Transform posts data - 与 getBusinessPosts 保持一致
     const transformedPosts = posts.map((post: any) => {
-      console.log('[getBusinessPostsByTopic] 原始帖子数据:', post.toJSON());
+      const postData = post.get({ plain: true });
+      console.log('[getBusinessPostsByTopic] 原始帖子数据:', postData);
       
+      let displayPlatform;
+      switch (postData.platform) {
+        case "xhs":
+          displayPlatform = "Rednote";
+          break;
+        case "wb":
+          displayPlatform = "Weibo";
+          break;
+        case "dy":
+          displayPlatform = "Douyin";
+          break;
+        default:
+          displayPlatform = postData.platform;
+      }
+
       return {
-        id: post.get('note_id'),
-        platform: post.get('platform'),
-        post: post.get('english_desc') || post.get('description') || 'No content',
-        title: post.get('english_title') || post.get('title') || 'No title',
-        nickname: post.get('nickname') || 'Unknown',
-        showDate: post.get('create_time'),
-        sentiment: post.get('english_sentiment') || 'neutral',
-        relvance: post.get('relevance_percentage') || 0,
-        criticism: post.get('has_negative_or_criticism') || false,
-        postCategory: post.get('post_category') || '',
-        topic: post.get('post_topic') || '',
-        topic_type: post.get('topic_type') || '',
-        url: post.get('note_url') || '',
-        likes: post.get('liked_count') || 0,
-        comments: post.get('comment_count') || 0,
-        shares: post.get('share_count') || 0,
+        id: postData.note_id,
+        businessId: postData.business_id,
+        description: postData.description,
+        englishDesc: postData.english_desc,
+        post: postData.english_preview_text || postData.english_desc || postData.description || 'No content',
+        title: postData.title,
+        englishTitle: postData.english_title,
+        displayTitle: postData.english_title || postData.title || 'No title',
+        tagList: postData.tag_list,
+        englishTagList: postData.english_tag_list,
+        taglist: postData.english_tag_list || postData.tag_list,
+        date: postData.create_time,
+        showDate: postData.create_time,
+        sentiment: postData.english_sentiment || 'Not specified',
+        nickname: postData.nickname || 'Anonymous',
+        relvance: postData.relevance_percentage || 0,
+        platform: displayPlatform,
+        hasCriticism: postData.has_negative_or_criticism || false,
+        criticismSummary: postData.negative_feedback_summary,
+        url: postData.note_url,
+        postCategory: postData.post_category || 'Null',
+        topic: postData.post_topic || '',
+        likes: postData.liked_count || 0,
+        comments: postData.comment_count || 0,
+        shares: postData.share_count || 0,
       };
     });
 
