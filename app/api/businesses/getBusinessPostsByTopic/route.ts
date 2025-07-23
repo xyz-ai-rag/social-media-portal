@@ -35,7 +35,6 @@ export async function GET(request: NextRequest) {
         business_id: businessId,
       },
     });
-    console.log('[getBusinessPostsByTopic] 该 businessId 在 city_topics 表中的总记录数:', totalCityTopics);
 
     // 根据话题名称和类型查找对应的 note_ids
     let noteIds: string[] = [];
@@ -56,33 +55,17 @@ export async function GET(request: NextRequest) {
 
       // 提取去重后的 note_ids
       noteIds = cityTopics.map((ct: any) => ct.note_id);
-      console.log('[getBusinessPostsByTopic] 查找条件:', {
-        topic,
-        topic_type: topicType === 'City_Criticisms' || topicType === 'Criticisms' ? 'Criticism' : topicType,
-        business_id: businessId
-      });
-      console.log('[getBusinessPostsByTopic] 找到的 note_ids:', noteIds);
-      console.log('[getBusinessPostsByTopic] city_topics 原始数据:', cityTopics);
 
-      // 如果没有找到数据，尝试查看数据库中有什么数据
-      if (cityTopics.length === 0) {
-        console.log('[getBusinessPostsByTopic] 没有找到数据，尝试查看数据库中的样本数据...');
-        const sampleCityTopics = await CityTopicsModel.findAll({
-          where: {
-            business_id: businessId
-          },
-          attributes: ['topic', 'topic_type', 'note_id'],
-          limit: 5,
-          raw: true,
-        });
-        console.log('[getBusinessPostsByTopic] 该 business_id 的样本数据:', sampleCityTopics);
-      }
+
+
     } catch (error) {
       console.error('[getBusinessPostsByTopic] 查找 city_topics 失败:', error);
     }
 
-    // Build where clause - 按 note_ids 查询
-    let whereClause: any = {};
+    // Build where clause - 按 note_ids 和 business_id 查询
+    let whereClause: any = {
+      business_id: businessId // 确保只查询特定 business_id 的数据
+    };
     
     if (noteIds.length > 0) {
       whereClause.note_id = {
@@ -116,51 +99,9 @@ export async function GET(request: NextRequest) {
     // 暂时不按 topic_type 过滤，因为可能字段为空
     // 如果需要按 topic_type 过滤，可以后续添加
 
-    // Date range filter
-    if (startDate && endDate) {
-      whereClause.create_time = {
-        [Op.gte]: startOfDay(parseISO(startDate)),
-        [Op.lte]: endOfDay(parseISO(endDate)),
-      };
-    }
 
-    // Platform filter
-    if (platform) {
-      whereClause.platform = platform;
-    }
 
-    // Sentiment filter
-    if (sentiment) {
-      whereClause.english_sentiment = sentiment;
-    }
 
-    // Relevance filter
-    if (relevance) {
-      whereClause.relevance_percentage = relevance;
-    }
-
-    // Criticism filter
-    if (hasCriticism) {
-      whereClause.has_negative_or_criticism = hasCriticism === "true";
-    }
-
-    // Post category filter
-    if (postCategory) {
-      whereClause.post_category = postCategory;
-    }
-
-    // Search filter
-    if (search) {
-      whereClause[Op.or] = [
-        { english_desc: { [Op.iLike]: `%${search}%` } },
-        { description: { [Op.iLike]: `%${search}%` } },
-        { english_title: { [Op.iLike]: `%${search}%` } },
-        { title: { [Op.iLike]: `%${search}%` } },
-        { nickname: { [Op.iLike]: `%${search}%` } },
-      ];
-    }
-
-    console.log('[getBusinessPostsByTopic] SQL where条件:', whereClause);
 
     // 检查数据库中是否有匹配的数据
     const sampleData = await BusinessPostModel.findOne({
@@ -168,20 +109,16 @@ export async function GET(request: NextRequest) {
       attributes: ['note_id', 'business_id', 'description'],
       raw: true,
     });
-    console.log('[getBusinessPostsByTopic] 样本数据:', sampleData);
 
-    // Get total count
-    const totalCount = await BusinessPostModel.count({ where: whereClause });
 
     // Calculate pagination
-    const totalPages = Math.ceil(totalCount / pageSize);
     const offset = (page - 1) * pageSize;
 
-    // Get posts with pagination, using DISTINCT to avoid duplicates
-    const posts = await BusinessPostModel.findAll({
+    // 先获取所有匹配的帖子数据
+    const allPosts = await BusinessPostModel.findAll({
       where: whereClause,
       attributes: [
-        [fn('DISTINCT', col('note_id')), 'note_id'],
+        "note_id",
         "business_id",
         "description",
         "title",
@@ -204,14 +141,39 @@ export async function GET(request: NextRequest) {
         "share_count",
       ],
       order: [['create_time', sortOrder.toUpperCase()]],
-      limit: pageSize,
-      offset: offset,
+      raw: true,
     });
+
+    // 去重：保留每个 note_id 的第一条记录
+    const uniquePostsMap = new Map();
+    allPosts.forEach(post => {
+      if (!uniquePostsMap.has(post.note_id)) {
+        uniquePostsMap.set(post.note_id, post);
+      }
+    });
+
+    const uniquePosts = Array.from(uniquePostsMap.values());
+    const totalCount = uniquePosts.length;
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    // 计算当前页的数据
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const posts = uniquePosts.slice(startIndex, endIndex);
+
+
+    
+    // 调试 Business Travel 的情况
+    if (topic === 'Business Travel') {
+      console.log('[getBusinessPostsByTopic] Business Travel - 总帖子:', allPosts.length);
+      console.log('[getBusinessPostsByTopic] Business Travel - note_ids:', allPosts.map(post => post.note_id));
+      console.log('[getBusinessPostsByTopic] Business Travel - 去重后note_ids:', uniquePosts.map(post => post.note_id));
+    }
 
     // Transform posts data - 与 getBusinessPosts 保持一致
     const transformedPosts = posts.map((post: any) => {
-      const postData = post.get({ plain: true });
-      console.log('[getBusinessPostsByTopic] 原始帖子数据:', postData);
+      const postData = post; // 已经是普通对象，不需要 .get()
+
       
       let displayPlatform;
       switch (postData.platform) {
@@ -277,23 +239,7 @@ export async function GET(request: NextRequest) {
       pageSize,
     };
 
-    console.log('[getBusinessPostsByTopic] 返回数据:', {
-      postsCount: transformedPosts.length,
-      totalCount,
-      totalPages,
-      currentPage: page,
-      firstPost: transformedPosts[0],
-      samplePostFields: transformedPosts[0] ? {
-        id: transformedPosts[0].id,
-        post: transformedPosts[0].post,
-        title: transformedPosts[0].title,
-        platform: transformedPosts[0].platform,
-        nickname: transformedPosts[0].nickname,
-        showDate: transformedPosts[0].showDate,
-        sentiment: transformedPosts[0].sentiment,
-        relvance: transformedPosts[0].relvance,
-      } : null,
-    });
+
 
     return new Response(JSON.stringify({
       posts: transformedPosts,

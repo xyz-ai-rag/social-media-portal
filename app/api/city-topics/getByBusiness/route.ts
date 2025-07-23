@@ -29,16 +29,42 @@ export async function GET(request: NextRequest) {
   const topicType = searchParams.get("topic_type");
   const where: any = { business_id: 'f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c' };
   if (topicType) where.topic_type = topicType;
-  const cityTopicCounts = await CityTopicsModelToUse.findAll({
-    where,
-    attributes: [
-      'topic',
-      [fn('COUNT', fn('DISTINCT', col('note_id'))), 'count']
-    ],
-    group: ['topic'],
-    order: [[literal('count'), 'DESC']],
+
+  // 先获取所有在 business_posts 表中实际存在的 note_ids
+  const { BusinessPostModel } = await import("@/feature/sqlORM/modelorm");
+  const existingNoteIds = await BusinessPostModel.findAll({
+    where: { business_id: 'f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c' },
+    attributes: ['note_id'],
     raw: true,
   });
+  const existingNoteIdSet = new Set(existingNoteIds.map(post => post.note_id));
+
+  // 从 city_topics 表获取所有 topic 和对应的 note_ids
+  const cityTopics = await CityTopicsModelToUse.findAll({
+    where,
+    attributes: ['topic', 'note_id'],
+    raw: true,
+  });
+
+  // 按 topic 分组，只统计在 business_posts 表中实际存在的 note_ids
+  const topicCounts: { [key: string]: Set<string> } = {};
+  cityTopics.forEach((item: any) => {
+    // 只统计在 business_posts 表中存在的 note_id
+    if (existingNoteIdSet.has(item.note_id)) {
+      if (!topicCounts[item.topic]) {
+        topicCounts[item.topic] = new Set();
+      }
+      topicCounts[item.topic].add(item.note_id);
+    }
+  });
+
+  const cityTopicCounts = Object.entries(topicCounts).map(([topic, noteIds]) => ({
+    topic,
+    count: noteIds.size
+  })).sort((a, b) => b.count - a.count);
+
+
+
   const total = cityTopicCounts.reduce((sum: any, t: any) => sum + Number(t.count), 0);
   const topics = cityTopicCounts.map((t: any) => ({
     topic: t.topic,
