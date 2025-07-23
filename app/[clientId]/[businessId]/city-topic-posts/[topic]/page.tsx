@@ -26,13 +26,25 @@ export default function CityTopicPostsPage() {
         <button
           onClick={() => {
             const baseUrl = `/${clientId}/${businessId}/city-topic-analysis`;
-            const tabParam = topicType === 'City_General' ? '?tab=2' : '?tab=3';
+            let tabParam = '?tab=2';
+            let tabName = 'City General';
+            
+            if (topicType === 'Criticisms' || topicType === 'Criticism') {
+              tabParam = '?tab=2';
+              tabName = 'Criticisms';
+            } else if (topicType === 'Compliments' || topicType === 'Compliment') {
+              tabParam = '?tab=3';
+              tabName = 'Compliments';
+            }
+            
             router.push(baseUrl + tabParam);
           }}
           className="flex items-center text-gray-500 hover:text-blue-600 text-sm font-medium"
         >
           <span className="mr-1">&#8592;</span>
-          Back to Topic Analysis {topicType === 'City_General' ? ': City General' : ': Criticisms'}
+          Back to Topic Analysis: {topicType === 'City_General' ? 'City General' : 
+                                  topicType === 'Criticisms' || topicType === 'Criticism' ? 'Criticisms' :
+                                  topicType === 'Compliments' || topicType === 'Compliment' ? 'Compliments' : topicType}
         </button>
       </div>
       

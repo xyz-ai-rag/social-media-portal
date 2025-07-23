@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
       // 映射 topic_type
       if (type === 'City_Criticisms' || type === 'Criticisms') {
         whereClause.topic_type = 'Criticism';
+      } else if (type === 'Compliments' || type === 'Compliment') {
+        whereClause.topic_type = 'Compliment';
       } else {
         whereClause.topic_type = type;
       }

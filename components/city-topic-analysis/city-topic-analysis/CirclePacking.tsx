@@ -82,8 +82,8 @@ const CirclePacking: FC<CirclePackingProps> = ({
       
       // 根据 topicType 决定跳转路径
       let url;
-      if (topicType === 'Criticisms') {
-        // Tab3 的 Criticisms 跳转到简单的帖子页面
+      if (topicType === 'Criticisms' || topicType === 'Compliments') {
+        // Tab3 的 Criticisms 和 Tab4 的 Compliments 跳转到简单的帖子页面
         url = `/${clientId}/${businessId}/city-topic-posts/${encodedTopic}?topic_type=${encodedTopicType}`;
       } else {
         // Tab2 的 City_General 跳转到完整的 drill-down 页面
@@ -96,7 +96,7 @@ const CirclePacking: FC<CirclePackingProps> = ({
       console.error('[CirclePacking] Navigation error:', error);
       // Fallback: try without encoding
       let url;
-      if (topicType === 'Criticisms') {
+      if (topicType === 'Criticisms' || topicType === 'Compliments') {
         url = `/${clientId}/${businessId}/city-topic-posts/${data.name}?topic_type=${topicType}`;
       } else {
         url = `/${clientId}/${businessId}/city-topic-analysis/${data.name}?topic_type=${topicType}`;

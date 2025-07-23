@@ -13,7 +13,7 @@ const TabSection: FC<TabSectionProps> = ({
     { id: 0, label: 'City Overview' },
     { id: 1, label: 'City Analysis' },
     { id: 2, label: 'Criticisms' },
-    { id: 3, label: 'Compliments/Praise' },
+    { id: 3, label: 'Compliments' },
     { id: 4, label: 'Other Cities' },
   ];
 

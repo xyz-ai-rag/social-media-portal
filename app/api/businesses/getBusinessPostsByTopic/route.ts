@@ -44,7 +44,8 @@ export async function GET(request: NextRequest) {
       const cityTopics = await CityTopicsModel.findAll({
         where: {
           topic: topic,
-          topic_type: topicType === 'City_Criticisms' || topicType === 'Criticisms' ? 'Criticism' : topicType,
+          topic_type: topicType === 'City_Criticisms' || topicType === 'Criticisms' ? 'Criticism' : 
+                     topicType === 'Compliments' || topicType === 'Compliment' ? 'Compliment' : topicType,
           business_id: businessId
         },
         attributes: [

@@ -13,6 +13,7 @@ import GroupedBarChart from './GroupedBarChart/GroupedBarChart';
 import CitySpecificAnalysis from './Tabs/Tab2/CityAnalysis';
 import Overview from './Tabs/Tab1/CityOverview';
 import CityCriticisms from './Tabs/Tab3/CityCriticisms';
+import CityCompliments from './Tabs/Tab4/CityCompliments';
 interface AnalysisProps {
   clientId: string;
   businessId: string;
@@ -258,16 +259,16 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
             clientId={clientId}
           />
         ) : activeTab === 3 ? (
+          <CityCompliments
+            businessId={businessId}
+            clientId={clientId}
+          />
+        ) : activeTab === 4 ? (
           <div className="flex flex-col items-center justify-center w-full min-h-[400px]">
-            <h2 className="text-2xl font-bold mb-4">Competitor</h2>
-            <p className="text-gray-500">敬请期待，或在此处添加你的自定义图表组件！</p>
+            <h2 className="text-2xl font-bold mb-4">Other Cities</h2>
+            <p className="text-gray-500">nothing here</p>
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center w-full min-h-[400px]">
-            <h2 className="text-2xl font-bold mb-4">其它</h2>
-            <p className="text-gray-500">敬请期待，或在此处添加你的自定义图表组件！</p>
-          </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
