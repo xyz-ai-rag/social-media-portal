@@ -47,12 +47,12 @@ export async function GET(request: NextRequest) {
 
     console.log('[getCityTopicSMPI] SQL where条件:', whereClause);
 
-    // 1. 按 topic 分组统计
+    // 1. 按 topic 分组统计，使用 DISTINCT note_id 去重
     const topicRows = await CityTopicsModel.findAll({
       attributes: [
         'topic',
         'topic_type',
-        [fn('COUNT', '*'), 'M'],
+        [fn('COUNT', fn('DISTINCT', col('note_id'))), 'M'],
         [fn('SUM', literal("CASE WHEN sentiment = 'Highly Positive' THEN 1 ELSE 0 END")), 'HP'],
         [fn('SUM', literal("CASE WHEN sentiment = 'Positive' THEN 1 ELSE 0 END")), 'P'],
         [fn('SUM', literal("CASE WHEN sentiment = 'Negative' THEN 1 ELSE 0 END")), 'Neg'],
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       ],
       where: whereClause,
       group: ['topic', 'topic_type'],
-      order: [[fn('COUNT', '*'), 'DESC']]
+      order: [[fn('COUNT', fn('DISTINCT', col('note_id'))), 'DESC']]
     });
 
     // 2. 统计全局均值（所有 topic 的均值）

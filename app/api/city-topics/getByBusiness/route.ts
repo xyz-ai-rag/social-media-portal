@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     where,
     attributes: [
       'topic',
-      [fn('COUNT', col('id')), 'count']
+      [fn('COUNT', fn('DISTINCT', col('note_id'))), 'count']
     ],
     group: ['topic'],
     order: [[literal('count'), 'DESC']],

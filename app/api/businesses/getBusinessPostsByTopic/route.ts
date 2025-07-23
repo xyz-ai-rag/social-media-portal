@@ -41,17 +41,20 @@ export async function GET(request: NextRequest) {
     let noteIds: string[] = [];
     
     try {
-      // 从 city_topics 表中查找匹配的 note_ids
+      // 从 city_topics 表中查找匹配的 note_ids，使用 DISTINCT 去重
       const cityTopics = await CityTopicsModel.findAll({
         where: {
           topic: topic,
           topic_type: topicType === 'City_Criticisms' || topicType === 'Criticisms' ? 'Criticism' : topicType,
           business_id: businessId
         },
-        attributes: ['note_id'],
+        attributes: [
+          [fn('DISTINCT', col('note_id')), 'note_id']
+        ],
         raw: true,
       });
 
+      // 提取去重后的 note_ids
       noteIds = cityTopics.map((ct: any) => ct.note_id);
       console.log('[getBusinessPostsByTopic] 查找条件:', {
         topic,
@@ -174,12 +177,12 @@ export async function GET(request: NextRequest) {
     const totalPages = Math.ceil(totalCount / pageSize);
     const offset = (page - 1) * pageSize;
 
-    // Get posts with pagination
+    // Get posts with pagination, using DISTINCT to avoid duplicates
     const posts = await BusinessPostModel.findAll({
       where: whereClause,
       attributes: [
+        [fn('DISTINCT', col('note_id')), 'note_id'],
         "business_id",
-        "note_id",
         "description",
         "title",
         "english_desc",
