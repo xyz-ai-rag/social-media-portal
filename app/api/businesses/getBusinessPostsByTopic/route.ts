@@ -6,7 +6,7 @@ import { parseISO, startOfDay, endOfDay } from 'date-fns';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const businessId = "f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c"; // 使用硬编码的 businessId，与 getCriticismTrend 保持一致
+    const businessId = "f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c"; 
     const topic = searchParams.get("topic");
     const topicType = searchParams.get("topicType");
     const startDate = searchParams.get("startDate");
@@ -25,22 +25,10 @@ export async function GET(request: NextRequest) {
       return new Response(JSON.stringify({ error: "Missing required parameters" }), { status: 400 });
     }
 
-    console.log('[getBusinessPostsByTopic] 请求参数:', {
-      businessId, topic, topicType, startDate, endDate, platform, sentiment, relevance, hasCriticism, search, sortOrder, postCategory, page
-    });
 
-    // 检查该 businessId 在 city_topics 表中是否有数据
-    const totalCityTopics = await CityTopicsModel.count({
-      where: {
-        business_id: businessId,
-      },
-    });
-
-    // 根据话题名称和类型查找对应的 note_ids
     let noteIds: string[] = [];
     
     try {
-      // 从 city_topics 表中查找匹配的 note_ids，使用 DISTINCT 去重
       const cityTopics = await CityTopicsModel.findAll({
         where: {
           topic: topic,
@@ -54,7 +42,6 @@ export async function GET(request: NextRequest) {
         raw: true,
       });
 
-      // 提取去重后的 note_ids
       noteIds = cityTopics.map((ct: any) => ct.note_id);
 
 
@@ -63,9 +50,9 @@ export async function GET(request: NextRequest) {
       console.error('[getBusinessPostsByTopic] 查找 city_topics 失败:', error);
     }
 
-    // Build where clause - 按 note_ids 和 business_id 查询
-    let whereClause: any = {
-      business_id: businessId // 确保只查询特定 business_id 的数据
+
+    const whereClause: any = {
+      business_id: businessId 
     };
     
     if (noteIds.length > 0) {
@@ -73,7 +60,6 @@ export async function GET(request: NextRequest) {
         [Op.in]: noteIds
       };
     } else {
-      // 如果没有找到 note_ids，返回空结果
       console.log('[getBusinessPostsByTopic] 没有找到匹配的 note_ids，返回空结果');
       return new Response(JSON.stringify({
         posts: [],
@@ -97,25 +83,6 @@ export async function GET(request: NextRequest) {
       }), { status: 200 });
     }
 
-    // 暂时不按 topic_type 过滤，因为可能字段为空
-    // 如果需要按 topic_type 过滤，可以后续添加
-
-
-
-
-
-    // 检查数据库中是否有匹配的数据
-    const sampleData = await BusinessPostModel.findOne({
-      where: whereClause,
-      attributes: ['note_id', 'business_id', 'description'],
-      raw: true,
-    });
-
-
-    // Calculate pagination
-    const offset = (page - 1) * pageSize;
-
-    // 先获取所有匹配的帖子数据
     const allPosts = await BusinessPostModel.findAll({
       where: whereClause,
       attributes: [
@@ -145,7 +112,6 @@ export async function GET(request: NextRequest) {
       raw: true,
     });
 
-    // 去重：保留每个 note_id 的第一条记录
     const uniquePostsMap = new Map();
     allPosts.forEach(post => {
       if (!uniquePostsMap.has(post.note_id)) {
