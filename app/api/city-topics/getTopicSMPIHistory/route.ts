@@ -8,12 +8,12 @@ import { calculateSMPI } from "@/utils/smpi";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const businessId = "f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c";
+    const businessId = searchParams.get("businessId");
     const topic = searchParams.get("topic");
     const type = searchParams.get("type");
 
     if (!businessId || !topic || !type) {
-      return new Response(JSON.stringify({ error: "Missing required parameters" }), { status: 400 });
+      return new Response(JSON.stringify({ error: "Missing required parameters: businessId, topic, and type" }), { status: 400 });
     }
 
     console.log('[getTopicSMPIHistory] 请求参数:', { businessId, topic, type });

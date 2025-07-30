@@ -18,11 +18,12 @@ const MonthSelector: FC<MonthSelectorProps> = ({
   showEverything = true,
   className = ""
 }) => {
-  // 生成月份选项
+  // Generate month options
   const monthOptions = useMemo(() => {
     const options = [];
+    const seenMonths = new Set(); // Track added months to avoid duplicates
     
-    // 添加 "Everything" 选项（如果启用）
+    // Add "Everything" option if enabled
     if (showEverything) {
       options.push({
         value: 'everything',
@@ -38,19 +39,24 @@ const MonthSelector: FC<MonthSelectorProps> = ({
     while (currentDate >= startDateObj) {
       const monthStr = format(currentDate, 'yyyy-MM');
       const monthLabel = format(currentDate, 'MMM yyyy');
-      if (monthStr !== currentMonth) {
+      
+      // Check if month already added to avoid duplicates
+      if (monthStr !== currentMonth && !seenMonths.has(monthStr)) {
         options.push({
           value: monthStr,
           label: monthLabel
         });
+        seenMonths.add(monthStr);
       }
-      currentDate = new Date(currentDate.setMonth(currentDate.getMonth() - 1));
+      
+      // Use subMonths to avoid date mutation issues
+      currentDate = subMonths(currentDate, 1);
     }
 
     return options;
   }, [earliestDate, showEverything]);
 
-  // 缓存 onChange 处理函数
+  // Cache onChange handler
   const handleChange = useMemo(() => (e: React.ChangeEvent<HTMLSelectElement>) => {
     onMonthChange(e.target.value);
   }, [onMonthChange]);

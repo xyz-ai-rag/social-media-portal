@@ -28,7 +28,7 @@ echarts.use([
 interface GroupedBarChartProps {
   clientId: string;
   businessId: string;
-  selectedMonth: string;  // 新增
+  selectedMonth: string;  // Added
 }
 
 interface ChartRecord {
@@ -76,7 +76,6 @@ export default function GroupedBarChart({
         const url = `/api/city-topics/getCityTopicSMPI?businessId=${businessId}&month=${selectedMonth}`;
         const response = await fetch(url);
         const { topics } = await response.json();
-        console.log('[GroupedBarChart] API返回 topics:', topics);
 
         const chartData = (topics || []).map((item: any) => ({
           topic: item.topic,
@@ -85,8 +84,6 @@ export default function GroupedBarChart({
 
         if (isCurrent) {
           setChartData(chartData);
-        } else {
-          console.log("Ignore an invalid request");
         }
       } catch (error) {
         if (isCurrent) {
@@ -104,7 +101,7 @@ export default function GroupedBarChart({
     return () => {
       isCurrent = false;
     };
-  }, [businessId, selectedMonth]);  // 添加 selectedMonth 依赖
+  }, [businessId, selectedMonth]);  // Add selectedMonth dependency
 
   // Initialize and configure the chart once data is loaded.
   useEffect(() => {
@@ -161,7 +158,7 @@ export default function GroupedBarChart({
         type: "value",
         splitLine: { lineStyle: { type: "dashed" } },
         show: true,
-        max: 100, // 固定最大高度为100
+        max: 100, // Fixed maximum height of 100
       },
       series: [
         {

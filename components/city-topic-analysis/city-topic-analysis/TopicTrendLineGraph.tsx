@@ -52,7 +52,7 @@ export default function TopicTrendLineGraph({
   const [trendData, setTrendData] = useState<TopicTrendData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 获取数据
+  // Fetch data
   useEffect(() => {
     let isCurrent = true;
 
@@ -60,11 +60,9 @@ export default function TopicTrendLineGraph({
       setIsLoading(true);
       try {
         const url = `/api/city-topics/getTopicSMPIHistory?businessId=${encodeURIComponent(businessId)}&topic=${encodeURIComponent(topic)}&type=${encodeURIComponent(topicType)}`;
-        console.log('[TopicTrendLineGraph] Fetching SMPI history:', url);
         
         const res = await fetch(url);
         const data = await res.json();
-        console.log('[TopicTrendLineGraph] Received SMPI history:', data);
 
         if (isCurrent) {
           setTrendData(data);
@@ -85,7 +83,7 @@ export default function TopicTrendLineGraph({
     };
   }, [businessId, topic, topicType]);
 
-  // 渲染图表
+  // Render chart
   useEffect(() => {
     if (isLoading || !chartRef.current || !trendData) return;
 

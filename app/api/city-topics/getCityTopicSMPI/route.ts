@@ -7,7 +7,7 @@ import { Op } from 'sequelize';
 export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
-  const businessId = "f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c";
+  const businessId = searchParams.get("businessId");
   const type = searchParams.get("type");
   const month = searchParams.get("month"); // 2025-06
 

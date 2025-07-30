@@ -29,26 +29,26 @@ export default function ComplimentLineGraph({
     lastMonth: ComplimentData | null;
   }>({ currentMonth: null, lastMonth: null });
 
-  // 计算当前月份和上个月份
+  // Calculate current month and last month
   const currentMonthDate = selectedMonth === 'everything' 
     ? new Date() 
     : parseISO(selectedMonth + '-01');
   const lastMonthDate = subMonths(currentMonthDate, 1);
 
-  // 获取数据
+  // Fetch data
   useEffect(() => {
     let isCurrent = true;
 
     async function fetchComplimentData() {
       setIsLoading(true);
       try {
-        // 获取当前月份数据
+        // Fetch current month data
         const currentMonthResponse = await fetch(
           `/api/city-topics/getComplimentTrend?businessId=${businessId}&month=${format(currentMonthDate, 'yyyy-MM')}`
         );
         const currentMonthData = await currentMonthResponse.json();
 
-        // 获取上个月数据
+        // Fetch last month data
         const lastMonthResponse = await fetch(
           `/api/city-topics/getComplimentTrend?businessId=${businessId}&month=${format(lastMonthDate, 'yyyy-MM')}`
         );
@@ -77,15 +77,15 @@ export default function ComplimentLineGraph({
     return () => {
       isCurrent = false;
     };
-  }, [businessId, selectedMonth]); // 简化依赖项
+  }, [businessId, selectedMonth]); // Simplified dependencies
 
-  // 渲染图表
+  // Render chart
   useEffect(() => {
     if (isLoading || !chartRef.current) return;
 
     const chart = echarts.init(chartRef.current);
 
-    // 检查是否有数据 - 更宽松的检查
+    // Check if there's data - more lenient check
     if (!complimentData.currentMonth?.topics && !complimentData.lastMonth?.topics) {
       chart.setOption({
         title: {
@@ -101,34 +101,24 @@ export default function ComplimentLineGraph({
       return;
     }
 
-    // 调试：打印实际的数据结构
-    console.log('[ComplimentLineGraph] 图表渲染数据:', {
-      currentMonth: complimentData.currentMonth,
-      lastMonth: complimentData.lastMonth,
-      currentMonthTopics: complimentData.currentMonth?.topics,
-      lastMonthTopics: complimentData.lastMonth?.topics,
-    });
-
-    // 检查是否选择了 "Everything" 或所有话题都是 "Unknown" 或空
+    // Check if "Everything" is selected or all topics are "Unknown" or empty
     const isEverythingSelected = selectedMonth === 'everything';
     const allTopicsUnknown = complimentData.currentMonth?.topics.every(t => t.topic === 'Unknown' || !t.topic) &&
                             complimentData.lastMonth?.topics.every(t => t.topic === 'Unknown' || !t.topic);
 
-    console.log('[ComplimentLineGraph] isEverythingSelected:', isEverythingSelected, 'allTopicsUnknown:', allTopicsUnknown);
-
-    // 准备数据
+    // Prepare data
     const currentMonthName = format(currentMonthDate, 'MMM yyyy');
     const lastMonthName = format(lastMonthDate, 'MMM yyyy');
 
-    // 计算总表扬数
+    // Calculate total compliments
     const currentTotal = complimentData.currentMonth?.total_compliments || 0;
     const lastTotal = complimentData.lastMonth?.total_compliments || 0;
 
     const series = [];
 
     if (isEverythingSelected || allTopicsUnknown) {
-      // 如果选择 "Everything" 或所有话题都是 "Unknown"，显示总表扬数趋势
-      // 总是显示，即使数据为0
+      // If "Everything" is selected or all topics are "Unknown", show total compliment trend
+      // Always show, even if data is 0
       series.push({
         name: 'Total Compliments',
         type: 'line',
@@ -148,8 +138,8 @@ export default function ComplimentLineGraph({
         },
       });
     } else {
-      // 正常显示本月和上个月的数据
-      // 添加本月数据 - 只要有数据就显示，即使为0
+      // Normal display of current month and last month data
+      // Add current month data - show as long as there's data, even if 0
       if (complimentData.currentMonth?.topics) {
         series.push({
           name: currentMonthName,
@@ -171,7 +161,7 @@ export default function ComplimentLineGraph({
         });
       }
 
-      // 添加上个月数据 - 只要有数据就显示，即使为0
+      // Add last month data - show as long as there's data, even if 0
       if (complimentData.lastMonth?.topics) {
         series.push({
           name: lastMonthName,
@@ -221,7 +211,7 @@ export default function ComplimentLineGraph({
         data: (isEverythingSelected || allTopicsUnknown)
           ? ['Last Month', 'This Month']
           : (() => {
-              // 合并本月和上个月的话题，去重
+              // Merge current month and last month topics, remove duplicates
               const allTopics = new Set();
               if (complimentData.currentMonth?.topics) {
                 complimentData.currentMonth.topics.forEach(t => allTopics.add(t.topic));
@@ -265,7 +255,7 @@ export default function ComplimentLineGraph({
     };
   }, [complimentData, isLoading, selectedMonth, currentMonthDate, lastMonthDate]);
 
-  // 检查是否选择了 "Everything" 或所有话题都是 "Unknown" 或空（用于标题显示）
+  // Check if "Everything" is selected or all topics are "Unknown" or empty (for title display)
   const isEverythingSelected = selectedMonth === 'everything';
   const allTopicsUnknown = complimentData.currentMonth?.topics.every(t => t.topic === 'Unknown' || !t.topic) &&
                           complimentData.lastMonth?.topics.every(t => t.topic === 'Unknown' || !t.topic);

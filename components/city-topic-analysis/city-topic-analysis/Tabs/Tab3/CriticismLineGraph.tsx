@@ -46,11 +46,11 @@ export default function CriticismLineGraph({
   }>({ currentMonth: null, lastMonth: null });
   const [isLoading, setIsLoading] = useState(true);
 
-  // 计算月份
+  // Calculate months
   const currentMonthDate = useMemo(() => new Date(selectedMonth + '-01'), [selectedMonth]);
   const lastMonthDate = useMemo(() => subMonths(currentMonthDate, 1), [currentMonthDate]);
 
-  // 获取数据
+  // Fetch data
   useEffect(() => {
     let isCurrent = true;
 
@@ -59,13 +59,11 @@ export default function CriticismLineGraph({
       
       setIsLoading(true);
       try {
-        // 简化逻辑：统一处理所有情况
+        // Simplified logic: handle all cases uniformly
         const currentMonthStr = format(currentMonthDate, 'yyyy-MM');
         const lastMonthStr = format(lastMonthDate, 'yyyy-MM');
 
-        console.log('[CriticismLineGraph] Fetching criticism data for:', { currentMonthStr, lastMonthStr, selectedMonth });
-
-        // 并行获取本月和上个月的数据
+        // Fetch current month and last month data in parallel
         const [currentResponse, lastResponse] = await Promise.all([
           fetch(`/api/city-topics/getCriticismTrend?businessId=${encodeURIComponent(businessId)}&month=${currentMonthStr}`),
           fetch(`/api/city-topics/getCriticismTrend?businessId=${encodeURIComponent(businessId)}&month=${lastMonthStr}`)
@@ -75,8 +73,6 @@ export default function CriticismLineGraph({
           currentResponse.json(),
           lastResponse.json()
         ]);
-
-        console.log('[CriticismLineGraph] Received data:', { currentData, lastData });
 
         if (isCurrent) {
           setCriticismData({
@@ -101,9 +97,9 @@ export default function CriticismLineGraph({
     return () => {
       isCurrent = false;
     };
-  }, [businessId, selectedMonth]); // 简化依赖项
+  }, [businessId, selectedMonth]); // Simplified dependencies
 
-  // 渲染图表
+  // Render chart
   useEffect(() => {
     if (isLoading || !chartRef.current) return;
 
@@ -125,34 +121,24 @@ export default function CriticismLineGraph({
       return;
     }
 
-    // 调试：打印实际的数据结构
-    console.log('[CriticismLineGraph] 图表渲染数据:', {
-      currentMonth: criticismData.currentMonth,
-      lastMonth: criticismData.lastMonth,
-      currentMonthTopics: criticismData.currentMonth?.topics,
-      lastMonthTopics: criticismData.lastMonth?.topics,
-    });
-
-    // 检查是否选择了 "Everything" 或所有话题都是 "Unknown" 或空
+    // Check if "Everything" is selected or all topics are "Unknown" or empty
     const isEverythingSelected = selectedMonth === 'everything';
     const allTopicsUnknown = criticismData.currentMonth?.topics.every(t => t.topic === 'Unknown' || !t.topic) &&
                             criticismData.lastMonth?.topics.every(t => t.topic === 'Unknown' || !t.topic);
 
-    console.log('[CriticismLineGraph] isEverythingSelected:', isEverythingSelected, 'allTopicsUnknown:', allTopicsUnknown);
-
-    // 准备数据
+    // Prepare data
     const currentMonthName = format(currentMonthDate, 'MMM yyyy');
     const lastMonthName = format(lastMonthDate, 'MMM yyyy');
 
-    // 计算总批评数
+    // Calculate total criticisms
     const currentTotal = criticismData.currentMonth?.total_criticisms || 0;
     const lastTotal = criticismData.lastMonth?.total_criticisms || 0;
 
     const series = [];
 
     if (isEverythingSelected || allTopicsUnknown) {
-      // 如果选择 "Everything" 或所有话题都是 "Unknown"，显示总批评数趋势
-      // 总是显示，即使数据为0
+      // If "Everything" is selected or all topics are "Unknown", show total criticism trend
+      // Always show, even if data is 0
       series.push({
         name: 'Total Criticisms',
         type: 'line',
@@ -172,8 +158,8 @@ export default function CriticismLineGraph({
         },
       });
     } else {
-      // 正常显示本月和上个月的数据
-      // 添加本月数据 - 只要有数据就显示，即使为0
+      // Normal display of current month and last month data
+      // Add current month data - show as long as there's data, even if 0
       if (criticismData.currentMonth?.topics) {
         series.push({
           name: currentMonthName,
@@ -195,7 +181,7 @@ export default function CriticismLineGraph({
         });
       }
 
-      // 添加上个月数据 - 只要有数据就显示，即使为0
+      // Add last month data - show as long as there's data, even if 0
       if (criticismData.lastMonth?.topics) {
         series.push({
           name: lastMonthName,
@@ -245,7 +231,7 @@ export default function CriticismLineGraph({
         data: (isEverythingSelected || allTopicsUnknown)
           ? ['Last Month', 'This Month']
           : (() => {
-              // 合并本月和上个月的话题，去重
+              // Merge current month and last month topics, remove duplicates
               const allTopics = new Set();
               if (criticismData.currentMonth?.topics) {
                 criticismData.currentMonth.topics.forEach(t => allTopics.add(t.topic));
@@ -289,7 +275,7 @@ export default function CriticismLineGraph({
     };
   }, [isLoading, criticismData, currentMonthDate, lastMonthDate]);
 
-  // 检查是否选择了 "Everything" 或所有话题都是 "Unknown" 或空（用于标题显示）
+  // Check if "Everything" is selected or all topics are "Unknown" or empty (for title display)
   const isEverythingSelected = selectedMonth === 'everything';
   const allTopicsUnknown = criticismData.currentMonth?.topics.every(t => t.topic === 'Unknown' || !t.topic) &&
                           criticismData.lastMonth?.topics.every(t => t.topic === 'Unknown' || !t.topic);

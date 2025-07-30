@@ -27,13 +27,13 @@ export async function GET(request: NextRequest) {
   }
 
   const topicType = searchParams.get("topic_type");
-  const where: any = { business_id: 'f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c' };
+  const where: any = { business_id: businessId };
   if (topicType) where.topic_type = topicType;
 
   // 先获取所有在 business_posts 表中实际存在的 note_ids
   const { BusinessPostModel } = await import("@/feature/sqlORM/modelorm");
   const existingNoteIds = await BusinessPostModel.findAll({
-    where: { business_id: 'f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c' },
+    where: { business_id: businessId },
     attributes: ['note_id'],
     raw: true,
   });

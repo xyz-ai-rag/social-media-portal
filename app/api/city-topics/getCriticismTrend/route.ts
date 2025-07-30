@@ -6,11 +6,11 @@ import { parseISO, startOfMonth, endOfMonth } from 'date-fns';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const businessId = "f8e7d6c5-b4a3-2f1e-0d9c-8b7a6f5e4d3c"; // 使用硬编码的 businessId，与 getCityTopicSMPI 保持一致
+    const businessId = searchParams.get("businessId");
     const month = searchParams.get("month");
 
-    if (!month) {
-      return new Response(JSON.stringify({ error: "Missing required parameters" }), { status: 400 });
+    if (!businessId || !month) {
+      return new Response(JSON.stringify({ error: "Missing required parameters: businessId and month" }), { status: 400 });
     }
 
     console.log('[getCriticismTrend] 请求参数:', { businessId, month });

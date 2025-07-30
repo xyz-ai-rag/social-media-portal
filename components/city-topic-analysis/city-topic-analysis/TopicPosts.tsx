@@ -170,11 +170,7 @@ const TopicPosts: FC<TopicPostsProps> = ({ clientId, businessId, topic, topicTyp
 
       const { posts, pagination } = await fetchPostsForPage(currentPage);
 
-      console.log('[TopicPosts] 获取到的数据:', {
-        postsCount: posts.length,
-        firstPost: posts[0],
-        pagination,
-      });
+
 
       if (posts.length >= 0) {
         setPosts(posts);

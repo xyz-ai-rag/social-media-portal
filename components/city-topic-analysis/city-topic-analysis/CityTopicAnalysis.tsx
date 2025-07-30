@@ -93,21 +93,10 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
   // Add state for active tab
   const [activeTab, setActiveTabState] = useState(getActiveTab(searchParams.get("topic_type")) || 0);
   
-  // Custom setActiveTab function with logging
+  // Custom setActiveTab function
   const setActiveTab = (tab: number) => {
-    console.log('[CityTopicAnalysis] Tab change requested:', { from: activeTab, to: tab });
     setActiveTabState(tab);
   };
-  
-  // Debug: Log component re-renders
-  console.log('[CityTopicAnalysis] Component rendered with:', {
-    clientId,
-    businessId,
-    activeTab,
-    hasClientDetails: !!clientDetails,
-    clientDetailsLength: clientDetails?.businesses?.length,
-    searchParams: searchParams.toString()
-  });
   
   useEffect(() => {
     const newActiveTab = getActiveTab(searchParams.get("topic_type")) || 0;
@@ -139,7 +128,6 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
         
         // Skip duplicate requests in the same render cycle
         if (requestTracker.current.has(requestKey)) {
-          console.log('Skipping duplicate request:', requestKey);
           return;
         }
         
@@ -179,7 +167,7 @@ const CityTopicAnalysis: FC<AnalysisProps> = ({
     // eslint-disable-next-line
   }, [clientDetails, businessId, activeTab]);
 
-  // 只在 City Overview tab 下请求两个 topic_type
+  // Only request two topic_types under City Overview tab
   useEffect(() => {
     if (activeTab !== 0) return;
     
