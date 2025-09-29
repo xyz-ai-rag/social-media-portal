@@ -1,20 +1,33 @@
 "use client"
 import { FC } from 'react';
+
 interface TabSectionProps {
   activeTab: number;
   setActiveTab: (tab: number) => void;
+  businessType: string;
 }
 
 const TabSection: FC<TabSectionProps> = ({
   activeTab,
   setActiveTab,
+  businessType,
 }) => {
-  const tabs = [
+  const allTabs = [
     { id: 0, label: 'Overview' },
     { id: 1, label: 'Popular Topics' },
     { id: 2, label: 'Critical Feedback' },
     { id: 3, label: 'Competitors & Similar Business' },
+    { id: 4, label: 'Merchant Partnership' },
   ];
+
+  // Filter tabs based on business type
+  // Show "Merchant Partnership" tab only for Credit card businesses
+  const tabs = allTabs.filter(tab => {
+    if (tab.id === 4) {
+      return businessType === 'Credit card';
+    }
+    return true;
+  });
 
   return (
     <div className="mt-6">
@@ -43,4 +56,4 @@ const TabSection: FC<TabSectionProps> = ({
   );
 };
 
-export default TabSection; 
+export default TabSection;

@@ -28,6 +28,8 @@ const TopicAnalysis: FC<AnalysisProps> = ({
   // business name state
   const [businessName, setBusinessName] = useState<string>("");
 
+  // business type state
+  const [businessType, setBusinessType] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
 
   // topics state
@@ -45,6 +47,8 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         return 2;
       case "Competitor":
         return 3;
+      case "Merchant Partnership":
+        return 4;
     }
   };
 
@@ -58,6 +62,8 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         return "Criticism";
       case 3:
         return "Competitor";
+      case 4:
+        return "Merchant Partnership";
       default:
         return "General";
     }
@@ -72,6 +78,8 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         return 30; // Maximum 30 topics
       case 2: // Criticism
       case 3: // Competitor
+        return 50; // Maximum 50 topics
+      case 4: // Merchant Partnership
         return 50; // Maximum 50 topics
       default:
         return Infinity;
@@ -92,6 +100,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
       );
       if (business) {
         setBusinessName(business.business_name);
+        setBusinessType(business.business_type);
       }
     }
   }, [clientDetails, businessId]);
@@ -171,6 +180,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
       <TabSection
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        businessType={businessType}
       />
       {/* Charts */}
       <div className="flex justify-center items-center min-h-[400px] w-full min-w-0">
