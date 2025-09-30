@@ -1,4 +1,4 @@
-import { BusinessTopicsModel,TestBusinessTopicsModel } from "@/feature/sqlORM/modelorm";
+import { BusinessTopicsModel, TestBusinessTopicsModel, BusinessPostModel } from "@/feature/sqlORM/modelorm";
 import { NextRequest, NextResponse } from "next/server";
 import { Op, fn, col, literal } from "sequelize";
 
@@ -11,7 +11,7 @@ const DEPLOY_ENV = process.env.DEPLOY_ENV;
 const TopicModelToUse = DEPLOY_ENV === "test" ? TestBusinessTopicsModel : BusinessTopicsModel;
 export async function POST(request: NextRequest) {
   try {
-    const { businessId, topicType } = await request.json();
+    const { businessId, topicType, startDate, endDate } = await request.json();
 
     if (!businessId || !topicType) {
       return NextResponse.json(
@@ -20,22 +20,60 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const where: any = {
-      business_id: businessId,
-      topic_type: topicType,
-    }
+    let topicCounts;
 
-    // count each topic
-    const topicCounts = await TopicModelToUse.findAll({
-      where,
-      attributes: [
-        "topic",
-        [fn("COUNT", col("id")), "count"]
-      ],
-      group: ["topic"],
-      order: [[literal("count"), "DESC"]],
-      raw: true,
-    }) as any[];
+    if (startDate && endDate) {
+      // Get note_ids from posts within date range
+      const relevantPosts = await BusinessPostModel.findAll({
+        where: {
+          create_time: {
+            [Op.between]: [new Date(startDate), new Date(endDate)]
+          },
+          is_relevant: true
+        },
+        attributes: ['note_id'],
+        raw: true
+      });
+
+      const noteIds = relevantPosts.map(post => post.note_id);
+
+      if (noteIds.length === 0) {
+        topicCounts = [];
+      } else {
+        // Get topic counts for those note_ids
+        topicCounts = await TopicModelToUse.findAll({
+          where: {
+            business_id: businessId,
+            topic_type: topicType,
+            note_id: {
+              [Op.in]: noteIds
+            }
+          },
+          attributes: [
+            "topic",
+            [fn("COUNT", col("id")), "count"]
+          ],
+          group: ["topic"],
+          order: [[literal("count"), "DESC"]],
+          raw: true,
+        }) as any[];
+      }
+    } else {
+      // No date filtering
+      topicCounts = await TopicModelToUse.findAll({
+        where: {
+          business_id: businessId,
+          topic_type: topicType,
+        },
+        attributes: [
+          "topic",
+          [fn("COUNT", col("id")), "count"]
+        ],
+        group: ["topic"],
+        order: [[literal("count"), "DESC"]],
+        raw: true,
+      }) as any[];
+    }
     // total
     const total = topicCounts.reduce((sum, t) => sum + Number(t.count), 0);
 

@@ -1,7 +1,7 @@
 "use client"
 export const dynamic = 'force-dynamic';
 
-import { FC, useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { FC, useState, useEffect, useMemo, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { constructVercelURL } from "@/utils/generateURL";
 import CirclePacking from './CirclePacking';
@@ -9,6 +9,8 @@ import TabSection from './TabSection';
 import BarChart from './BarChart';
 import { useSearchParams } from "next/navigation";
 import { TopicAnalysisOverviewTierBanner } from "@/components/TierBanner";
+import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import { useDateRange } from "@/context/DateRangeContext";
 interface AnalysisProps {
   clientId: string;
   businessId: string;
@@ -21,6 +23,9 @@ const TopicAnalysis: FC<AnalysisProps> = ({
   // Get auth context to access similar businesses
   const { clientDetails } = useAuth();
   const searchParams = useSearchParams();
+
+  // Get date range from context
+  const { dateRange } = useDateRange();
   
   // Add a ref to track API requests
   const requestTracker = useRef(new Set());
@@ -35,6 +40,10 @@ const TopicAnalysis: FC<AnalysisProps> = ({
   // topics state
   const [topics, setTopics] = useState<any[]>([]);
   const [total, setTotal] = useState<number>(0);
+
+  // Get dates from context
+  const startDate = dateRange.startDate;
+  const endDate = dateRange.endDate;
 
   // Map tab index to topic type
   const getActiveTab = (topicType: string | null) => {
@@ -105,18 +114,17 @@ const TopicAnalysis: FC<AnalysisProps> = ({
     }
   }, [clientDetails, businessId]);
 
-  // Fetch topic data - just add request tracking
+  // Fetch topic data
   useEffect(() => {
     const fetchData = async () => {
       try {
         if (!clientDetails || !businessId) return;
-        
-        // Create a cache key based on the current request parameters
-        const requestKey = `${businessId}_${getTopicType(activeTab)}`;
-        
+
+        // Create a cache key based on the current request parameters including dates
+        const requestKey = `${businessId}_${getTopicType(activeTab)}_${startDate}_${endDate}`;
+
         // Skip duplicate requests in the same render cycle
         if (requestTracker.current.has(requestKey)) {
-          console.log('Skipping duplicate request:', requestKey);
           return;
         }
         
@@ -125,7 +133,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         
         setIsLoading(true);
 
-        // Fetch competitor details using the batch API
+        // Fetch topic statistics using the API
         const response = await fetch(
           constructVercelURL("/api/businesses/getBusinessTopicStats"),
           {
@@ -134,6 +142,8 @@ const TopicAnalysis: FC<AnalysisProps> = ({
             body: JSON.stringify({
               businessId: businessId,
               topicType: getTopicType(activeTab),
+              startDate: startDate,
+              endDate: endDate,
             }),
           }
         );
@@ -161,7 +171,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
     return () => {
       requestTracker.current.clear();
     };
-  }, [clientDetails, businessId, activeTab]);
+  }, [clientDetails, businessId, activeTab, dateRange]);
 
   // Get the minimum count and maximum number of topics based on active tab
   const topicLimit = getTopicLimit(activeTab);
@@ -173,6 +183,14 @@ const TopicAnalysis: FC<AnalysisProps> = ({
       <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-4">
         {`Topic Analysis for ${businessName || "Business"}`}
       </h1>
+
+      {/* Date Range Picker */}
+      <div className="mb-4">
+        <DateRangePicker
+          page="topic-analysis"
+          businessId={businessId}
+        />
+      </div>
 
       {/* Tier-aware banner - positioned under title for better alignment */}
       <TopicAnalysisOverviewTierBanner />
