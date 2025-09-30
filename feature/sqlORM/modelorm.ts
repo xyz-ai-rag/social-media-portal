@@ -304,3 +304,23 @@ export const TestBusinessTopicsModel =
       timestamps: false,
     }
   );
+
+export const CityTopicsModel =
+  sequelizeDbConnection.define(
+    "city_topics",
+    {
+      id: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
+      business_id: { type: DataTypes.UUID, allowNull: false },
+      topic_type: { type: DataTypes.TEXT, allowNull: false },
+      topic: { type: DataTypes.TEXT, allowNull: false },
+      note_id: { type: DataTypes.TEXT, allowNull: false },
+      created_at: { type: DataTypes.DATE, allowNull: false },
+      sentiment: { type: DataTypes.TEXT, allowNull: true },
+      updated_at: { type: DataTypes.DATE, allowNull: true },
+      subtopic: { type: DataTypes.TEXT, allowNull: true },
+    },
+    {
+      tableName: "city_topics",
+      timestamps: false,
+    }
+  );

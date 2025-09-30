@@ -106,3 +106,15 @@ export interface BusinessTopicsInstance extends Model {
   note_id: string;
   created_at: Date;
 }
+
+export interface CityTopicsInstance extends Model {
+  id: string;
+  business_id: string;
+  topic_type: string;
+  topic: string;
+  note_id: string;
+  created_at: Date;
+  sentiment?: string;
+  updated_at?: Date;
+  subtopic?: string;
+}

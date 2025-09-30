@@ -1,6 +1,6 @@
 // Fixed NegativeFeedbackBubbleChart Component - Client Level
 "use client"
-import { FC, useMemo, useState, useEffect, useRef } from "react";
+import React, { FC, useMemo, useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { convertTopicsToTree, Topic, Tree } from "@/utils/topicTree";
 import { setEndOfDay, setStartOfDay } from "@/utils/timeUtils";

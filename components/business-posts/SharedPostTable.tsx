@@ -141,7 +141,7 @@ const SharedPostTable: FC<SharedPostTableProps> = ({
               ) : (
                 listData.map((item, index) => (
                   <Table.Row
-                    key={item.id || index}
+                    key={`${item.id}-${index}`}
                     onClick={() => openPreviewModal?.(item)}
                     className="cursor-pointer"
                   >
