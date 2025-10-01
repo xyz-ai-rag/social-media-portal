@@ -7,10 +7,12 @@ import { constructVercelURL } from "@/utils/generateURL";
 import CirclePacking from './CirclePacking';
 import TabSection from './TabSection';
 import BarChart from './BarChart';
+import WordCloud from './WordCloud'; // Import the new WordCloud component
 import { useSearchParams } from "next/navigation";
 import { TopicAnalysisOverviewTierBanner } from "@/components/TierBanner";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import { useDateRange } from "@/context/DateRangeContext";
+
 interface AnalysisProps {
   clientId: string;
   businessId: string;
@@ -40,6 +42,9 @@ const TopicAnalysis: FC<AnalysisProps> = ({
   // topics state
   const [topics, setTopics] = useState<any[]>([]);
   const [total, setTotal] = useState<number>(0);
+
+  // Visualization mode state
+  const [visualizationMode, setVisualizationMode] = useState<'bubble' | 'wordcloud'>('bubble');
 
   // Get dates from context
   const startDate = dateRange.startDate;
@@ -97,6 +102,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
 
   // Add state for active tab
   const [activeTab, setActiveTab] = useState(getActiveTab(searchParams.get("topic_type")) || 0);
+  
   useEffect(() => {
     setActiveTab(getActiveTab(searchParams.get("topic_type")) || 0);
   }, [searchParams]);
@@ -155,7 +161,6 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         const data = await response.json();
         setTopics(data.topics);
         setTotal(data.total);
-        
 
       } catch (error) {
         console.error("Error fetching topics:", error);
@@ -179,7 +184,6 @@ const TopicAnalysis: FC<AnalysisProps> = ({
 
   return (
     <div className="container mx-auto px-4">
-
       <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-4">
         {`Topic Analysis for ${businessName || "Business"}`}
       </h1>
@@ -194,12 +198,16 @@ const TopicAnalysis: FC<AnalysisProps> = ({
 
       {/* Tier-aware banner - positioned under title for better alignment */}
       <TopicAnalysisOverviewTierBanner />
-      {/* Tab Section */}
+      
+      {/* Tab Section with Visualization Toggle */}
       <TabSection
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         businessType={businessType}
+        visualizationMode={visualizationMode}
+        setVisualizationMode={setVisualizationMode}
       />
+      
       {/* Charts */}
       <div className="flex justify-center items-center min-h-[400px] w-full min-w-0">
         {isLoading ? (
@@ -212,27 +220,41 @@ const TopicAnalysis: FC<AnalysisProps> = ({
             <div className="flex justify-center mb-6">
               <p className="text-gray-500">Total Count: {total}</p>
             </div>
-
             <p className="text-gray-500">No posts with these topics found</p>
           </div>
         ) : (
           <div className="flex flex-col items-center p-2 w-full">
-            <CirclePacking
-              topics={topics}
-              businessId={businessId}
-              clientId={clientId}
-              minCount={minCount}
-              maxTopics={topicLimit}
-              topicType={getTopicType(activeTab)}
-            />
-            <BarChart 
-              topics={topics} 
-              businessId={businessId} 
-              clientId={clientId} 
-              minCount={minCount}
-              maxTopics={topicLimit}
-              topicType={getTopicType(activeTab)}
-            />
+            {visualizationMode === 'wordcloud' ? (
+              // Word Cloud View
+              <WordCloud
+                topics={topics}
+                businessId={businessId}
+                clientId={clientId}
+                minCount={minCount}
+                maxTopics={topicLimit}
+                topicType={getTopicType(activeTab)}
+              />
+            ) : (
+              // Bubble Chart View
+              <>
+                <CirclePacking
+                  topics={topics}
+                  businessId={businessId}
+                  clientId={clientId}
+                  minCount={minCount}
+                  maxTopics={topicLimit}
+                  topicType={getTopicType(activeTab)}
+                />
+                <BarChart 
+                  topics={topics} 
+                  businessId={businessId} 
+                  clientId={clientId} 
+                  minCount={minCount}
+                  maxTopics={topicLimit}
+                  topicType={getTopicType(activeTab)}
+                />
+              </>
+            )}
           </div>
         )}
       </div>
@@ -240,4 +262,4 @@ const TopicAnalysis: FC<AnalysisProps> = ({
   );
 };
 
-export default TopicAnalysis; 
+export default TopicAnalysis;
