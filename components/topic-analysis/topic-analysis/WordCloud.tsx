@@ -96,11 +96,15 @@ const WordCloud: FC<WordCloudProps> = ({
       rotate: 0,
     }));
 
-    // Improved spiral layout algorithm with better collision detection
+    // Compact oval-shaped layout algorithm
     const layoutWords = () => {
       const { width, height } = dimensions;
       const centerX = width / 2;
       const centerY = height / 2;
+      
+      // Create elliptical boundary (oval shape)
+      const ellipseA = width * 0.4; // Horizontal radius
+      const ellipseB = height * 0.35; // Vertical radius (smaller for oval)
       
       interface BoundingBox {
         x: number;
@@ -122,22 +126,22 @@ const WordCloud: FC<WordCloudProps> = ({
         );
       };
       
-      words.forEach((word) => {
-        let angle = Math.random() * Math.PI * 2; // Random starting angle
-        let radius = 0;
+      words.forEach((word, index) => {
+        let angle = Math.random() * Math.PI * 2;
+        let radiusScale = index === 0 ? 0 : 0.1; // Start from center for largest word
         let placed = false;
-        const maxAttempts = 5000;
+        const maxAttempts = 8000;
         let attempts = 0;
-        const angleStep = 0.3;
-        const radiusStep = 3;
+        const angleStep = 0.15; // Smaller steps for denser packing
+        const radiusStep = 0.02; // Smaller increments for tighter spiral
         
-        // Determine rotation (20% chance of vertical)
-        const rotate = Math.random() > 0.8 ? -90 : 0;
+        // Less rotation for more compact look (10% chance)
+        const rotate = Math.random() > 0.9 ? -90 : 0;
         word.rotate = rotate;
         
-        // Better word dimension estimation
-        const charWidth = word.size * 0.55;
-        const padding = word.size * 0.3; // Add padding between words
+        // Tighter character width estimation
+        const charWidth = word.size * 0.5;
+        const padding = word.size * 0.15; // Reduced padding for compactness
         
         let wordWidth: number;
         let wordHeight: number;
@@ -151,8 +155,12 @@ const WordCloud: FC<WordCloudProps> = ({
         }
         
         while (!placed && attempts < maxAttempts) {
-          const x = centerX + radius * Math.cos(angle) - wordWidth / 2;
-          const y = centerY + radius * Math.sin(angle) - wordHeight / 2;
+          // Use elliptical coordinates for oval shape
+          const ellipseX = ellipseA * radiusScale * Math.cos(angle);
+          const ellipseY = ellipseB * radiusScale * Math.sin(angle);
+          
+          const x = centerX + ellipseX - wordWidth / 2;
+          const y = centerY + ellipseY - wordHeight / 2;
           
           const currentBox: BoundingBox = {
             x,
@@ -162,7 +170,11 @@ const WordCloud: FC<WordCloudProps> = ({
             padding
           };
           
-          // Check if within bounds
+          // Check if within elliptical bounds
+          const distX = ellipseX / ellipseA;
+          const distY = ellipseY / ellipseB;
+          const inEllipse = (distX * distX + distY * distY) <= 0.9; // Stay within 90% of ellipse
+          
           const inBounds = 
             x - padding > 0 && 
             x + wordWidth + padding < width && 
@@ -172,16 +184,21 @@ const WordCloud: FC<WordCloudProps> = ({
           // Check collision with existing words
           const hasCollision = boundingBoxes.some(box => boxesCollide(currentBox, box));
           
-          if (inBounds && !hasCollision) {
-            word.x = centerX + radius * Math.cos(angle);
-            word.y = centerY + radius * Math.sin(angle);
+          if (inBounds && inEllipse && !hasCollision) {
+            word.x = centerX + ellipseX;
+            word.y = centerY + ellipseY;
             boundingBoxes.push(currentBox);
             placed = true;
           } else {
             angle += angleStep;
             if (angle > Math.PI * 2) {
               angle = 0;
-              radius += radiusStep;
+              radiusScale += radiusStep;
+              
+              // Stop if we're going too far out
+              if (radiusScale > 1.2) {
+                break;
+              }
             }
           }
           attempts++;
@@ -189,7 +206,7 @@ const WordCloud: FC<WordCloudProps> = ({
         
         // Fallback: skip if can't place
         if (!placed) {
-          word.x = -9999; // Place off-screen
+          word.x = -9999;
           word.y = -9999;
         }
       });
