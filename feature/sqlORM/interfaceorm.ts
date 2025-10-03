@@ -106,3 +106,11 @@ export interface BusinessTopicsInstance extends Model {
   note_id: string;
   created_at: Date;
 }
+
+
+export interface BusinessTopicsTranslationsInstance extends Model {
+  id: string; // UUID
+  topic_id: string; // UUID - foreign key id to business_topics
+  alternative_language: string; // e.g., 'Chinese'，'Japanese'
+  translated_topic: string;
+}

@@ -153,12 +153,13 @@ const TopicAnalysis: FC<AnalysisProps> = ({
             }),
           }
         );
-
+        
         if (!response.ok) {
           throw new Error("Failed to fetch post topics");
         }
 
         const data = await response.json();
+        console.log("checking topic response",data)
         setTopics(data.topics);
         setTotal(data.total);
 

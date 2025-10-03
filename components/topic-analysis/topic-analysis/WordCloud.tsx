@@ -5,6 +5,7 @@ import * as d3 from 'd3';
 
 interface Topic {
   topic: string;
+  displayTopic: string;
   count: number;
   sentiment?: number;
   [key: string]: any;
@@ -21,6 +22,7 @@ interface WordCloudProps {
 
 interface Word {
   text: string;
+  originalTopic: string; // Add original topic
   size: number;
   count: number;
   sentiment?: number;
@@ -41,16 +43,16 @@ const WordCloud: FC<WordCloudProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
 
-  // Get color based on frequency only
+  // Dynamic color based on frequency - smooth gradient
   const getColor = (word: Word, maxCount: number, minCountValue: number) => {
     const range = maxCount - minCountValue;
     const normalized = range > 0 ? (word.count - minCountValue) / range : 0.5;
     
-    // Color gradient from light blue to dark blue
-    if (normalized > 0.7) return '#1E40AF'; // Dark blue
-    if (normalized > 0.5) return '#3B82F6'; // Medium-dark blue
-    if (normalized > 0.3) return '#60A5FA'; // Medium blue
-    return '#93C5FD'; // Light blue
+    // Smooth blue gradient using interpolation
+    const colorScale = d3.scaleSequential(d3.interpolateBlues)
+      .domain([0, 1]);
+    
+    return colorScale(0.3 + normalized * 0.7); // Start from light blue, go to dark blue
   };
 
   useEffect(() => {
@@ -80,14 +82,16 @@ const WordCloud: FC<WordCloudProps> = ({
     const maxCount = Math.max(...filteredTopics.map(t => t.count));
     const minCountValue = Math.min(...filteredTopics.map(t => t.count));
 
-    // Create font size scale - adjusted for better spacing
-    const fontSizeScale = d3.scaleSqrt()
+    // Enhanced font size scale with wider range for more dramatic differences
+    const fontSizeScale = d3.scalePow()
+      .exponent(0.6) // Use power scale for better visual distribution
       .domain([minCountValue, maxCount])
-      .range([16, 60]); // Reduced max size to prevent overlap
+      .range([14, 80]); // Wider range: small words at 14px, large at 80px
 
-    // Prepare words
+    // Prepare words - include both display and original topic
     const words: Word[] = filteredTopics.map(topic => ({
-      text: topic.topic,
+      text: topic.displayTopic,
+      originalTopic: topic.topic, // Store original topic for navigation
       size: fontSizeScale(topic.count),
       count: topic.count,
       sentiment: topic.sentiment,
@@ -103,8 +107,8 @@ const WordCloud: FC<WordCloudProps> = ({
       const centerY = height / 2;
       
       // Create elliptical boundary (oval shape)
-      const ellipseA = width * 0.4; // Horizontal radius
-      const ellipseB = height * 0.35; // Vertical radius (smaller for oval)
+      const ellipseA = width * 0.45; // Slightly larger for bigger words
+      const ellipseB = height * 0.4;
       
       interface BoundingBox {
         x: number;
@@ -128,20 +132,20 @@ const WordCloud: FC<WordCloudProps> = ({
       
       words.forEach((word, index) => {
         let angle = Math.random() * Math.PI * 2;
-        let radiusScale = index === 0 ? 0 : 0.1; // Start from center for largest word
+        let radiusScale = index === 0 ? 0 : 0.1;
         let placed = false;
         const maxAttempts = 8000;
         let attempts = 0;
-        const angleStep = 0.15; // Smaller steps for denser packing
-        const radiusStep = 0.02; // Smaller increments for tighter spiral
+        const angleStep = 0.15;
+        const radiusStep = 0.02;
         
-        // Less rotation for more compact look (10% chance)
+        // Less rotation for more compact look
         const rotate = Math.random() > 0.9 ? -90 : 0;
         word.rotate = rotate;
         
-        // Tighter character width estimation
+        // Dynamic padding based on word size
         const charWidth = word.size * 0.5;
-        const padding = word.size * 0.15; // Reduced padding for compactness
+        const padding = word.size * 0.2;
         
         let wordWidth: number;
         let wordHeight: number;
@@ -155,7 +159,6 @@ const WordCloud: FC<WordCloudProps> = ({
         }
         
         while (!placed && attempts < maxAttempts) {
-          // Use elliptical coordinates for oval shape
           const ellipseX = ellipseA * radiusScale * Math.cos(angle);
           const ellipseY = ellipseB * radiusScale * Math.sin(angle);
           
@@ -170,10 +173,9 @@ const WordCloud: FC<WordCloudProps> = ({
             padding
           };
           
-          // Check if within elliptical bounds
           const distX = ellipseX / ellipseA;
           const distY = ellipseY / ellipseB;
-          const inEllipse = (distX * distX + distY * distY) <= 0.9; // Stay within 90% of ellipse
+          const inEllipse = (distX * distX + distY * distY) <= 0.9;
           
           const inBounds = 
             x - padding > 0 && 
@@ -181,7 +183,6 @@ const WordCloud: FC<WordCloudProps> = ({
             y - padding > 0 && 
             y + wordHeight + padding < height;
           
-          // Check collision with existing words
           const hasCollision = boundingBoxes.some(box => boxesCollide(currentBox, box));
           
           if (inBounds && inEllipse && !hasCollision) {
@@ -195,8 +196,7 @@ const WordCloud: FC<WordCloudProps> = ({
               angle = 0;
               radiusScale += radiusStep;
               
-              // Stop if we're going too far out
-              if (radiusScale > 1.2) {
+              if (radiusScale > 1.3) {
                 break;
               }
             }
@@ -204,7 +204,6 @@ const WordCloud: FC<WordCloudProps> = ({
           attempts++;
         }
         
-        // Fallback: skip if can't place
         if (!placed) {
           word.x = -9999;
           word.y = -9999;
@@ -214,14 +213,11 @@ const WordCloud: FC<WordCloudProps> = ({
 
     layoutWords();
 
-    // Filter out words that couldn't be placed
     const placedWords = words.filter(w => w.x !== -9999);
 
-    // Clear previous content
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
-    // Create or select tooltip div
     const tooltipId = 'wordcloud-tooltip';
     let tooltipElement = document.getElementById(tooltipId) as HTMLDivElement;
     
@@ -244,7 +240,6 @@ const WordCloud: FC<WordCloudProps> = ({
     
     const tooltip = d3.select(tooltipElement);
 
-    // Create word elements
     const g = svg.append('g');
 
     const textElements = g.selectAll('text')
@@ -261,7 +256,6 @@ const WordCloud: FC<WordCloudProps> = ({
       .attr('transform', d => `translate(${d.x},${d.y}) rotate(${d.rotate})`)
       .text(d => d.text)
       .on('mouseover', function(event, d) {
-        // Just change opacity and scale, keep original color
         d3.select(this)
           .style('opacity', '0.7')
           .attr('transform', `translate(${d.x},${d.y}) rotate(${d.rotate}) scale(1.05)`);
@@ -286,7 +280,6 @@ const WordCloud: FC<WordCloudProps> = ({
           .style('top', `${event.pageY - 10}px`);
       })
       .on('mouseout', function(event, d) {
-        // Restore original state
         d3.select(this)
           .style('opacity', '1')
           .attr('transform', `translate(${d.x},${d.y}) rotate(${d.rotate})`);
@@ -294,15 +287,16 @@ const WordCloud: FC<WordCloudProps> = ({
         tooltip.style('opacity', '0');
       })
       .on('click', (event, d) => {
+        // Use originalTopic for navigation (English topic name)
         const searchParams = new URLSearchParams({
           business_id: businessId,
-          topic: d.text,
+          topic: d.originalTopic, // Use original English topic
           topic_type: topicType,
         });
-        window.location.href = `/dashboard/${clientId}/topic-posts?${searchParams.toString()}`;
+         window.location.href = `/${clientId}/${businessId}/topic-analysis/${encodeURIComponent(d.originalTopic)}?topic_type=${encodeURIComponent(topicType)}`;
+
       });
 
-    // Add entrance animation
     textElements
       .style('opacity', 0)
       .transition()
@@ -337,23 +331,18 @@ const WordCloud: FC<WordCloudProps> = ({
         </div>
       </div>
       
-      {/* Legend */}
-      <div className="flex items-center gap-4 mb-4 text-xs text-gray-600">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#1E40AF' }}></div>
-          <span>High frequency</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#60A5FA' }}></div>
-          <span>Medium frequency</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#93C5FD' }}></div>
-          <span>Low frequency</span>
+      {/* Updated legend for gradient */}
+      <div className="flex items-center gap-2 mb-4 text-xs text-gray-600">
+        <span>Frequency:</span>
+        <div className="flex items-center gap-1">
+          <span>Low</span>
+          <div className="w-24 h-4 rounded" style={{ 
+            background: 'linear-gradient(to right, #BFDBFE, #1E40AF)' 
+          }}></div>
+          <span>High</span>
         </div>
       </div>
 
-      {/* Word Cloud */}
       <div ref={containerRef} className="w-full">
         <svg
           ref={svgRef}

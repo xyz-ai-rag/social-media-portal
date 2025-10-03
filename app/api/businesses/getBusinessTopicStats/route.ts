@@ -1,4 +1,10 @@
-import { BusinessTopicsModel, TestBusinessTopicsModel, BusinessPostModel } from "@/feature/sqlORM/modelorm";
+import { 
+  BusinessTopicsModel, 
+  TestBusinessTopicsModel, 
+  BusinessPostModel,
+  BusinessTopicsTranslationsModel,
+  BusinessModel
+} from "@/feature/sqlORM/modelorm";
 import { NextRequest, NextResponse } from "next/server";
 import { Op, fn, col, literal } from "sequelize";
 
@@ -9,6 +15,7 @@ import { Op, fn, col, literal } from "sequelize";
 
 const DEPLOY_ENV = process.env.DEPLOY_ENV;
 const TopicModelToUse = DEPLOY_ENV === "test" ? TestBusinessTopicsModel : BusinessTopicsModel;
+
 export async function POST(request: NextRequest) {
   try {
     const { businessId, topicType, startDate, endDate } = await request.json();
@@ -20,7 +27,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let topicCounts;
+    // Get business type to determine if we need translations
+    const business = await BusinessModel.findOne({
+      where: { business_id: businessId },
+      attributes: ['business_type'],
+      raw: true
+    });
+
+    const needsTranslation = business?.business_type === 'Credit card';
+
+    let topicCounts: any[] = [];
 
     if (startDate && endDate) {
       // Get note_ids from posts within date range
@@ -29,7 +45,8 @@ export async function POST(request: NextRequest) {
           create_time: {
             [Op.between]: [new Date(startDate), new Date(endDate)]
           },
-          is_relevant: true
+          is_relevant: true,
+          business_id: businessId
         },
         attributes: ['note_id'],
         raw: true
@@ -40,14 +57,108 @@ export async function POST(request: NextRequest) {
       if (noteIds.length === 0) {
         topicCounts = [];
       } else {
-        // Get topic counts for those note_ids
-        topicCounts = await TopicModelToUse.findAll({
+        if (needsTranslation) {
+          // Get topic counts WITHOUT the join for accurate counting
+          const rawTopicCounts = await TopicModelToUse.findAll({
+            where: {
+              business_id: businessId,
+              topic_type: topicType,
+              note_id: {
+                [Op.in]: noteIds
+              }
+            },
+            attributes: [
+              "topic",
+              [fn("COUNT", col("id")), "count"]
+            ],
+            group: ["topic"],
+            order: [[literal("count"), "DESC"]],
+            raw: true,
+          }) as any[];
+
+          // Get all topic IDs with their topics for this business
+          const topicToIdMap = await TopicModelToUse.findAll({
+            where: {
+              business_id: businessId,
+              topic_type: topicType,
+              note_id: {
+                [Op.in]: noteIds
+              }
+            },
+            attributes: ['id', 'topic'],
+            raw: true
+          }) as any[];
+
+          // Build a map: topic_id -> topic_name
+          const idToTopicMap = new Map();
+          topicToIdMap.forEach(row => {
+            idToTopicMap.set(row.id, row.topic);
+          });
+
+          // Get translations separately
+          const translations = await BusinessTopicsTranslationsModel.findAll({
+            attributes: ['topic_id', 'translated_topic', 'alternative_language'],
+            where: {
+              alternative_language: 'Chinese',
+              topic_id: {
+                [Op.in]: Array.from(idToTopicMap.keys())
+              }
+            },
+            raw: true
+          }) as any[];
+
+          // Build translation map: topic_name -> translated_topic
+          const translationMap = new Map();
+          translations.forEach(trans => {
+            const topicName = idToTopicMap.get(trans.topic_id);
+            if (topicName && !translationMap.has(topicName)) {
+              translationMap.set(topicName, trans.translated_topic);
+            }
+          });
+
+          // Combine counts with translations
+          topicCounts = rawTopicCounts.map(t => ({
+            topic: t.topic,
+            displayTopic: translationMap.get(t.topic) || t.topic,
+            count: Number(t.count),
+            hasTranslation: translationMap.has(t.topic)
+          }));
+        } else {
+          // Get topic counts without translations
+          const rawTopicCounts = await TopicModelToUse.findAll({
+            where: {
+              business_id: businessId,
+              topic_type: topicType,
+              note_id: {
+                [Op.in]: noteIds
+              }
+            },
+            attributes: [
+              "topic",
+              [fn("COUNT", col("id")), "count"]
+            ],
+            group: ["topic"],
+            order: [[literal("count"), "DESC"]],
+            raw: true,
+          }) as any[];
+          
+          // Add displayTopic for consistency
+          topicCounts = rawTopicCounts.map(t => ({
+            topic: t.topic,
+            displayTopic: t.topic,
+            count: Number(t.count),
+            hasTranslation: false
+          }));
+        }
+      }
+    } else {
+      // No date filtering
+      if (needsTranslation) {
+        // Get topic counts WITHOUT the join for accurate counting
+        const rawTopicCounts = await TopicModelToUse.findAll({
           where: {
             business_id: businessId,
             topic_type: topicType,
-            note_id: {
-              [Op.in]: noteIds
-            }
           },
           attributes: [
             "topic",
@@ -57,31 +168,86 @@ export async function POST(request: NextRequest) {
           order: [[literal("count"), "DESC"]],
           raw: true,
         }) as any[];
-      }
-    } else {
-      // No date filtering
-      topicCounts = await TopicModelToUse.findAll({
-        where: {
-          business_id: businessId,
-          topic_type: topicType,
-        },
-        attributes: [
-          "topic",
-          [fn("COUNT", col("id")), "count"]
-        ],
-        group: ["topic"],
-        order: [[literal("count"), "DESC"]],
-        raw: true,
-      }) as any[];
-    }
-    // total
-    const total = topicCounts.reduce((sum, t) => sum + Number(t.count), 0);
 
-    // percentage
+        // Get all topic IDs with their topics for this business
+        const topicToIdMap = await TopicModelToUse.findAll({
+          where: {
+            business_id: businessId,
+            topic_type: topicType
+          },
+          attributes: ['id', 'topic'],
+          raw: true
+        }) as any[];
+
+        // Build a map: topic_id -> topic_name
+        const idToTopicMap = new Map();
+        topicToIdMap.forEach(row => {
+          idToTopicMap.set(row.id, row.topic);
+        });
+
+        // Get translations separately
+        const translations = await BusinessTopicsTranslationsModel.findAll({
+          attributes: ['topic_id', 'translated_topic', 'alternative_language'],
+          where: {
+            alternative_language: 'Chinese',
+            topic_id: {
+              [Op.in]: Array.from(idToTopicMap.keys())
+            }
+          },
+          raw: true
+        }) as any[];
+
+        // Build translation map: topic_name -> translated_topic
+        const translationMap = new Map();
+        translations.forEach(trans => {
+          const topicName = idToTopicMap.get(trans.topic_id);
+          if (topicName && !translationMap.has(topicName)) {
+            translationMap.set(topicName, trans.translated_topic);
+          }
+        });
+
+        // Combine counts with translations
+        topicCounts = rawTopicCounts.map(t => ({
+          topic: t.topic,
+          displayTopic: translationMap.get(t.topic) || t.topic,
+          count: Number(t.count),
+          hasTranslation: translationMap.has(t.topic)
+        }));
+      } else {
+        const rawTopicCounts = await TopicModelToUse.findAll({
+          where: {
+            business_id: businessId,
+            topic_type: topicType,
+          },
+          attributes: [
+            "topic",
+            [fn("COUNT", col("id")), "count"]
+          ],
+          group: ["topic"],
+          order: [[literal("count"), "DESC"]],
+          raw: true,
+        }) as any[];
+        
+        // Add displayTopic for consistency
+        topicCounts = rawTopicCounts.map(t => ({
+          topic: t.topic,
+          displayTopic: t.topic,
+          count: Number(t.count),
+          hasTranslation: false
+        }));
+      }
+    }
+
+    // Calculate total
+    const total = topicCounts.reduce((sum, t) => sum + t.count, 0);
+
+    // Format response with percentage (displayTopic already set above)
     const topics = topicCounts.map((t: any) => ({
       topic: t.topic,
-      count: Number(t.count),
-      percentage: total > 0 ? Number(t.count) / total : 0
+      displayTopic: t.displayTopic,
+      count: t.count,
+      percentage: total > 0 ? t.count / total : 0,
+      hasTranslation: t.hasTranslation
     }));
 
     return NextResponse.json({ topics, total });

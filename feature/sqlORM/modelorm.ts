@@ -7,6 +7,7 @@ import {
   ClientUsersInstance,
   ActiveSessionsInstance,
   BusinessTopicsInstance,
+  BusinessTopicsTranslationsInstance,
 } from "./interfaceorm";
 
 // BusinessPosts table
@@ -304,3 +305,41 @@ export const TestBusinessTopicsModel =
       timestamps: false,
     }
   );
+
+  export const BusinessTopicsTranslationsModel =
+  sequelizeDbConnection.define<BusinessTopicsTranslationsInstance>(
+    "business_topics_translations",
+    {
+      id: { 
+        type: DataTypes.UUID, 
+        primaryKey: true, 
+        allowNull: false 
+      },
+      topic_id: { 
+        type: DataTypes.UUID, 
+        allowNull: false 
+      },
+      alternative_language: { 
+        type: DataTypes.STRING, 
+        allowNull: false 
+      },
+      translated_topic: { 
+        type: DataTypes.TEXT, 
+        allowNull: false 
+      },
+    },
+    {
+      tableName: "business_topics_translations",
+      timestamps: false,
+    }
+  );
+
+BusinessTopicsModel.hasMany(BusinessTopicsTranslationsModel, {
+  foreignKey: 'topic_id',
+  as: 'translations'
+});
+
+BusinessTopicsTranslationsModel.belongsTo(BusinessTopicsModel, {
+  foreignKey: 'topic_id',
+  as: 'topic'
+});

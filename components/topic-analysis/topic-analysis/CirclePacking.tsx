@@ -33,9 +33,12 @@ const CirclePacking: FC<CirclePackingProps> = ({
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [hoveredCircle, setHoveredCircle] = useState<string | null>(null);
   const router = useRouter();
-  
+
+
   // Filter topics by minimum count and limit the number of topics
   const filteredData = useMemo(() => {
+    if (!topics || topics.length === 0) return [];
+    
     // If we have fewer topics than maxTopics, show all topics
     if (topics.length <= maxTopics) {
       return topics;
@@ -46,23 +49,21 @@ const CirclePacking: FC<CirclePackingProps> = ({
       .sort((a, b) => b.count - a.count)
       .slice(0, maxTopics);
   }, [topics, maxTopics]);
-  
-  if (filteredData.length === 0) {
+
+  if (!filteredData || filteredData.length === 0) {
     return <div>No posts with these topics found</div>;
   }
 
   // Calculate dimensions based on the number of topics
-  const baseSize = 600; // Base size
-  const minSize = 200;  // Minimum size
-  const maxSize = 1000; // Maximum size
+  const baseSize = 600;
+  const minSize = 200;
+  const maxSize = 1000;
   const size = Math.min(maxSize, Math.max(minSize, baseSize * Math.sqrt(filteredData.length / 10)));
-  // const sizeScale = scaleSqrt()
-  // .domain([min, max])
-  // .range([BUBBLE_MIN_SIZE, BUBBLE_MAX_SIZE]);
   const width = size;
   const height = size;
 
   const treeData = convertTopicsToTree(filteredData);
+  
   const hierarchy = d3
     .hierarchy(treeData)
     .sum((d: any) => d.count)
@@ -73,14 +74,16 @@ const CirclePacking: FC<CirclePackingProps> = ({
   const color = d3.scaleOrdinal(d3.schemeCategory10);
 
   function handleCircleClick(data: any): void {
-    router.push(`/${clientId}/${businessId}/topic-analysis/${encodeURIComponent(data.name)}?topic_type=${encodeURIComponent(topicType)}`);
+    // Use originalTopic for URL if available, otherwise use name
+    const topicForUrl = data.originalTopic || data.name;
+    router.push(`/${clientId}/${businessId}/topic-analysis/${encodeURIComponent(topicForUrl)}?topic_type=${encodeURIComponent(topicType)}`);
   }
 
   const handleMouseEnter = (node: any) => {
     setTooltipData({
-      name: node.data.name,
-      count: node.data.count,
-      percentage: node.data.percentage * 100,
+      name: node.data.name || 'Unknown',
+      count: node.data.count || 0,
+      percentage: (node.data.percentage || 0) * 100,
       x: node.x,
       y: node.y,
       r: node.r
@@ -93,38 +96,47 @@ const CirclePacking: FC<CirclePackingProps> = ({
     setHoveredCircle(null);
   };
 
-
   return (
     <div className="relative">
       <svg width={width} height={height} className="inline-block">
         {root
           .descendants()
           .slice(1)
-          .map((node: any) => (
-            <circle
-              key={node.data.name}
-              cx={node.x}
-              cy={node.y}
-              r={node.r}
-              stroke={hoveredCircle === node.data.name ? "#000" : "#fff"}
-              strokeWidth={hoveredCircle === node.data.name ? 3 : 2}
-              fill={color(node.data.name)}
-              fillOpacity={hoveredCircle === node.data.name ? 0.9 : 0.7}
-              onClick={() => handleCircleClick(node.data)}
-              onMouseEnter={() => handleMouseEnter(node)}
-              onMouseLeave={handleMouseLeave}
-              className="transition-all duration-200 ease-in-out cursor-pointer"
-            />
-          ))}
+          .map((node: any) => {
+            if (!node.data.name) {
+              console.warn('Node without name:', node);
+              return null;
+            }
+            return (
+              <circle
+                key={node.data.name}
+                cx={node.x}
+                cy={node.y}
+                r={node.r}
+                stroke={hoveredCircle === node.data.name ? "#000" : "#fff"}
+                strokeWidth={hoveredCircle === node.data.name ? 3 : 2}
+                fill={color(node.data.name)}
+                fillOpacity={hoveredCircle === node.data.name ? 0.9 : 0.7}
+                onClick={() => handleCircleClick(node.data)}
+                onMouseEnter={() => handleMouseEnter(node)}
+                onMouseLeave={handleMouseLeave}
+                className="transition-all duration-200 ease-in-out cursor-pointer"
+              />
+            );
+          })}
         {root
           .descendants()
           .slice(1)
           .map((node: any) => {
+            const name = node.data.name || '';
+            if (!name) {
+              console.warn('Text node without name:', node);
+              return null;
+            }
+            
+            const count = node.data.count || 0;
             const fontSize = Math.min(13, node.r / 3);
-            // Estimate maximum characters that can fit
             const maxChars = Math.floor((node.r * 1.8) / (fontSize * 0.5));
-            const name = node.data.name;
-            const count = node.data.count;
 
             // Split name into two lines if it's too long
             let displayName;
@@ -132,7 +144,6 @@ const CirclePacking: FC<CirclePackingProps> = ({
               const halfLength = Math.floor(maxChars / 2);
               const firstLine = name.slice(0, halfLength);
               const secondLine = name.slice(halfLength, maxChars);
-              // Add ellipsis to second line if it's too long
               const truncatedSecondLine = secondLine.length > halfLength
                 ? secondLine.slice(0, halfLength - 1) + '…'
                 : secondLine;
@@ -141,12 +152,11 @@ const CirclePacking: FC<CirclePackingProps> = ({
               displayName = [name];
             }
 
-            const totalLines = displayName.length; // +1 for the count
-
+            const totalLines = displayName.length;
 
             return (
               <text
-                key={node.data.name}
+                key={`text-${node.data.name}`}
                 x={node.x}
                 y={node.y - ((totalLines - 1) / 2) * fontSize * 1.2}
                 fontSize={fontSize}

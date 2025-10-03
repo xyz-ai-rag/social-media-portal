@@ -16,9 +16,11 @@ export type TreeLeaf = {
 export type Tree = TreeNode | TreeLeaf;
 
 export interface Topic {
-  topic: string;
+  topic: string; // Original English topic
+  displayTopic: string; // Chinese or English for display
   count: number;
   percentage: number;
+  hasTranslation?: boolean;
 }
 
 export const convertTopicsToTree = (topics: Topic[]): Tree => {
@@ -28,7 +30,7 @@ export const convertTopicsToTree = (topics: Topic[]): Tree => {
   // Convert each topic to a leaf node
   const children: Tree[] = topics.map(topic => ({
     type: 'leaf',
-    name: topic.topic,
+    name: topic.displayTopic,
     count: topic.count,
     percentage: topic.percentage
   }));
