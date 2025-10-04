@@ -7,8 +7,8 @@ import { constructVercelURL } from "@/utils/generateURL";
 import CirclePacking from './CirclePacking';
 import TabSection from './TabSection';
 import BarChart from './BarChart';
-import WordCloud from './WordCloud'; // Import the new WordCloud component
-import { useSearchParams } from "next/navigation";
+import WordCloud from './WordCloud';
+import { useSearchParams, useRouter } from "next/navigation";
 import { TopicAnalysisOverviewTierBanner } from "@/components/TierBanner";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import { useDateRange } from "@/context/DateRangeContext";
@@ -22,35 +22,28 @@ const TopicAnalysis: FC<AnalysisProps> = ({
   clientId,
   businessId,
 }) => {
-  // Get auth context to access similar businesses
   const { clientDetails } = useAuth();
   const searchParams = useSearchParams();
-
-  // Get date range from context
+  const router = useRouter();
   const { dateRange } = useDateRange();
-  
-  // Add a ref to track API requests
   const requestTracker = useRef(new Set());
 
-  // business name state
   const [businessName, setBusinessName] = useState<string>("");
-
-  // business type state
   const [businessType, setBusinessType] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
-
-  // topics state
   const [topics, setTopics] = useState<any[]>([]);
   const [total, setTotal] = useState<number>(0);
-
-  // Visualization mode state
   const [visualizationMode, setVisualizationMode] = useState<'bubble' | 'wordcloud'>('bubble');
+  const [displayLanguage, setDisplayLanguage] = useState<'en' | 'zh'>('en');
+  
+  // Initialize from URL params or default to 'all'
+  const [selectedPlatform, setSelectedPlatform] = useState<string>(
+    searchParams.get("platform") || 'all'
+  );
 
-  // Get dates from context
   const startDate = dateRange.startDate;
   const endDate = dateRange.endDate;
 
-  // Map tab index to topic type
   const getActiveTab = (topicType: string | null) => {
     switch (topicType) {
       case "General":
@@ -63,6 +56,8 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         return 3;
       case "Merchant Partnership":
         return 4;
+      default:
+        return 0;
     }
   };
 
@@ -83,31 +78,36 @@ const TopicAnalysis: FC<AnalysisProps> = ({
     }
   };
 
-  // Topic limits based on category
   const getTopicLimit = (tabIndex: number) => {
     switch (tabIndex) {
-      case 0: // General
-        return Infinity; // No limit for General
-      case 1: // Specific
-        return 30; // Maximum 30 topics
-      case 2: // Criticism
-      case 3: // Competitor
-        return 50; // Maximum 50 topics
-      case 4: // Merchant Partnership
-        return 50; // Maximum 50 topics
+      case 0:
+        return Infinity;
+      case 1:
+        return 30;
+      case 2:
+      case 3:
+        return 50;
+      case 4:
+        return 50;
       default:
         return Infinity;
     }
   };
 
-  // Add state for active tab
   const [activeTab, setActiveTab] = useState(getActiveTab(searchParams.get("topic_type")) || 0);
   
   useEffect(() => {
     setActiveTab(getActiveTab(searchParams.get("topic_type")) || 0);
   }, [searchParams]);
 
-  // Update business name when business ID changes
+  // Sync platform state with URL params
+  useEffect(() => {
+    const platformParam = searchParams.get("platform");
+    if (platformParam && platformParam !== selectedPlatform) {
+      setSelectedPlatform(platformParam);
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     if (clientDetails && businessId) {
       const business = clientDetails.businesses.find(
@@ -120,26 +120,20 @@ const TopicAnalysis: FC<AnalysisProps> = ({
     }
   }, [clientDetails, businessId]);
 
-  // Fetch topic data
   useEffect(() => {
     const fetchData = async () => {
       try {
         if (!clientDetails || !businessId) return;
 
-        // Create a cache key based on the current request parameters including dates
-        const requestKey = `${businessId}_${getTopicType(activeTab)}_${startDate}_${endDate}`;
+        const requestKey = `${businessId}_${getTopicType(activeTab)}_${startDate}_${endDate}_${selectedPlatform}`;
 
-        // Skip duplicate requests in the same render cycle
         if (requestTracker.current.has(requestKey)) {
           return;
         }
         
-        // Add to request tracker
         requestTracker.current.add(requestKey);
-        
         setIsLoading(true);
 
-        // Fetch topic statistics using the API
         const response = await fetch(
           constructVercelURL("/api/businesses/getBusinessTopicStats"),
           {
@@ -150,6 +144,8 @@ const TopicAnalysis: FC<AnalysisProps> = ({
               topicType: getTopicType(activeTab),
               startDate: startDate,
               endDate: endDate,
+              preferredLanguage: displayLanguage,
+              platform: selectedPlatform === 'all' ? undefined : selectedPlatform,
             }),
           }
         );
@@ -159,13 +155,11 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         }
 
         const data = await response.json();
-        console.log("checking topic response",data)
         setTopics(data.topics);
         setTotal(data.total);
 
       } catch (error) {
         console.error("Error fetching topics:", error);
-        // Don't set an error message for users to see
       } finally {
         setIsLoading(false);
       }
@@ -173,15 +167,28 @@ const TopicAnalysis: FC<AnalysisProps> = ({
 
     fetchData();
     
-    // Clear request tracker when component unmounts
     return () => {
       requestTracker.current.clear();
     };
-  }, [clientDetails, businessId, activeTab, dateRange]);
+  }, [clientDetails, businessId, activeTab, startDate, endDate, displayLanguage, selectedPlatform]);
 
-  // Get the minimum count and maximum number of topics based on active tab
+  // Handler to update platform and URL
+  const handlePlatformChange = (platform: string) => {
+    setSelectedPlatform(platform);
+    
+    // Update URL params
+    const params = new URLSearchParams(searchParams.toString());
+    if (platform === 'all') {
+      params.delete('platform');
+    } else {
+      params.set('platform', platform);
+    }
+    
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
+
   const topicLimit = getTopicLimit(activeTab);
-  const minCount = activeTab === 0 ? 2 : 0; // Keep minimum count = 2 for General, otherwise allow count = 1
+  const minCount = activeTab === 0 ? 2 : 0;
 
   return (
     <div className="container mx-auto px-4">
@@ -189,27 +196,44 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         {`Topic Analysis for ${businessName || "Business"}`}
       </h1>
 
-      {/* Date Range Picker */}
-      <div className="mb-4">
-        <DateRangePicker
-          page="topic-analysis"
-          businessId={businessId}
-        />
+      {/* Date and Platform Filters */}
+      <div className="mb-4 flex gap-4 items-end justify-end">
+        <div>
+          <DateRangePicker
+            page="topic-analysis"
+            businessId={businessId}
+          />
+        </div>
+        <div className="w-64">
+          <label htmlFor="platform-filter" className="block text-sm font-medium text-gray-700 mb-2">
+            {/* Platform */}
+          </label>
+          <select
+            id="platform-filter"
+            value={selectedPlatform}
+            onChange={(e) => handlePlatformChange(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+          >
+            <option value="all">All Platforms</option>
+            <option value="xhs">Rednote</option>
+            <option value="wb">Weibo</option>
+            <option value="dy">Douyin</option>
+          </select>
+        </div>
       </div>
 
-      {/* Tier-aware banner - positioned under title for better alignment */}
       <TopicAnalysisOverviewTierBanner />
       
-      {/* Tab Section with Visualization Toggle */}
       <TabSection
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         businessType={businessType}
         visualizationMode={visualizationMode}
         setVisualizationMode={setVisualizationMode}
+        displayLanguage={displayLanguage}
+        setDisplayLanguage={setDisplayLanguage}
       />
       
-      {/* Charts */}
       <div className="flex justify-center items-center min-h-[400px] w-full min-w-0">
         {isLoading ? (
           <div className="flex flex-col items-center">
@@ -226,7 +250,6 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         ) : (
           <div className="flex flex-col items-center p-2 w-full">
             {visualizationMode === 'wordcloud' ? (
-              // Word Cloud View
               <WordCloud
                 topics={topics}
                 businessId={businessId}
@@ -234,9 +257,9 @@ const TopicAnalysis: FC<AnalysisProps> = ({
                 minCount={minCount}
                 maxTopics={topicLimit}
                 topicType={getTopicType(activeTab)}
+                displayLanguage={displayLanguage}
               />
             ) : (
-              // Bubble Chart View
               <>
                 <CirclePacking
                   topics={topics}
@@ -245,6 +268,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
                   minCount={minCount}
                   maxTopics={topicLimit}
                   topicType={getTopicType(activeTab)}
+                  displayLanguage={displayLanguage}
                 />
                 <BarChart 
                   topics={topics} 
@@ -253,6 +277,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
                   minCount={minCount}
                   maxTopics={topicLimit}
                   topicType={getTopicType(activeTab)}
+                  displayLanguage={displayLanguage}
                 />
               </>
             )}

@@ -18,11 +18,12 @@ interface WordCloudProps {
   minCount?: number;
   maxTopics?: number;
   topicType: string;
+  displayLanguage?: 'en' | 'zh';
 }
 
 interface Word {
   text: string;
-  originalTopic: string; // Add original topic
+  originalTopic: string;
   size: number;
   count: number;
   sentiment?: number;
@@ -38,21 +39,20 @@ const WordCloud: FC<WordCloudProps> = ({
   minCount = 0,
   maxTopics = Infinity,
   topicType,
+  displayLanguage = 'en',
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
 
-  // Dynamic color based on frequency - smooth gradient
   const getColor = (word: Word, maxCount: number, minCountValue: number) => {
     const range = maxCount - minCountValue;
     const normalized = range > 0 ? (word.count - minCountValue) / range : 0.5;
     
-    // Smooth blue gradient using interpolation
     const colorScale = d3.scaleSequential(d3.interpolateBlues)
       .domain([0, 1]);
     
-    return colorScale(0.3 + normalized * 0.7); // Start from light blue, go to dark blue
+    return colorScale(0.3 + normalized * 0.7);
   };
 
   useEffect(() => {
@@ -71,7 +71,6 @@ const WordCloud: FC<WordCloudProps> = ({
   useEffect(() => {
     if (!svgRef.current || !topics || topics.length === 0) return;
 
-    // Filter and prepare words
     const filteredTopics = topics
       .filter((topic) => topic.count >= minCount)
       .slice(0, maxTopics)
@@ -82,16 +81,15 @@ const WordCloud: FC<WordCloudProps> = ({
     const maxCount = Math.max(...filteredTopics.map(t => t.count));
     const minCountValue = Math.min(...filteredTopics.map(t => t.count));
 
-    // Enhanced font size scale with wider range for more dramatic differences
     const fontSizeScale = d3.scalePow()
-      .exponent(0.6) // Use power scale for better visual distribution
+      .exponent(0.6)
       .domain([minCountValue, maxCount])
-      .range([14, 80]); // Wider range: small words at 14px, large at 80px
+      .range([14, 80]);
 
-    // Prepare words - include both display and original topic
+    // Use topic or displayTopic based on language selection
     const words: Word[] = filteredTopics.map(topic => ({
-      text: topic.displayTopic,
-      originalTopic: topic.topic, // Store original topic for navigation
+      text: displayLanguage === 'zh' ? topic.displayTopic : topic.topic,
+      originalTopic: topic.topic,
       size: fontSizeScale(topic.count),
       count: topic.count,
       sentiment: topic.sentiment,
@@ -100,14 +98,12 @@ const WordCloud: FC<WordCloudProps> = ({
       rotate: 0,
     }));
 
-    // Compact oval-shaped layout algorithm
     const layoutWords = () => {
       const { width, height } = dimensions;
       const centerX = width / 2;
       const centerY = height / 2;
       
-      // Create elliptical boundary (oval shape)
-      const ellipseA = width * 0.45; // Slightly larger for bigger words
+      const ellipseA = width * 0.45;
       const ellipseB = height * 0.4;
       
       interface BoundingBox {
@@ -120,7 +116,6 @@ const WordCloud: FC<WordCloudProps> = ({
       
       const boundingBoxes: BoundingBox[] = [];
       
-      // Helper function to check if two boxes collide
       const boxesCollide = (box1: BoundingBox, box2: BoundingBox): boolean => {
         return !(
           box1.x + box1.width + box1.padding < box2.x - box2.padding ||
@@ -139,22 +134,21 @@ const WordCloud: FC<WordCloudProps> = ({
         const angleStep = 0.15;
         const radiusStep = 0.02;
         
-        // Less rotation for more compact look
         const rotate = Math.random() > 0.9 ? -90 : 0;
         word.rotate = rotate;
         
-        // Dynamic padding based on word size
-        const charWidth = word.size * 0.5;
-        const padding = word.size * 0.2;
-        
+        const isChinese = /[\u4e00-\u9fa5]/.test(word.text);
+        const charWidth = isChinese ? word.size * 0.85 : word.size * 0.5;
+        const padding = isChinese ? word.size * 0.4 : word.size * 0.3;
+
         let wordWidth: number;
         let wordHeight: number;
-        
+
         if (rotate === 0) {
           wordWidth = word.text.length * charWidth;
-          wordHeight = word.size;
+          wordHeight = word.size * 1.3;
         } else {
-          wordWidth = word.size;
+          wordWidth = word.size * 1.3;
           wordHeight = word.text.length * charWidth;
         }
         
@@ -287,14 +281,7 @@ const WordCloud: FC<WordCloudProps> = ({
         tooltip.style('opacity', '0');
       })
       .on('click', (event, d) => {
-        // Use originalTopic for navigation (English topic name)
-        const searchParams = new URLSearchParams({
-          business_id: businessId,
-          topic: d.originalTopic, // Use original English topic
-          topic_type: topicType,
-        });
-         window.location.href = `/${clientId}/${businessId}/topic-analysis/${encodeURIComponent(d.originalTopic)}?topic_type=${encodeURIComponent(topicType)}`;
-
+        window.location.href = `/${clientId}/${businessId}/topic-analysis/${encodeURIComponent(d.originalTopic)}?topic_type=${encodeURIComponent(topicType)}`;
       });
 
     textElements
@@ -304,7 +291,7 @@ const WordCloud: FC<WordCloudProps> = ({
       .delay((d, i) => i * 30)
       .style('opacity', 1);
 
-  }, [topics, dimensions, minCount, maxTopics, businessId, clientId, topicType]);
+  }, [topics, dimensions, minCount, maxTopics, businessId, clientId, topicType, displayLanguage]);
 
   if (!topics || topics.length === 0) {
     return (
@@ -331,7 +318,6 @@ const WordCloud: FC<WordCloudProps> = ({
         </div>
       </div>
       
-      {/* Updated legend for gradient */}
       <div className="flex items-center gap-2 mb-4 text-xs text-gray-600">
         <span>Frequency:</span>
         <div className="flex items-center gap-1">

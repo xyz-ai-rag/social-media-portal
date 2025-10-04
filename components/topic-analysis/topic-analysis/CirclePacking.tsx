@@ -1,5 +1,5 @@
 "use client"
-import { FC, useMemo, useState, useEffect, useRef } from "react";
+import { FC, useMemo, useState } from "react";
 import * as d3 from "d3";
 import { convertTopicsToTree, Topic, Tree } from "@/utils/topicTree";
 import { useRouter } from 'next/navigation';
@@ -11,6 +11,7 @@ interface CirclePackingProps {
   minCount: number;
   maxTopics: number;
   topicType: string;
+  displayLanguage?: 'en' | 'zh';
 }
 
 interface TooltipData {
@@ -29,22 +30,19 @@ const CirclePacking: FC<CirclePackingProps> = ({
   minCount,
   maxTopics,
   topicType,
+  displayLanguage = 'en',
 }) => {
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [hoveredCircle, setHoveredCircle] = useState<string | null>(null);
   const router = useRouter();
 
-
-  // Filter topics by minimum count and limit the number of topics
   const filteredData = useMemo(() => {
     if (!topics || topics.length === 0) return [];
     
-    // If we have fewer topics than maxTopics, show all topics
     if (topics.length <= maxTopics) {
       return topics;
     } 
     
-    // Otherwise, sort by count (descending) and limit to maxTopics
     return [...topics]
       .sort((a, b) => b.count - a.count)
       .slice(0, maxTopics);
@@ -54,7 +52,6 @@ const CirclePacking: FC<CirclePackingProps> = ({
     return <div>No posts with these topics found</div>;
   }
 
-  // Calculate dimensions based on the number of topics
   const baseSize = 600;
   const minSize = 200;
   const maxSize = 1000;
@@ -62,7 +59,17 @@ const CirclePacking: FC<CirclePackingProps> = ({
   const width = size;
   const height = size;
 
-  const treeData = convertTopicsToTree(filteredData);
+  // Map topics to use appropriate language and preserve original for navigation
+  const languageMappedTopics = filteredData.map(topic => ({
+    ...topic,
+    displayName: displayLanguage === 'zh' ? topic.displayTopic : topic.topic,
+    originalTopic: topic.topic,
+  }));
+
+  const treeData = convertTopicsToTree(languageMappedTopics.map(t => ({
+    ...t,
+    topic: t.displayName, // Use display name for visualization
+  })));
   
   const hierarchy = d3
     .hierarchy(treeData)
@@ -74,8 +81,9 @@ const CirclePacking: FC<CirclePackingProps> = ({
   const color = d3.scaleOrdinal(d3.schemeCategory10);
 
   function handleCircleClick(data: any): void {
-    // Use originalTopic for URL if available, otherwise use name
-    const topicForUrl = data.originalTopic || data.name;
+    // Find the original topic from our mapped data
+    const mappedTopic = languageMappedTopics.find(t => t.displayName === data.name);
+    const topicForUrl = mappedTopic?.originalTopic || data.name;
     router.push(`/${clientId}/${businessId}/topic-analysis/${encodeURIComponent(topicForUrl)}?topic_type=${encodeURIComponent(topicType)}`);
   }
 
@@ -138,7 +146,6 @@ const CirclePacking: FC<CirclePackingProps> = ({
             const fontSize = Math.min(13, node.r / 3);
             const maxChars = Math.floor((node.r * 1.8) / (fontSize * 0.5));
 
-            // Split name into two lines if it's too long
             let displayName;
             if (name.length > maxChars) {
               const halfLength = Math.floor(maxChars / 2);

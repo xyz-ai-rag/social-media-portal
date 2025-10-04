@@ -11,6 +11,7 @@ echarts.use([TitleComponent, TooltipComponent, GridComponent, EBarChart, CanvasR
 
 interface Topic {
   topic: string;
+  displayTopic: string;
   count: number;
   percentage: number;
 }
@@ -22,29 +23,45 @@ interface BarChartProps {
   minCount: number;
   maxTopics: number;
   topicType: string;
+  displayLanguage?: 'en' | 'zh';
 }
 
-const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, minCount, maxTopics, topicType }) => {
+const BarChart: React.FC<BarChartProps> = ({ 
+  topics, 
+  businessId, 
+  clientId, 
+  minCount, 
+  maxTopics, 
+  topicType,
+  displayLanguage = 'en'
+}) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   // Filter topics by minimum count and limit the number of topics
   const filteredTopics = useMemo(() => {
-    // If we have fewer topics than maxTopics, show all topics
     if (topics.length <= maxTopics) {
       return topics;
     }
     
-    // Otherwise, sort by count (descending) and limit to maxTopics
     return [...topics]
       .sort((a, b) => b.count - a.count)
       .slice(0, maxTopics);
   }, [topics, maxTopics]);
 
+  // Map topics with language-aware display names
+  const languageMappedTopics = useMemo(() => {
+    return filteredTopics.map(topic => ({
+      ...topic,
+      displayName: displayLanguage === 'zh' ? topic.displayTopic : topic.topic,
+      originalTopic: topic.topic,
+    }));
+  }, [filteredTopics, displayLanguage]);
+
   // For bar chart display, we want to show in ascending order
   const sortedTopics = useMemo(() => {
-    return [...filteredTopics].sort((a, b) => a.count - b.count);
-  }, [filteredTopics]);
+    return [...languageMappedTopics].sort((a, b) => a.count - b.count);
+  }, [languageMappedTopics]);
 
   useEffect(() => {
     if (!chartRef.current || sortedTopics.length === 0) return;
@@ -73,7 +90,7 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, minCo
       },
       yAxis: {
         type: 'category',
-        data: sortedTopics.map((t) => t.topic),
+        data: sortedTopics.map((t) => t.displayName),
         axisLabel: {
           fontSize: 12,
           formatter: (value: string) => {
@@ -113,12 +130,10 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, minCo
 
     chart.setOption(option);
 
-    // --- ResizeObserver + window.resize dual monitoring ---
     const resizeHandler = () => {
       chart.resize();
     };
 
-    // ResizeObserver
     const resizeObserver = new window.ResizeObserver(() => {
       chart.resize();
     });
@@ -126,14 +141,14 @@ const BarChart: React.FC<BarChartProps> = ({ topics, businessId, clientId, minCo
       resizeObserver.observe(chartRef.current);
     }
 
-    // window resize
     window.addEventListener('resize', resizeHandler);
-
     setTimeout(() => chart.resize(), 0);
 
     chart.on('click', (params: any) => {
-      const topicName = params.name;
-      router.push(`/${clientId}/${businessId}/topic-analysis/${encodeURIComponent(topicName)}?topic_type=${encodeURIComponent(topicType)}`);
+      // Find the original topic name for navigation
+      const clickedTopic = sortedTopics.find(t => t.displayName === params.name);
+      const topicForUrl = clickedTopic?.originalTopic || params.name;
+      router.push(`/${clientId}/${businessId}/topic-analysis/${encodeURIComponent(topicForUrl)}?topic_type=${encodeURIComponent(topicType)}`);
     });
 
     return () => {

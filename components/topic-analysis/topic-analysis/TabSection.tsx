@@ -1,6 +1,6 @@
 "use client"
 import { FC } from 'react';
-import { Cloud, Circle } from 'lucide-react';
+import { Cloud, Circle, Languages } from 'lucide-react';
 
 interface TabSectionProps {
   activeTab: number;
@@ -8,6 +8,8 @@ interface TabSectionProps {
   businessType: string;
   visualizationMode?: 'bubble' | 'wordcloud';
   setVisualizationMode?: (mode: 'bubble' | 'wordcloud') => void;
+  displayLanguage?: 'en' | 'zh';
+  setDisplayLanguage?: (lang: 'en' | 'zh') => void;
 }
 
 const TabSection: FC<TabSectionProps> = ({
@@ -16,6 +18,8 @@ const TabSection: FC<TabSectionProps> = ({
   businessType,
   visualizationMode = 'bubble',
   setVisualizationMode,
+  displayLanguage = 'en',
+  setDisplayLanguage,
 }) => {
   const allTabs = [
     { id: 0, label: 'Overview' },
@@ -26,13 +30,15 @@ const TabSection: FC<TabSectionProps> = ({
   ];
 
   // Filter tabs based on business type
-  // Show "Merchant Partnership" tab only for Credit card businesses
   const tabs = allTabs.filter(tab => {
     if (tab.id === 4) {
       return businessType === 'Credit card';
     }
     return true;
   });
+
+  // Only show language toggle for Credit card business type
+  const showLanguageToggle = businessType === 'Credit card';
 
   return (
     <div className="mt-6">
@@ -59,36 +65,68 @@ const TabSection: FC<TabSectionProps> = ({
           </ul>
         </div>
 
-        {/* Visualization Mode Toggle */}
-        {setVisualizationMode && (
-          <div className="flex items-center gap-2 ml-4 mb-4">
-            <span className="text-sm text-gray-600 mr-2">View:</span>
-            <div className="flex bg-gray-100 rounded-lg p-1">
-              <button
-                onClick={() => setVisualizationMode('bubble')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  visualizationMode === 'bubble'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <Circle className="w-4 h-4" />
-                Bubble Chart
-              </button>
-              <button
-                onClick={() => setVisualizationMode('wordcloud')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  visualizationMode === 'wordcloud'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <Cloud className="w-4 h-4" />
-                Word Cloud
-              </button>
+        {/* Controls Container */}
+        <div className="flex items-center gap-3 ml-4 mb-4">
+          {/* Language Toggle - Only for Credit card business type */}
+          {showLanguageToggle && setDisplayLanguage && (
+            <div className="flex items-center gap-2">
+              <Languages className="w-4 h-4 text-gray-600" />
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setDisplayLanguage('en')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                    displayLanguage === 'en'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  EN
+                </button>
+                <button
+                  onClick={() => setDisplayLanguage('zh')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                    displayLanguage === 'zh'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  中文
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Visualization Mode Toggle */}
+          {setVisualizationMode && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">View:</span>
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setVisualizationMode('bubble')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    visualizationMode === 'bubble'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <Circle className="w-4 h-4" />
+                  Bubble Chart
+                </button>
+                <button
+                  onClick={() => setVisualizationMode('wordcloud')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    visualizationMode === 'wordcloud'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <Cloud className="w-4 h-4" />
+                  Word Cloud
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
