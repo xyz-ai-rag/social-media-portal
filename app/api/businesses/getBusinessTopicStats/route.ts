@@ -10,7 +10,7 @@ import { Op, fn, col, literal } from "sequelize";
 
 /**
  * POST /api/businesses/getTopicStats
- * body: { businessId, topicType, startDate?, endDate? }
+ * body: { businessId, topicType, startDate?, endDate?, preferredLanguage? }
  */
 
 const DEPLOY_ENV = process.env.DEPLOY_ENV;
@@ -18,7 +18,7 @@ const TopicModelToUse = DEPLOY_ENV === "test" ? TestBusinessTopicsModel : Busine
 
 export async function POST(request: NextRequest) {
   try {
-    const { businessId, topicType, startDate, endDate } = await request.json();
+    const { businessId, topicType, startDate, endDate, preferredLanguage = 'en',platform  } = await request.json();
 
     if (!businessId || !topicType) {
       return NextResponse.json(
@@ -27,27 +27,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get business type to determine if we need translations
+    // Get business type to determine if translations are available
     const business = await BusinessModel.findOne({
       where: { business_id: businessId },
       attributes: ['business_type'],
       raw: true
     });
 
-    const needsTranslation = business?.business_type === 'Credit card';
+    const hasTranslations = business?.business_type === 'Credit card';
+    // Only use translations if they exist AND user prefers Chinese
+    const useTranslations = hasTranslations && preferredLanguage === 'zh';
 
     let topicCounts: any[] = [];
 
     if (startDate && endDate) {
-      // Get note_ids from posts within date range
-      const relevantPosts = await BusinessPostModel.findAll({
-        where: {
-          create_time: {
-            [Op.between]: [new Date(startDate), new Date(endDate)]
-          },
-          is_relevant: true,
-          business_id: businessId
+      // Build where clause for posts
+      const postWhere: any = {
+        create_time: {
+          [Op.between]: [new Date(startDate), new Date(endDate)]
         },
+        is_relevant: true,
+        business_id: businessId
+      };
+
+      // Add platform filter if provided
+      if (platform) {
+        postWhere.platform = platform;
+      }
+
+      // Get note_ids from posts within date range and optional platform filter
+      const relevantPosts = await BusinessPostModel.findAll({
+        where: postWhere,
         attributes: ['note_id'],
         raw: true
       });
@@ -57,7 +67,7 @@ export async function POST(request: NextRequest) {
       if (noteIds.length === 0) {
         topicCounts = [];
       } else {
-        if (needsTranslation) {
+        if (useTranslations) {
           // Get topic counts WITHOUT the join for accurate counting
           const rawTopicCounts = await TopicModelToUse.findAll({
             where: {
@@ -124,7 +134,7 @@ export async function POST(request: NextRequest) {
             hasTranslation: translationMap.has(t.topic)
           }));
         } else {
-          // Get topic counts without translations
+          // Get topic counts without translations (English or no translations available)
           const rawTopicCounts = await TopicModelToUse.findAll({
             where: {
               business_id: businessId,
@@ -142,7 +152,7 @@ export async function POST(request: NextRequest) {
             raw: true,
           }) as any[];
           
-          // Add displayTopic for consistency
+          // Use original English topic for both topic and displayTopic
           topicCounts = rawTopicCounts.map(t => ({
             topic: t.topic,
             displayTopic: t.topic,
@@ -153,7 +163,7 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // No date filtering
-      if (needsTranslation) {
+      if (useTranslations) {
         // Get topic counts WITHOUT the join for accurate counting
         const rawTopicCounts = await TopicModelToUse.findAll({
           where: {
@@ -214,6 +224,7 @@ export async function POST(request: NextRequest) {
           hasTranslation: translationMap.has(t.topic)
         }));
       } else {
+        // Get topic counts without translations (English or no translations available)
         const rawTopicCounts = await TopicModelToUse.findAll({
           where: {
             business_id: businessId,
@@ -228,7 +239,7 @@ export async function POST(request: NextRequest) {
           raw: true,
         }) as any[];
         
-        // Add displayTopic for consistency
+        // Use original English topic for both topic and displayTopic
         topicCounts = rawTopicCounts.map(t => ({
           topic: t.topic,
           displayTopic: t.topic,
