@@ -45,14 +45,21 @@ const WordCloud: FC<WordCloudProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
 
-  const getColor = (word: Word, maxCount: number, minCountValue: number) => {
-    const range = maxCount - minCountValue;
-    const normalized = range > 0 ? (word.count - minCountValue) / range : 0.5;
+  const getColor = (word: Word, index: number) => {
+    const colors = [
+      '#9333EA', // purple
+      '#2563EB', // blue
+      '#059669', // green
+      '#DC2626', // red
+      '#EA580C', // orange
+      '#7C3AED', // violet
+      '#0891B2', // cyan
+      '#CA8A04', // yellow
+      '#DB2777', // pink
+      '#65A30D', // lime
+    ];
     
-    const colorScale = d3.scaleSequential(d3.interpolateBlues)
-      .domain([0, 1]);
-    
-    return colorScale(0.3 + normalized * 0.7);
+    return colors[index % colors.length];
   };
 
   useEffect(() => {
@@ -82,11 +89,10 @@ const WordCloud: FC<WordCloudProps> = ({
     const minCountValue = Math.min(...filteredTopics.map(t => t.count));
 
     const fontSizeScale = d3.scalePow()
-      .exponent(0.6)
+      .exponent(0.5)
       .domain([minCountValue, maxCount])
-      .range([14, 80]);
+      .range([16, 90]);
 
-    // Use topic or displayTopic based on language selection
     const words: Word[] = filteredTopics.map(topic => ({
       text: displayLanguage === 'zh' ? topic.displayTopic : topic.topic,
       originalTopic: topic.topic,
@@ -103,8 +109,8 @@ const WordCloud: FC<WordCloudProps> = ({
       const centerX = width / 2;
       const centerY = height / 2;
       
-      const ellipseA = width * 0.45;
-      const ellipseB = height * 0.4;
+      const ellipseA = width * 0.48;
+      const ellipseB = height * 0.43;
       
       interface BoundingBox {
         x: number;
@@ -134,23 +140,14 @@ const WordCloud: FC<WordCloudProps> = ({
         const angleStep = 0.15;
         const radiusStep = 0.02;
         
-        const rotate = Math.random() > 0.9 ? -90 : 0;
-        word.rotate = rotate;
+        word.rotate = 0;
         
         const isChinese = /[\u4e00-\u9fa5]/.test(word.text);
-        const charWidth = isChinese ? word.size * 0.85 : word.size * 0.5;
-        const padding = isChinese ? word.size * 0.4 : word.size * 0.3;
+        const charWidth = isChinese ? word.size * 0.85 : word.size * 0.55;
+        const padding = isChinese ? word.size * 0.2 : word.size * 0.08;
 
-        let wordWidth: number;
-        let wordHeight: number;
-
-        if (rotate === 0) {
-          wordWidth = word.text.length * charWidth;
-          wordHeight = word.size * 1.3;
-        } else {
-          wordWidth = word.size * 1.3;
-          wordHeight = word.text.length * charWidth;
-        }
+        const wordWidth = word.text.length * charWidth;
+        const wordHeight = word.size * 1.3;
         
         while (!placed && attempts < maxAttempts) {
           const ellipseX = ellipseA * radiusScale * Math.cos(angle);
@@ -243,16 +240,16 @@ const WordCloud: FC<WordCloudProps> = ({
       .style('font-size', d => `${d.size}px`)
       .style('font-family', 'Inter, system-ui, sans-serif')
       .style('font-weight', '600')
-      .style('fill', d => getColor(d, maxCount, minCountValue))
+      .style('fill', (d, i) => getColor(d, i))
       .style('cursor', 'pointer')
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
-      .attr('transform', d => `translate(${d.x},${d.y}) rotate(${d.rotate})`)
+      .attr('transform', d => `translate(${d.x},${d.y})`)
       .text(d => d.text)
       .on('mouseover', function(event, d) {
         d3.select(this)
           .style('opacity', '0.7')
-          .attr('transform', `translate(${d.x},${d.y}) rotate(${d.rotate}) scale(1.05)`);
+          .attr('transform', `translate(${d.x},${d.y}) scale(1.05)`);
         
         let tooltipText = `<strong>${d.text}</strong><br/>${d.count} mention${d.count !== 1 ? 's' : ''}`;
         if (d.sentiment !== undefined && d.sentiment !== null) {
@@ -276,7 +273,7 @@ const WordCloud: FC<WordCloudProps> = ({
       .on('mouseout', function(event, d) {
         d3.select(this)
           .style('opacity', '1')
-          .attr('transform', `translate(${d.x},${d.y}) rotate(${d.rotate})`);
+          .attr('transform', `translate(${d.x},${d.y})`);
         
         tooltip.style('opacity', '0');
       })
@@ -318,16 +315,6 @@ const WordCloud: FC<WordCloudProps> = ({
         </div>
       </div>
       
-      <div className="flex items-center gap-2 mb-4 text-xs text-gray-600">
-        <span>Frequency:</span>
-        <div className="flex items-center gap-1">
-          <span>Low</span>
-          <div className="w-24 h-4 rounded" style={{ 
-            background: 'linear-gradient(to right, #BFDBFE, #1E40AF)' 
-          }}></div>
-          <span>High</span>
-        </div>
-      </div>
 
       <div ref={containerRef} className="w-full">
         <svg
