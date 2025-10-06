@@ -50,21 +50,22 @@ const TopicWordCloud: FC<WordCloudProps> = ({
     };
   }, [topics, minCount, maxTopics, displayLanguage]);
 
-  const getColor = (index: number) => {
-    const colors = [
-      '#9333EA', // purple
-      '#2563EB', // blue
-      '#059669', // green
-      '#DC2626', // red
-      '#EA580C', // orange
-      '#7C3AED', // violet
-      '#0891B2', // cyan
-      '#CA8A04', // yellow
-      '#DB2777', // pink
-      '#65A30D', // lime
-    ];
+  const getColor = (word: Word, index: number) => {
+    const count = word.value;
+    const maxCount = Math.max(...words.map(w => w.value));
+    const minCount = Math.min(...words.map(w => w.value));
+    const range = maxCount - minCount;
+    const normalized = range > 0 ? (count - minCount) / range : 0.5;
     
-    return colors[index % colors.length];
+    // Blue color scale from light to dark
+    const lightBlue = { r: 191, g: 219, b: 254 }; // #BFDBFE
+    const darkBlue = { r: 30, g: 64, b: 175 };    // #1E40AF
+    
+    const r = Math.round(lightBlue.r + (darkBlue.r - lightBlue.r) * normalized);
+    const g = Math.round(lightBlue.g + (darkBlue.g - lightBlue.g) * normalized);
+    const b = Math.round(lightBlue.b + (darkBlue.b - lightBlue.b) * normalized);
+    
+    return `rgb(${r}, ${g}, ${b})`;
   };
 
   if (!topics || topics.length === 0) {
@@ -97,7 +98,7 @@ const TopicWordCloud: FC<WordCloudProps> = ({
           padding={1}
           spiral="archimedean"
           rotate={() => 0}
-          fill={(_, index) => getColor(index)}
+          fill={(word, index) => getColor(word, index)}
           enableTooltip={true}
           svgProps={{
             style: {
