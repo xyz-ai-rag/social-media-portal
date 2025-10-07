@@ -50,6 +50,30 @@ const TopicWordCloud: FC<WordCloudProps> = ({
     };
   }, [topics, minCount, maxTopics, displayLanguage]);
 
+  // Dynamic font size scaling based on data range
+  const getFontSize = useMemo(() => {
+    if (words.length === 0) return () => 20;
+    
+    const counts = words.map(w => w.value);
+    const maxCount = Math.max(...counts);
+    const minCount = Math.min(...counts);
+    const range = maxCount - minCount;
+    
+    // Adaptive scaling: smaller datasets get larger base sizes
+    const baseMin = totalMentions < 100 ? 24 : 16;
+    const baseMax = totalMentions < 100 ? 80 : 100;
+    
+    return (word: Word) => {
+      if (range === 0) return (baseMin + baseMax) / 2;
+      
+      const normalized = (word.value - minCount) / range;
+      // Use power scaling for better visual distribution
+      const scaledSize = baseMin + (baseMax - baseMin) * Math.pow(normalized, 0.6);
+      
+      return Math.max(baseMin, Math.min(baseMax, scaledSize));
+    };
+  }, [words, totalMentions]);
+
   const getColor = (word: Word, index: number) => {
     const count = word.value;
     const maxCount = Math.max(...words.map(w => w.value));
@@ -93,9 +117,9 @@ const TopicWordCloud: FC<WordCloudProps> = ({
           width={1200}
           height={500}
           font="Impact"
-          fontSize={(word) => Math.sqrt(word.value) * 10}
+          fontSize={getFontSize}
           fontWeight="normal"
-          padding={1}
+          padding={2}
           spiral="archimedean"
           rotate={() => 0}
           fill={(word, index) => getColor(word, index)}
