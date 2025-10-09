@@ -44,3 +44,23 @@ export const convertTopicsToTree = (topics: Topic[]): Tree => {
     children
   };
 }; 
+
+// ⭐ NEW FUNCTION - For NegativeFeedbackBubbleChart
+export const convertTopicsToTreeWithDisplay = (topics: Topic[]): Tree => {
+  const totalCount = topics.reduce((sum, topic) => sum + topic.count, 0);
+  
+  const children: Tree[] = topics.map(topic => ({
+    type: 'leaf',
+    name: topic.topic, // Use displayTopic directly
+    count: topic.count,
+    percentage: topic.percentage
+  }));
+
+  return {
+    type: 'node',
+    name: 'Topics',
+    count: totalCount,
+    percentage: 1,
+    children
+  };
+};

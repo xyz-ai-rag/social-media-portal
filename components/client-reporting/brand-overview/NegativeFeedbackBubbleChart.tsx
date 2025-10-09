@@ -2,7 +2,7 @@
 "use client"
 import { FC, useMemo, useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
-import { convertTopicsToTree, Topic, Tree } from "@/utils/topicTree";
+import { convertTopicsToTreeWithDisplay, Topic, Tree } from "@/utils/topicTree";
 import { setEndOfDay, setStartOfDay } from "@/utils/timeUtils";
 import { format } from "date-fns";
 
@@ -105,7 +105,7 @@ const NegativeFeedbackBubbleChart: FC<NegativeFeedbackBubbleChartProps> = ({
   const width = size;
   const height = size;
 
-  const treeData = convertTopicsToTree(topics);
+  const treeData = convertTopicsToTreeWithDisplay(topics);
   const hierarchy = d3
     .hierarchy(treeData)
     .sum((d: any) => d.count)
