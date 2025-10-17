@@ -39,7 +39,8 @@ export default function Header() {
       pathname.includes("/dashboard") ||
       pathname.includes("/posts") ||
       pathname.includes("/competitors") ||
-      pathname.includes("/topic-analysis") 
+      pathname.includes("/topic-analysis") ||
+      pathname.includes("/credit-cards")
     );
   }, [pathname, searchParams]); // Re-compute when pathname or searchParams changes
 
