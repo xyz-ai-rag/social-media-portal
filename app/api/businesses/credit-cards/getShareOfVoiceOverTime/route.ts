@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const business_id = searchParams.get("business_id");
     const start_date = searchParams.get("start_date");
     const end_date = searchParams.get("end_date");
+    const platform = searchParams.get("platform"); // Get platform parameter
 
     if (!business_id || !start_date || !end_date) {
       return NextResponse.json(
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(
-      `[SOV Over Time] Query params: business_id=${business_id}, start_date=${startDateTime.toISOString()}, end_date=${endDateTime.toISOString()}`
+      `[SOV Over Time] Query params: business_id=${business_id}, start_date=${startDateTime.toISOString()}, end_date=${endDateTime.toISOString()}, platform=${platform || 'all'}`
     );
 
     // Get the business and its similar businesses
@@ -89,7 +90,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([]);
     }
 
-    // Main query for share of voice over time
+    // Build platform filter condition
+    const platformCondition = platform ? `AND bp.platform = $4` : '';
+
+    // Main query for share of voice over time with dynamic platform filter
     const query = `
       WITH monthly_totals AS (
         SELECT 
@@ -99,8 +103,8 @@ export async function GET(request: NextRequest) {
         FROM business_posts bp
         WHERE bp.business_id = ANY($1::uuid[])
           AND bp.is_relevant = true 
-          AND bp.platform = 'xhs' 
           AND bp.last_update_time BETWEEN $2 AND $3
+          ${platformCondition}
         GROUP BY TO_CHAR(last_update_time, 'Mon YYYY'), TO_CHAR(last_update_time, 'YYYY-MM')
       ),
       business_monthly AS (
@@ -113,9 +117,9 @@ export async function GET(request: NextRequest) {
         JOIN business b ON bp.business_id = b.business_id
         WHERE bp.business_id = ANY($1::uuid[])
           AND bp.is_relevant = true 
-          AND bp.platform = 'xhs' 
           AND bp.last_update_time BETWEEN $2 AND $3
           AND b.business_name IS NOT NULL
+          ${platformCondition}
         GROUP BY TO_CHAR(bp.last_update_time, 'Mon YYYY'), TO_CHAR(bp.last_update_time, 'YYYY-MM'), b.business_name
       ),
       business_percentages AS (
@@ -138,8 +142,13 @@ export async function GET(request: NextRequest) {
 
     console.log(`[SOV Over Time] Executing query...`);
 
+    // Conditionally add platform to bind parameters
+    const bindParams = platform 
+      ? [allBusinessIds, startDateTime.toISOString(), endDateTime.toISOString(), platform]
+      : [allBusinessIds, startDateTime.toISOString(), endDateTime.toISOString()];
+
     const results: any[] = await sequelizeDbConnection.query(query, {
-      bind: [allBusinessIds, startDateTime.toISOString(), endDateTime.toISOString()],
+      bind: bindParams,
       type: QueryTypes.SELECT,
     });
 

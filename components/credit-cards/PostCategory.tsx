@@ -25,6 +25,7 @@ echarts.use([
 
 interface PostCategoryProps {
   businessId: string;
+  platform:string;
 }
 
 interface PostCategoryStat {
@@ -39,7 +40,7 @@ interface PostCategoryData {
   totalCount: number;
 }
 
-export default function PostCategory({ businessId }: PostCategoryProps) {
+export default function PostCategory({ businessId ,platform}: PostCategoryProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [postCategoryData, setPostCategoryData] = useState<PostCategoryData>({
     postCategoryStats: [],
@@ -79,7 +80,10 @@ export default function PostCategory({ businessId }: PostCategoryProps) {
           start_date: startDateProcessed,
           end_date: endDateProcessed,
         });
-
+        // Add platform filter if not 'all'
+        if (platform && platform !== 'all') {
+          params.append('platform', platform);
+        }
         const response = await fetch(
           `/api/businesses/credit-cards/getPostCategories?${params.toString()}`
         );

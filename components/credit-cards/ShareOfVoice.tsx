@@ -25,6 +25,7 @@ echarts.use([
 
 interface ShareOfVoiceProps {
   businessId: string;
+  platform:string;
 }
 
 interface VoiceData {
@@ -34,7 +35,7 @@ interface VoiceData {
   percentage: number;
 }
 
-export default function ShareOfVoice({ businessId }: ShareOfVoiceProps) {
+export default function ShareOfVoice({ businessId ,platform}: ShareOfVoiceProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [voiceData, setVoiceData] = useState<VoiceData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,7 +72,10 @@ export default function ShareOfVoice({ businessId }: ShareOfVoiceProps) {
           start_date: startDateProcessed,
           end_date: endDateProcessed,
         });
-
+        // Add platform filter if not 'all'
+        if (platform && platform !== 'all') {
+          params.append('platform', platform);
+        }
         const response = await fetch(
           `/api/businesses/credit-cards/getShareOfVoice?${params.toString()}`
         );

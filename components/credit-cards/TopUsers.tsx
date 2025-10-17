@@ -25,6 +25,7 @@ echarts.use([
 
 interface TopUsersProps {
   businessId: string;
+  platform:string
 }
 
 interface UserData {
@@ -33,7 +34,7 @@ interface UserData {
   percentage?: number;
 }
 
-export default function TopUsers({ businessId }: TopUsersProps) {
+export default function TopUsers({ businessId,platform }: TopUsersProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const { dateRange } = useDateRange();
   const [users, setUsers] = useState<UserData[]>([]);
@@ -71,7 +72,10 @@ export default function TopUsers({ businessId }: TopUsersProps) {
           start_date: startDateProcessed,
           end_date: endDateProcessed,
         });
-
+        // Add platform filter if not 'all'
+        if (platform && platform !== 'all') {
+          params.append('platform', platform);
+        }
         const response = await fetch(
           `/api/businesses/credit-cards/getTopUsers?${params.toString()}`
         );

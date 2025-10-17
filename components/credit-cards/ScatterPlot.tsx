@@ -27,6 +27,7 @@ echarts.use([
 
 interface SOVvsNetSentimentProps {
   businessId: string;
+  platform:string;
 }
 
 interface ScatterData {
@@ -37,7 +38,7 @@ interface ScatterData {
   total_posts: number;
 }
 
-export default function SOVvsNetSentiment({ businessId }: SOVvsNetSentimentProps) {
+export default function SOVvsNetSentiment({ businessId,platform }: SOVvsNetSentimentProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [scatterData, setScatterData] = useState<ScatterData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,7 +75,10 @@ export default function SOVvsNetSentiment({ businessId }: SOVvsNetSentimentProps
           start_date: startDateProcessed,
           end_date: endDateProcessed,
         });
-
+        // Add platform filter if not 'all'
+        if (platform && platform !== 'all') {
+          params.append('platform', platform);
+        }
         const response = await fetch(
           `/api/businesses/credit-cards/getSOVvsNetSentiment?${params.toString()}`
         );
@@ -218,20 +222,7 @@ export default function SOVvsNetSentiment({ businessId }: SOVvsNetSentimentProps
               color: '#3B82F6',
               width: 2
             },
-            data: [
-              {
-                xAxis: 25,
-                label: {
-                  show: false
-                }
-              },
-              {
-                yAxis: 40,
-                label: {
-                  show: false
-                }
-              }
-            ]
+
           }
         }
       ]

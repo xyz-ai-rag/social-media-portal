@@ -25,6 +25,7 @@ echarts.use([
 
 interface SentimentComparisonProps {
   businessId: string;
+  platform:string;
 }
 
 interface SentimentData {
@@ -35,7 +36,7 @@ interface SentimentData {
   total_posts: number;
 }
 
-export default function SentimentComparison({ businessId }: SentimentComparisonProps) {
+export default function SentimentComparison({ businessId,platform }: SentimentComparisonProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [sentimentData, setSentimentData] = useState<SentimentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -72,7 +73,10 @@ export default function SentimentComparison({ businessId }: SentimentComparisonP
           start_date: startDateProcessed,
           end_date: endDateProcessed,
         });
-
+        // Add platform filter if not 'all'
+        if (platform && platform !== 'all') {
+          params.append('platform', platform);
+        }
         const response = await fetch(
           `/api/businesses/credit-cards/getSentimentComparison?${params.toString()}`
         );

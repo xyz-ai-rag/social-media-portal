@@ -25,6 +25,7 @@ echarts.use([
 
 interface NetSentimentScoreProps {
   businessId: string;
+  platform:string;
 }
 
 interface NetSentimentData {
@@ -40,7 +41,7 @@ interface NetSentimentData {
   net_sentiment_score: number | null;
 }
 
-export default function NetSentimentScore({ businessId }: NetSentimentScoreProps) {
+export default function NetSentimentScore({ businessId,platform }: NetSentimentScoreProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [sentimentData, setSentimentData] = useState<NetSentimentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,6 +79,10 @@ export default function NetSentimentScore({ businessId }: NetSentimentScoreProps
           end_date: endDateProcessed,
         });
 
+        // Add platform filter if not 'all'
+        if (platform && platform !== 'all') {
+          params.append('platform', platform);
+        }
         const response = await fetch(
           `/api/businesses/credit-cards/getNetSentimentScore?${params.toString()}`
         );

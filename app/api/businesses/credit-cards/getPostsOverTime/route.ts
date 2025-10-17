@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const business_id = searchParams.get("business_id");
     const start_date = searchParams.get("start_date");
     const end_date = searchParams.get("end_date");
+    const platform = searchParams.get("platform"); // Get platform parameter
 
     if (!business_id || !start_date || !end_date) {
       return NextResponse.json(
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(
-      `[Posts Over Time] Query params: business_id=${business_id}, start_date=${startDateTime.toISOString()}, end_date=${endDateTime.toISOString()}`
+      `[Posts Over Time] Query params: business_id=${business_id}, start_date=${startDateTime.toISOString()}, end_date=${endDateTime.toISOString()}, platform=${platform || 'all'}`
     );
 
     // Get the business and its similar businesses
@@ -86,7 +87,10 @@ export async function GET(request: NextRequest) {
       `COALESCE(MAX(CASE WHEN b.business_name = '${b.business_name}' THEN pc.post_count ELSE 0 END), 0)`
     ).join(' +\n        ');
 
-    // Use the exact query structure from your example
+    // Build platform filter condition
+    const platformCondition = platform ? `AND bp.platform = $4` : '';
+
+    // Use the exact query structure with dynamic platform filter
     const query = `
       WITH month_series AS (
         SELECT 
@@ -116,8 +120,8 @@ export async function GET(request: NextRequest) {
         LEFT JOIN public.business_posts bp ON 
           bl.business_id = bp.business_id 
           AND bp.is_relevant = true 
-          AND bp.platform = 'xhs'
           AND bp.last_update_time BETWEEN $1 AND $2
+          ${platformCondition}
         GROUP BY 
           b.business_id,
           b.business_name,
@@ -150,8 +154,13 @@ export async function GET(request: NextRequest) {
 
     console.log(`[Posts Over Time] Executing query...`);
 
+    // Conditionally add platform to bind parameters
+    const bindParams = platform 
+      ? [startDateTime.toISOString(), endDateTime.toISOString(), allBusinessIds, platform]
+      : [startDateTime.toISOString(), endDateTime.toISOString(), allBusinessIds];
+
     const results: any[] = await sequelizeDbConnection.query(query, {
-      bind: [startDateTime.toISOString(), endDateTime.toISOString(), allBusinessIds],
+      bind: bindParams,
       type: QueryTypes.SELECT,
     });
 

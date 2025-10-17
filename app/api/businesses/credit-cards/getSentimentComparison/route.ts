@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const business_id = searchParams.get("business_id");
     const start_date = searchParams.get("start_date");
     const end_date = searchParams.get("end_date");
+    const platform = searchParams.get("platform"); // Get platform parameter
 
     if (!business_id || !start_date || !end_date) {
       return NextResponse.json(
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(
-      `[Sentiment Comparison] Query params: business_id=${business_id}, start_date=${startDateTime.toISOString()}, end_date=${endDateTime.toISOString()}`
+      `[Sentiment Comparison] Query params: business_id=${business_id}, start_date=${startDateTime.toISOString()}, end_date=${endDateTime.toISOString()}, platform=${platform || 'all'}`
     );
 
     // Get the business and its similar businesses
@@ -61,7 +62,10 @@ export async function GET(request: NextRequest) {
 
     console.log(`[Sentiment Comparison] Fetching for ${allBusinessIds.length} businesses`);
 
-    // Main query using the exact structure from your SQL
+    // Build platform filter condition
+    const platformCondition = platform ? `AND bp.platform = $4` : '';
+
+    // Main query with dynamic platform filter
     const query = `
       WITH sentiment_groups AS (
         SELECT 'Positive' AS sentiment_group, 'Highly positive' AS english_sentiment, 1 AS sort_order UNION ALL
@@ -81,11 +85,11 @@ export async function GET(request: NextRequest) {
           COUNT(*) AS total_posts
         FROM business_posts bp
         WHERE bp.is_relevant = true 
-          AND bp.platform = 'xhs' 
           AND bp.last_update_time BETWEEN $2 AND $3
           AND bp.english_sentiment IS NOT NULL 
           AND bp.english_sentiment != ''
           AND bp.business_id = ANY($1::uuid[])
+          ${platformCondition}
         GROUP BY bp.business_id
       ),
       sentiment_counts AS (
@@ -101,10 +105,10 @@ export async function GET(request: NextRequest) {
         LEFT JOIN business_posts bp ON bl.business_id = bp.business_id 
           AND sg.english_sentiment = bp.english_sentiment
           AND bp.is_relevant = true 
-          AND bp.platform = 'xhs' 
           AND bp.last_update_time BETWEEN $2 AND $3
           AND bp.english_sentiment IS NOT NULL 
           AND bp.english_sentiment != ''
+          ${platformCondition}
         GROUP BY bl.business_id, bl.business_name, sg.sentiment_group, bt.total_posts
       )
       SELECT 
@@ -131,8 +135,13 @@ export async function GET(request: NextRequest) {
       ORDER BY business_name
     `;
 
+    // Conditionally add platform to bind parameters
+    const bindParams = platform 
+      ? [allBusinessIds, startDateTime.toISOString(), endDateTime.toISOString(), platform]
+      : [allBusinessIds, startDateTime.toISOString(), endDateTime.toISOString()];
+
     const results: any[] = await sequelizeDbConnection.query(query, {
-      bind: [allBusinessIds, startDateTime.toISOString(), endDateTime.toISOString()],
+      bind: bindParams,
       type: QueryTypes.SELECT,
     });
 

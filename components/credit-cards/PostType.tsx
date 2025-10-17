@@ -22,9 +22,10 @@ echarts.use([
   CanvasRenderer,
   GraphicComponent,
 ]);
-
+;
 interface PostTypeProps {
   businessId: string;
+  platform:string
 }
 
 interface PostTypeStat {
@@ -39,7 +40,7 @@ interface PostTypeData {
   totalCount: number;
 }
 
-export default function PostType({ businessId }: PostTypeProps) {
+export default function PostType({ businessId ,platform}: PostTypeProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [postTypeData, setPostTypeData] = useState<PostTypeData>({
     postTypeStats: [],
@@ -79,7 +80,10 @@ export default function PostType({ businessId }: PostTypeProps) {
           start_date: startDateProcessed,
           end_date: endDateProcessed,
         });
-
+        // Add platform filter if not 'all'
+        if (platform && platform !== 'all') {
+          params.append('platform', platform);
+        }
         const response = await fetch(
           `/api/businesses/credit-cards/getPostTypes?${params.toString()}`
         );

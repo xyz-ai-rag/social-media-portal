@@ -8,6 +8,8 @@ import { setStartOfDay, setEndOfDay } from "@/utils/timeUtils";
 
 interface TopHashtagsProps {
   businessId: string;
+  displayLanguage: string;
+  platform: string;
 }
 
 interface HashtagData {
@@ -15,7 +17,7 @@ interface HashtagData {
   tag_count: number;
 }
 
-export default function TopHashtags({ businessId }: TopHashtagsProps) {
+export default function TopHashtags({ businessId, displayLanguage, platform }: TopHashtagsProps) {
   const { dateRange } = useDateRange();
   const [hashtags, setHashtags] = useState<HashtagData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +53,13 @@ export default function TopHashtags({ businessId }: TopHashtagsProps) {
           business_id: businessId,
           start_date: startDateProcessed,
           end_date: endDateProcessed,
+          language: displayLanguage, // Add language parameter
         });
+
+        // Add platform filter if not 'all'
+        if (platform && platform !== 'all') {
+          params.append('platform', platform);
+        }
 
         const response = await fetch(
           `/api/businesses/credit-cards/getTopHashtags?${params.toString()}`
@@ -73,7 +81,7 @@ export default function TopHashtags({ businessId }: TopHashtagsProps) {
     };
 
     fetchHashtags();
-  }, [businessId, dateRange.startDate, dateRange.endDate, startDateProcessed, endDateProcessed]);
+  }, [businessId, dateRange.startDate, dateRange.endDate, startDateProcessed, endDateProcessed, displayLanguage, platform]);
 
   const { words, totalMentions } = useMemo(() => {
     const words: Word[] = hashtags.map((hashtag) => ({

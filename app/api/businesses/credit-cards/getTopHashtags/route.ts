@@ -9,6 +9,8 @@ export async function GET(request: NextRequest) {
     const business_id = searchParams.get("business_id");
     const start_date = searchParams.get("start_date");
     const end_date = searchParams.get("end_date");
+    const language = searchParams.get("language") || 'en'; // Get language parameter, default to 'en'
+    const platform = searchParams.get("platform"); // Get platform parameter
 
     if (!business_id || !start_date || !end_date) {
       return NextResponse.json(
@@ -34,7 +36,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(
-      `[Credit Card Hashtags] Query params: business_id=${business_id}, start_date=${startDateTime.toISOString()}, end_date=${endDateTime.toISOString()}`
+      `[Credit Card Hashtags] Query params: business_id=${business_id}, start_date=${startDateTime.toISOString()}, end_date=${endDateTime.toISOString()}, language=${language}, platform=${platform || 'all'}`
     );
 
     // Use BusinessModel ORM to get similar businesses
@@ -52,25 +54,35 @@ export async function GET(request: NextRequest) {
 
     console.log(`[Credit Card Hashtags] Fetching for ${businessIds.length} businesses`);
 
+    // Determine which tag field to use based on language
+    const tagField = language === 'zh' ? 'tag_list' : 'english_tag_list';
+
+    // Build where condition with optional platform filter
+    const whereCondition: any = {
+      business_id: {
+        [Op.in]: businessIds
+      },
+      is_relevant: true,
+      last_update_time: {
+        [Op.between]: [startDateTime, endDateTime]
+      },
+      [tagField]: {
+        [Op.and]: [
+          { [Op.ne]: null },
+          { [Op.ne]: '' }
+        ]
+      }
+    };
+
+    // Add platform filter if provided
+    if (platform) {
+      whereCondition.platform = platform;
+    }
+
     // Fetch all relevant posts using ORM
     const posts = await BusinessPostModel.findAll({
-      where: {
-        business_id: {
-          [Op.in]: businessIds
-        },
-        is_relevant: true,
-        platform: 'xhs',
-        last_update_time: {
-          [Op.between]: [startDateTime, endDateTime]
-        },
-        english_tag_list: {
-          [Op.and]: [
-            { [Op.ne]: null },
-            { [Op.ne]: '' }
-          ]
-        }
-      },
-      attributes: ['english_tag_list'],
+      where: whereCondition,
+      attributes: [tagField],
       raw: true
     });
 
@@ -80,16 +92,20 @@ export async function GET(request: NextRequest) {
     const hashtagMap = new Map<string, number>();
 
     posts.forEach((post: any) => {
-      if (post.english_tag_list) {
+      const tagList = post[tagField];
+      if (tagList) {
         // Split by comma and process each tag
-        const tags = post.english_tag_list.split(',');
+        const tags = tagList.split(',');
         
         tags.forEach((tag: string) => {
           // Trim whitespace and remove # symbols
-          const cleanTag = tag.trim().replace(/^#+|#+$/g, '').toLowerCase();
+          const cleanTag = tag.trim().replace(/^#+|#+$/g, '');
           
-          if (cleanTag) {
-            hashtagMap.set(cleanTag, (hashtagMap.get(cleanTag) || 0) + 1);
+          // For English, convert to lowercase for consistency
+          const normalizedTag = language === 'en' ? cleanTag.toLowerCase() : cleanTag;
+          
+          if (normalizedTag) {
+            hashtagMap.set(normalizedTag, (hashtagMap.get(normalizedTag) || 0) + 1);
           }
         });
       }

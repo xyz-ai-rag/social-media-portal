@@ -27,6 +27,7 @@ echarts.use([
 
 interface ShareOfVoiceOverTimeProps {
   businessId: string;
+  platform:string;
 }
 
 interface MonthlySOVData {
@@ -34,7 +35,7 @@ interface MonthlySOVData {
   [key: string]: any; // Business names as keys with percentage values
 }
 
-export default function ShareOfVoiceOverTime({ businessId }: ShareOfVoiceOverTimeProps) {
+export default function ShareOfVoiceOverTime({ businessId,platform}: ShareOfVoiceOverTimeProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [monthlyData, setMonthlyData] = useState<MonthlySOVData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,7 +72,10 @@ export default function ShareOfVoiceOverTime({ businessId }: ShareOfVoiceOverTim
           start_date: startDateProcessed,
           end_date: endDateProcessed,
         });
-
+        // Add platform filter if not 'all'
+        if (platform && platform !== 'all') {
+          params.append('platform', platform);
+        }
         const response = await fetch(
           `/api/businesses/credit-cards/getShareOfVoiceOverTime?${params.toString()}`
         );

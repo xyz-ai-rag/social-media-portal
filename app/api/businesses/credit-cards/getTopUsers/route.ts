@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const business_id = searchParams.get("business_id");
     const start_date = searchParams.get("start_date");
     const end_date = searchParams.get("end_date");
+    const platform = searchParams.get("platform"); // Get platform parameter
 
     if (!business_id || !start_date || !end_date) {
       return NextResponse.json(
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(
-      `[Credit Card Users] Query params: business_id=${business_id}, start_date=${startDateTime.toISOString()}, end_date=${endDateTime.toISOString()}`
+      `[Credit Card Users] Query params: business_id=${business_id}, start_date=${startDateTime.toISOString()}, end_date=${endDateTime.toISOString()}, platform=${platform || 'all'}`
     );
 
     // Use BusinessModel ORM to get similar businesses
@@ -52,28 +53,35 @@ export async function GET(request: NextRequest) {
 
     console.log(`[Credit Card Users] Fetching for ${businessIds.length} businesses`);
 
+    // Build where condition with optional platform filter
+    const whereCondition: any = {
+      business_id: {
+        [Op.in]: businessIds
+      },
+      is_relevant: true,
+      last_update_time: {
+        [Op.between]: [startDateTime, endDateTime]
+      },
+      nickname: {
+        [Op.and]: [
+          { [Op.ne]: null },
+          { [Op.ne]: '' }
+        ]
+      }
+    };
+
+    // Add platform filter if provided
+    if (platform) {
+      whereCondition.platform = platform;
+    }
+
     // Use Sequelize ORM query for business posts
     const results = await BusinessPostModel.findAll({
       attributes: [
         'nickname',
         [fn('COUNT', col('*')), 'post_count']
       ],
-      where: {
-        business_id: {
-          [Op.in]: businessIds
-        },
-        is_relevant: true,
-        platform: 'xhs',
-        last_update_time: {
-          [Op.between]: [startDateTime, endDateTime]
-        },
-        nickname: {
-          [Op.and]: [
-            { [Op.ne]: null },
-            { [Op.ne]: '' }
-          ]
-        }
-      },
+      where: whereCondition,
       group: ['nickname'],
       order: [[literal('post_count'), 'DESC']],
       limit: 10,

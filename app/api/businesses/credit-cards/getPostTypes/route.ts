@@ -1,4 +1,4 @@
-// app/api/businesses/credit-cards/getPostTypeStats/route.ts
+// app/api/businesses/credit-cards/getPostTypes/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { Op } from "sequelize";
 import { BusinessPostModel, BusinessModel } from "@/feature/sqlORM/modelorm";
@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const business_id = searchParams.get("business_id");
     const start_date = searchParams.get("start_date");
     const end_date = searchParams.get("end_date");
+    const platform = searchParams.get("platform"); // Get platform parameter
 
     if (!business_id || !start_date || !end_date) {
       return NextResponse.json(
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(
-      `[Post Type Stats] Query params: business_id=${business_id}, start_date=${startDateTime.toISOString()}, end_date=${endDateTime.toISOString()}`
+      `[Post Type Stats] Query params: business_id=${business_id}, start_date=${startDateTime.toISOString()}, end_date=${endDateTime.toISOString()}, platform=${platform || 'all'}`
     );
 
     // Get similar businesses
@@ -50,21 +51,28 @@ export async function GET(request: NextRequest) {
 
     console.log(`[Post Type Stats] Fetching for ${businessIds.length} businesses`);
 
+    // Build where condition with optional platform filter
+    const whereCondition: any = {
+      business_id: {
+        [Op.in]: businessIds
+      },
+      is_relevant: true,
+      last_update_time: {
+        [Op.between]: [startDateTime, endDateTime]
+      },
+      type: {
+        [Op.ne]: null
+      }
+    };
+
+    // Add platform filter if provided
+    if (platform) {
+      whereCondition.platform = platform;
+    }
+
     // Fetch all relevant posts
     const posts = await BusinessPostModel.findAll({
-      where: {
-        business_id: {
-          [Op.in]: businessIds
-        },
-        is_relevant: true,
-        platform: 'xhs',
-        last_update_time: {
-          [Op.between]: [startDateTime, endDateTime]
-        },
-        type: {
-          [Op.ne]: null
-        }
-      },
+      where: whereCondition,
       attributes: ['type'],
       raw: true
     });

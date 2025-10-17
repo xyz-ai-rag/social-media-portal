@@ -27,6 +27,7 @@ echarts.use([
 
 interface PostsOverTimeProps {
   businessId: string;
+  platform:string;
 }
 
 interface MonthlyData {
@@ -35,7 +36,7 @@ interface MonthlyData {
   [key: string]: any;
 }
 
-export default function PostsOverTime({ businessId }: PostsOverTimeProps) {
+export default function PostsOverTime({ businessId,platform }: PostsOverTimeProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -72,7 +73,10 @@ export default function PostsOverTime({ businessId }: PostsOverTimeProps) {
           start_date: startDateProcessed,
           end_date: endDateProcessed,
         });
-
+        // Add platform filter if not 'all'
+        if (platform && platform !== 'all') {
+          params.append('platform', platform);
+        }
         const response = await fetch(
           `/api/businesses/credit-cards/getPostsOverTime?${params.toString()}`
         );
