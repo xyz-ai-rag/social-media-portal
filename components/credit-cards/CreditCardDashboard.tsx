@@ -108,7 +108,7 @@ export default function CreditCardDashboard({
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h1 className="text-[34px] font-bold text-[#5D5FEF]">
-            {businessName} Credit Card Analytics
+            {businessName} Overview
           </h1>
           <div className="flex gap-4 items-end">
             <DateRangePicker 

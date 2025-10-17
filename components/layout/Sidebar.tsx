@@ -333,6 +333,18 @@ export default function Sidebar() {
                   </div>
                 )}
                 <nav className="space-y-2">
+                   {/* Credit Card Analytics - Only visible for credit card businesses */}
+                  {isCreditCardBusiness && (
+                    <MenuItem
+                      href={getCreditCardsUrl()}
+                      icon={<FiCreditCard />}
+                      label="Cards Overview"
+                      isActive={isActive("/[clientId]/[businessId]/credit-cards")}
+                      disabled={!hasBusiness}
+                      collapsed={collapsed}
+                      onClick={!hasBusiness ? handleDisabledClick : undefined}
+                    />
+                  )}
                   <MenuItem
                     href={getDashboardUrl()}
                     icon={<FiGrid />}
@@ -373,19 +385,6 @@ export default function Sidebar() {
                     collapsed={collapsed}
                     onClick={!hasBusiness ? handleDisabledClick : undefined}
                   />
-
-                  {/* Credit Card Analytics - Only visible for credit card businesses */}
-                  {isCreditCardBusiness && (
-                    <MenuItem
-                      href={getCreditCardsUrl()}
-                      icon={<FiCreditCard />}
-                      label="Credit Card Analytics"
-                      isActive={isActive("/[clientId]/[businessId]/credit-cards")}
-                      disabled={!hasBusiness}
-                      collapsed={collapsed}
-                      onClick={!hasBusiness ? handleDisabledClick : undefined}
-                    />
-                  )}
 
                   {/* Hide Competitors for credit card businesses */}
                   {!isCreditCardBusiness && (
