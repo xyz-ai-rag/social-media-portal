@@ -8,6 +8,7 @@ import CirclePacking from './CirclePacking';
 import TabSection from './TabSection';
 import BarChart from './BarChart';
 import WordCloud from './WordCloud';
+import RadarChartView from './RadarChartView';
 import { useSearchParams, useRouter } from "next/navigation";
 import { TopicAnalysisOverviewTierBanner } from "@/components/TierBanner";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
@@ -30,10 +31,13 @@ const TopicAnalysis: FC<AnalysisProps> = ({
 
   const [businessName, setBusinessName] = useState<string>("");
   const [businessType, setBusinessType] = useState<string>("");
+  const [similarBusinesses, setSimilarBusinesses] = useState<Array<{ business_id: string; business_name: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [topics, setTopics] = useState<any[]>([]);
   const [total, setTotal] = useState<number>(0);
-  const [visualizationMode, setVisualizationMode] = useState<'bubble' | 'wordcloud'>('bubble');
+  
+  // Default to 'radar' for credit cards, 'bubble' for others
+  const [visualizationMode, setVisualizationMode] = useState<'bubble' | 'wordcloud' | 'radar'>('bubble');
   const [displayLanguage, setDisplayLanguage] = useState<'en' | 'zh'>('en');
   
   // Initialize from URL params or default to 'all'
@@ -108,6 +112,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
     }
   }, [searchParams]);
 
+  // Set business details and similar businesses
   useEffect(() => {
     if (clientDetails && businessId) {
       const business = clientDetails.businesses.find(
@@ -116,6 +121,26 @@ const TopicAnalysis: FC<AnalysisProps> = ({
       if (business) {
         setBusinessName(business.business_name);
         setBusinessType(business.business_type);
+        
+        // Set default visualization mode for credit cards
+        if (business.business_type === 'Credit card' && visualizationMode === 'bubble') {
+          setVisualizationMode('radar');
+        }
+        
+        // Extract similar businesses if available
+        if (business.similar_businesses && Array.isArray(business.similar_businesses)) {
+          const similarBizList = business.similar_businesses
+            .map((simId: string) => {
+              const simBusiness = clientDetails.businesses.find(b => b.business_id === simId);
+              return simBusiness ? {
+                business_id: simBusiness.business_id,
+                business_name: simBusiness.business_name
+              } : null;
+            })
+            .filter(Boolean) as Array<{ business_id: string; business_name: string }>;
+          
+          setSimilarBusinesses(similarBizList);
+        }
       }
     }
   }, [clientDetails, businessId]);
@@ -190,6 +215,9 @@ const TopicAnalysis: FC<AnalysisProps> = ({
   const topicLimit = getTopicLimit(activeTab);
   const minCount = activeTab === 0 ? 2 : 0;
 
+  // Determine if we should show radar charts
+  const showRadarCharts = businessType === 'Credit card' && activeTab === 0 && visualizationMode === 'radar';
+
   return (
     <div className="container mx-auto px-4">
       <h1 className="text-[34px] font-bold text-[#5D5FEF] mb-4">
@@ -235,7 +263,20 @@ const TopicAnalysis: FC<AnalysisProps> = ({
       />
       
       <div className="flex justify-center items-center min-h-[400px] w-full min-w-0">
-        {isLoading ? (
+        {showRadarCharts ? (
+          // Show Radar Charts for Credit Cards on Overview tab
+          <div className="w-full">
+            <RadarChartView
+              businessId={businessId}
+              businessName={businessName}
+              similarBusinesses={similarBusinesses}
+              startDate={startDate}
+              endDate={endDate}
+              language={displayLanguage}
+              platform={selectedPlatform === 'all' ? undefined : selectedPlatform}
+            />
+          </div>
+        ) : isLoading ? (
           <div className="flex flex-col items-center">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-2"></div>
             <span className="text-gray-400">Loading...</span>
