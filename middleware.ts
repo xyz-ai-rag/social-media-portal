@@ -12,6 +12,7 @@ export const config = {
     '/:clientId/:businessId/business-reporting',
     '/:clientId/:businessId/monthly-kpis',
     '/:clientId/business-overview',
+    '/:clientId/:businessId/credit-cards',
     '/businesses',
   ],
 }

@@ -12,6 +12,7 @@ import {
   FiAlertCircle,
   FiBarChart,
   FiTrendingUp,
+  FiCreditCard
 } from "react-icons/fi";
 import { TbReportAnalytics } from "react-icons/tb";
 import { IoAnalyticsOutline } from "react-icons/io5";
@@ -133,6 +134,14 @@ export default function Sidebar() {
   const canViewClientReporting = clientDetails?.can_view_client_reporting || false;
   const canViewBusinessReporting = clientDetails?.can_view_business_reporting || false;
 
+
+  // Get current business type
+  const currentBusinessType = clientDetails?.businesses?.find(
+    (biz) => biz.business_id === effectiveBusinessId
+  )?.business_type;
+  // Check if current business is a credit card
+  const isCreditCardBusiness = currentBusinessType === "Credit card";
+
   // Simple permission logic:
   // - can_view_client_reporting = true -> show Brand Overview, Monthly KPIs, Business Reporting
   // - can_view_business_reporting = true -> show Dashboard, All Posts, Analysis, Competitors, Monthly KPIs
@@ -209,6 +218,9 @@ export default function Sidebar() {
     if (path.includes("[clientId]/[businessId]/competitors")) {
       return pathname === `/${effectiveClientId}/${effectiveBusinessId}/competitors`;
     }
+    if (path.includes("[clientId]/[businessId]/credit-cards")) {
+      return pathname === `/${effectiveClientId}/${effectiveBusinessId}/credit-cards`;
+    }
     return pathname === path;
   };
 
@@ -226,6 +238,7 @@ export default function Sidebar() {
   const getPostsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/posts`;
   const getCompetitorsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/competitors`;
   const getAnalyticsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/topic-analysis`;
+  const getCreditCardsUrl = () => `/${effectiveClientId}/${effectiveBusinessId}/credit-cards`;
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -320,6 +333,18 @@ export default function Sidebar() {
                   </div>
                 )}
                 <nav className="space-y-2">
+                   {/* Credit Card Analytics - Only visible for credit card businesses */}
+                  {isCreditCardBusiness && (
+                    <MenuItem
+                      href={getCreditCardsUrl()}
+                      icon={<FiCreditCard />}
+                      label="Cards Overview"
+                      isActive={isActive("/[clientId]/[businessId]/credit-cards")}
+                      disabled={!hasBusiness}
+                      collapsed={collapsed}
+                      onClick={!hasBusiness ? handleDisabledClick : undefined}
+                    />
+                  )}
                   <MenuItem
                     href={getDashboardUrl()}
                     icon={<FiGrid />}
@@ -361,15 +386,18 @@ export default function Sidebar() {
                     onClick={!hasBusiness ? handleDisabledClick : undefined}
                   />
 
-                  <MenuItem
-                    href={getCompetitorsUrl()}
-                    icon={<FiUsers />}
-                    label="Competitors"
-                    isActive={isActive("/[clientId]/[businessId]/competitors")}
-                    disabled={!hasBusiness}
-                    collapsed={collapsed}
-                    onClick={!hasBusiness ? handleDisabledClick : undefined}
-                  />
+                  {/* Hide Competitors for credit card businesses */}
+                  {!isCreditCardBusiness && (
+                    <MenuItem
+                      href={getCompetitorsUrl()}
+                      icon={<FiUsers />}
+                      label="Competitors"
+                      isActive={isActive("/[clientId]/[businessId]/competitors")}
+                      disabled={!hasBusiness}
+                      collapsed={collapsed}
+                      onClick={!hasBusiness ? handleDisabledClick : undefined}
+                    />
+                  )}
 
                 </nav>
               </>
