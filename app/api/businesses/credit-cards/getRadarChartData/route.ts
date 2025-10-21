@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     };
 
     const spendingScenariosMapping = {
-      'Online': ['Spending Scenarios: Online Shopping'],
+      'Online': ['Spending Scenario: Online Shopping'],
       'Overseas and Travel': ['Spending Scenario: Travel and Overseas Spending'],
       'Dining': ['Spending Scenario: Local Dining'],
       'Entertainment': ['Spending Scenario: Entertainment & Leisure'],
