@@ -99,7 +99,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
   };
 
   const [activeTab, setActiveTab] = useState(getActiveTab(searchParams.get("topic_type")) || 0);
-  
+
   useEffect(() => {
     setActiveTab(getActiveTab(searchParams.get("topic_type")) || 0);
   }, [searchParams]);
@@ -114,36 +114,63 @@ const TopicAnalysis: FC<AnalysisProps> = ({
 
   // Set business details and similar businesses
   useEffect(() => {
-    if (clientDetails && businessId) {
-      const business = clientDetails.businesses.find(
-        (b) => b.business_id === businessId
-      );
-      if (business) {
-        setBusinessName(business.business_name);
-        setBusinessType(business.business_type);
+    const fetchSimilarBusinesses = async () => {
+      if (clientDetails && businessId) {
+        const business = clientDetails.businesses.find(
+          (b) => b.business_id === businessId
+        );
         
-        // Set default visualization mode for credit cards
-        if (business.business_type === 'Credit card' && visualizationMode === 'bubble') {
-          setVisualizationMode('radar');
-        }
-        
-        // Extract similar businesses if available
-        if (business.similar_businesses && Array.isArray(business.similar_businesses)) {
-          const similarBizList = business.similar_businesses
-            .map((simId: string) => {
-              const simBusiness = clientDetails.businesses.find(b => b.business_id === simId);
-              return simBusiness ? {
-                business_id: simBusiness.business_id,
-                business_name: simBusiness.business_name
-              } : null;
-            })
-            .filter(Boolean) as Array<{ business_id: string; business_name: string }>;
+        if (business) {
+          setBusinessName(business.business_name);
+          setBusinessType(business.business_type);
           
-          setSimilarBusinesses(similarBizList);
+          // Set default visualization mode for credit cards
+          if (business.business_type === 'Credit card' && visualizationMode === 'bubble') {
+            setVisualizationMode('radar');
+          }
+          
+          // Fetch similar business names using the batch API
+          if (business.similar_businesses && Array.isArray(business.similar_businesses) && business.similar_businesses.length > 0) {
+            try {
+              const response = await fetch(
+                constructVercelURL("/api/businesses/getBusinessName/batch"),
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    businessIds: business.similar_businesses,
+                  }),
+                }
+              );
+
+              if (!response.ok) {
+                throw new Error("Failed to fetch similar businesses");
+              }
+
+              const data = await response.json();
+
+              // Map the response and sort alphabetically
+              const similarBizList = data.businesses
+                .map((biz: any) => ({
+                  business_id: biz.business_id,
+                  business_name: biz.business_name,
+                }))
+                .sort((a: any, b: any) => a.business_name.localeCompare(b.business_name));
+
+              setSimilarBusinesses(similarBizList);
+            } catch (error) {
+              console.error('Error fetching similar businesses:', error);
+              setSimilarBusinesses([]);
+            }
+          } else {
+            setSimilarBusinesses([]);
+          }
         }
       }
-    }
-  }, [clientDetails, businessId]);
+    };
+
+    fetchSimilarBusinesses();
+  }, [clientDetails, businessId, visualizationMode]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -262,10 +289,10 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         setDisplayLanguage={setDisplayLanguage}
       />
       
-      <div className="flex justify-center items-center min-h-[400px] w-full min-w-0">
+      <div className="flex justify-center items-center min-h-[400px] w-full min-w-0 overflow-visible">
         {showRadarCharts ? (
           // Show Radar Charts for Credit Cards on Overview tab
-          <div className="w-full">
+          <div className="w-full overflow-visible">
             <RadarChartView
               businessId={businessId}
               businessName={businessName}
