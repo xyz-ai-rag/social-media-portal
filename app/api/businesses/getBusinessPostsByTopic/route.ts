@@ -17,12 +17,15 @@ export async function GET(request: NextRequest) {
 
     // Required parameters
     const businessId = searchParams.get("businessId");
-    const topic = decodeURIComponent(searchParams.get("topic") || "");
+    const topicParam = decodeURIComponent(searchParams.get("topic") || "");
+    const topics = topicParam.includes(',') 
+      ? topicParam.split(',').map(t => t.trim())
+      : [topicParam];
     console.log("Request for business_id:", businessId);
     
     // Print which table is being used for topics
     console.log("Using topics table:", DEPLOY_ENV === "test" ? "TestBusinessTopicsModel" : "BusinessTopicsModel");
-    if (!businessId || !topic) {
+    if (!businessId || !topics) {
       return NextResponse.json(
         { error: "Business ID and topic are required" },
         { status: 400 }
@@ -80,7 +83,9 @@ export async function GET(request: NextRequest) {
     const topicNotes = await TopicModelToUse.findAll({
       where: {
         business_id: businessId,
-        topic: topic
+        topic: {
+          [Op.in]: topics  
+        }
       },
       attributes: ['note_id'],
       raw: true
