@@ -1,13 +1,13 @@
 "use client"
 import { FC } from 'react';
-import { Cloud, Circle, Languages } from 'lucide-react';
+import { Cloud, Circle, Languages, Radar } from 'lucide-react';
 
 interface TabSectionProps {
   activeTab: number;
   setActiveTab: (tab: number) => void;
   businessType: string;
-  visualizationMode?: 'bubble' | 'wordcloud';
-  setVisualizationMode?: (mode: 'bubble' | 'wordcloud') => void;
+  visualizationMode?: 'bubble' | 'wordcloud' | 'radar';
+  setVisualizationMode?: (mode: 'bubble' | 'wordcloud' | 'radar') => void;
   displayLanguage?: 'en' | 'zh';
   setDisplayLanguage?: (lang: 'en' | 'zh') => void;
 }
@@ -39,6 +39,9 @@ const TabSection: FC<TabSectionProps> = ({
 
   // Only show language toggle for Credit card business type
   const showLanguageToggle = businessType === 'Credit card';
+  
+  // Only show radar chart option for Credit card business type on Overview tab
+  const showRadarOption = businessType === 'Credit card' && activeTab === 0;
 
   return (
     <div className="mt-6">
@@ -101,6 +104,21 @@ const TabSection: FC<TabSectionProps> = ({
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">View:</span>
               <div className="flex bg-gray-100 rounded-lg p-1">
+                {/* Radar Chart Option - Only for Credit cards on Overview tab */}
+                {showRadarOption && (
+                  <button
+                    onClick={() => setVisualizationMode('radar')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                      visualizationMode === 'radar'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <Radar className="w-4 h-4" />
+                    Radar Chart
+                  </button>
+                )}
+                
                 <button
                   onClick={() => setVisualizationMode('bubble')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${

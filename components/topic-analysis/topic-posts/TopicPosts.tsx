@@ -2,17 +2,19 @@
 
 import { FC, useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useSearchParams } from "next/navigation";
 import SharedFilter from "@/components/business-posts/SharedFilter";
 import SharedPostTable from "@/components/business-posts/SharedPostTable";
 import PostCard from "@/components/business-posts/business-posts/PostCard";
 import { constructVercelURL } from "@/utils/generateURL";
 import { PostData } from "@/components/business-posts/SharedFilter";
-import PostPreviewCard from "@/components/business-posts/PostPreviewCard"; // Use original PostPreviewCard
+import PostPreviewCard from "@/components/business-posts/PostPreviewCard";
 import TopicPostTrendChart from "./TopicPostsTrendChart";
 import { IoArrowBack } from "react-icons/io5";
 import Link from "next/link";
 import { TopicAnalysisDrillDownTierBanner } from "@/components/TierBanner";
 import { useBusinessTier } from '@/context/BusinessTierContext';
+
 interface TopicPostsProps {
   clientId: string;
   businessId: string;
@@ -45,6 +47,13 @@ const TopicPosts: FC<TopicPostsProps> = ({
   topicType,
 }) => {
   const { isFreeTier } = useBusinessTier();
+  const searchParams = useSearchParams();
+  
+  // Check if this is a radar chart grouped topic
+  const isRadarGrouped = topicType === 'credit_card_radar';
+  const categoryName = searchParams.get('category') || '';
+  const isGroupedTopic = topic.includes(',');
+  
   const [posts, setPosts] = useState<PostData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +66,7 @@ const TopicPosts: FC<TopicPostsProps> = ({
     pageSize: 10,
   });
 
-  // State for the modal - same as original BusinessPosts
+  // State for the modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [modalRowData, setModalRowData] = useState<any>({});
@@ -71,7 +80,7 @@ const TopicPosts: FC<TopicPostsProps> = ({
   const yesterday = useMemo(() => {
     const date = new Date();
     date.setDate(date.getDate() - 1);
-    return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+    return date.toISOString().split("T")[0];
   }, []);
 
   const [filters, setFilters] = useState(() => {
@@ -80,7 +89,7 @@ const TopicPosts: FC<TopicPostsProps> = ({
       return savedFilters
         ? JSON.parse(savedFilters)
         : {
-            platform: "",
+            platform: searchParams.get('platform') || "",
             sentiment: "",
             relevance: "",
             hasCriticism: "",
@@ -90,7 +99,7 @@ const TopicPosts: FC<TopicPostsProps> = ({
           };
     }
     return {
-      platform: "",
+      platform: searchParams.get('platform') || "",
       sentiment: "",
       relevance: "",
       hasCriticism: "",
@@ -104,17 +113,17 @@ const TopicPosts: FC<TopicPostsProps> = ({
     sessionStorage.setItem(`${title}_filters`, JSON.stringify(filters));
   }, [filters, title]);
 
-  // Setting default date range
+  // Setting default date range - check URL params first
   const [dateRange, setDateRange] = useState<{
     startDate: string;
     endDate: string;
   }>({
-    startDate: "",
-    endDate: "",
+    startDate: searchParams.get('startDate') || "",
+    endDate: searchParams.get('endDate') || "",
   });
 
   useEffect(() => {
-    if (noteIds.length > 0) {
+    if (noteIds.length > 0 && !dateRange.startDate) {
       // Find the earliest date in the noteIds
       let earliestDate = new Date(noteIds[0].last_update_time);
 
@@ -125,10 +134,7 @@ const TopicPosts: FC<TopicPostsProps> = ({
         }
       });
 
-      // Format date as YYYY-MM-DD
       const formattedEarliestDate = earliestDate.toISOString().split("T")[0];
-
-      // Get yesterday's date for the end date
       const today = new Date();
       const yesterday = new Date(today);
       yesterday.setDate(today.getDate() - 1);
@@ -139,7 +145,7 @@ const TopicPosts: FC<TopicPostsProps> = ({
         endDate: formattedYesterday,
       });
     }
-  }, [noteIds]);
+  }, [noteIds, dateRange.startDate]);
 
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
@@ -165,7 +171,6 @@ const TopicPosts: FC<TopicPostsProps> = ({
         let apiEndpoint = `/api/businesses/getBusinessPostsByTopic`;
         
         if (isFreeTier) {
-          // For free tier, use sample business ID and regular business posts endpoint
           effectiveBusinessId = 'a7b6c5d4-e3f2-1a0b-9c8d-7e6f5a4b3c2d';
           apiEndpoint = `/api/businesses/getBusinessPosts`;
         }
@@ -225,7 +230,7 @@ const TopicPosts: FC<TopicPostsProps> = ({
         return { posts: [], pagination: null, appliedFilters: null };
       }
     },
-    [businessId, topic, filters, dateRange, yesterday]
+    [businessId, topic, filters, dateRange, yesterday, isFreeTier]
   );
 
   // Main fetch function for current page
@@ -257,38 +262,28 @@ const TopicPosts: FC<TopicPostsProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [businessId, filters.page, fetchPostsForPage]);
+  }, [fetchPostsForPage, filters.page]);
 
-  // Function to fetch adjacent pages - same as original
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
+
+  // Fetch adjacent pages for cross-page navigation in modals
   const fetchAdjacentPages = useCallback(async () => {
-    if (pagination.totalPages <= 1) return;
-
     setAdjacentPagesLoading(true);
 
-    const prevPage =
-      pagination.currentPage > 1
-        ? pagination.currentPage - 1
-        : pagination.totalPages;
+    const prevPage = pagination.currentPage > 1 ? pagination.currentPage - 1 : pagination.totalPages;
+    const nextPage = pagination.currentPage < pagination.totalPages ? pagination.currentPage + 1 : 1;
 
-    const nextPage =
-      pagination.currentPage < pagination.totalPages
-        ? pagination.currentPage + 1
-        : 1;
-
-    const [prevResult, nextResult] = await Promise.all([
+    const [prevData, nextData] = await Promise.all([
       fetchPostsForPage(prevPage),
       fetchPostsForPage(nextPage),
     ]);
 
-    setPrevPagePosts(prevResult.posts);
-    setNextPagePosts(nextResult.posts);
+    setPrevPagePosts(prevData.posts);
+    setNextPagePosts(nextData.posts);
     setAdjacentPagesLoading(false);
-  }, [pagination, fetchPostsForPage]);
-
-  // Fetch posts when filters or businessId changes
-  useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+  }, [pagination.currentPage, pagination.totalPages, fetchPostsForPage]);
 
   // Fetch adjacent pages when modal is opened or current page changes
   useEffect(() => {
@@ -302,9 +297,8 @@ const TopicPosts: FC<TopicPostsProps> = ({
     fetchAdjacentPages,
   ]);
 
-  // Handle opening the modal - same as original BusinessPosts
+  // Handle opening the modal
   const openModal = (row: any) => {
-    // Add contextual IDs to row data for the modal
     setModalRowData({
       ...row,
       clientId,
@@ -313,13 +307,11 @@ const TopicPosts: FC<TopicPostsProps> = ({
     setIsModalOpen(true);
   };
 
-  // Handle closing the modal
   const closeModal = () => {
     setIsModalOpen(false);
   };
 
   const openPreviewModal = (row: any) => {
-    // Add contextual IDs to row data for the modal
     setModalRowData({
       ...row,
       clientId,
@@ -328,12 +320,11 @@ const TopicPosts: FC<TopicPostsProps> = ({
     setIsPreviewModalOpen(true);
   };
 
-  // Handle closing the modal
   const closePreviewModal = () => {
     setIsPreviewModalOpen(false);
   };
 
-  // Add event listener to update the modal content without closing it - same as original
+  // Add event listener to update the modal content without closing it
   useEffect(() => {
     const handleUpdateModal = (event: CustomEvent<{ data: any }>) => {
       if (event.detail && event.detail.data) {
@@ -354,10 +345,9 @@ const TopicPosts: FC<TopicPostsProps> = ({
     };
   }, []);
 
-  // Function to handle cross-page navigation - same as original BusinessPosts
+  // Function to handle cross-page navigation
   const handleCrossPageNavigation = useCallback(
     (direction: "prev" | "next") => {
-      // Calculate the new page number
       const newPage =
         direction === "prev"
           ? pagination.currentPage > 1
@@ -367,30 +357,24 @@ const TopicPosts: FC<TopicPostsProps> = ({
           ? pagination.currentPage + 1
           : 1;
 
-      // Get posts from the appropriate page
       const newPagePosts = direction === "prev" ? prevPagePosts : nextPagePosts;
-
-      // Get the post from the beginning or end of the adjacent page
       const newRowData =
         direction === "prev"
           ? newPagePosts[newPagePosts.length - 1]
           : newPagePosts[0];
 
       if (newRowData) {
-        // Update modal data
         const updatedData = {
           ...newRowData,
           clientId,
           businessId,
         };
 
-        // Dispatch event to update modal
         const event = new CustomEvent("updatePostModal", {
           detail: { data: updatedData },
         });
         document.dispatchEvent(event);
 
-        // Change the page (this will also fetch new set of posts)
         handleFilterChange({ page: newPage });
       }
     },
@@ -399,14 +383,13 @@ const TopicPosts: FC<TopicPostsProps> = ({
 
   // Handle filter changes
   const handleFilterChange = (newFilters: any) => {
-    // Ensure we never send a date after yesterday
     if (
       newFilters.endDate &&
       new Date(newFilters.endDate) > new Date(yesterday)
     ) {
       newFilters.endDate = yesterday;
     }
-    // Extract startDate / endDate and save to local dateRange
+
     const { startDate, endDate, ...otherFilters } = newFilters;
 
     if (endDate || startDate) {
@@ -420,23 +403,23 @@ const TopicPosts: FC<TopicPostsProps> = ({
     setFilters((prev: any) => ({
       ...prev,
       ...otherFilters,
-      // If filters other than page change, reset to page 1
       page: newFilters.hasOwnProperty("page") ? newFilters.page : 1,
     }));
   };
 
-  // Handle page change specifically
   const handlePageChange = (page: number) => {
     handleFilterChange({ page });
   };
 
-  // Handle sort order change
   const handleSortOrderChange = (order: string) => {
     handleFilterChange({ sortOrder: order });
   };
 
-  // Fetch raw data from backend
+  // Fetch raw data from backend for trend chart
   useEffect(() => {
+    // Skip trend data for grouped topics since it doesn't make sense
+    if (isGroupedTopic) return;
+    
     const fetchData = async () => {
       try {
         const response = await fetch(
@@ -449,15 +432,37 @@ const TopicPosts: FC<TopicPostsProps> = ({
       }
     };
     fetchData();
-  }, [topic, businessId]);
+  }, [topic, businessId, isGroupedTopic]);
+
+  // Generate the display title
+  const getDisplayTitle = () => {
+    if (isRadarGrouped && categoryName) {
+      return `${categoryName} Posts`;
+    }
+    return `${decodeURIComponent(topic)} Posts`;
+  };
+
+  // Generate the subtitle for grouped topics
+  const getSubtitle = () => {
+    if (isGroupedTopic) {
+      const topics = topic.split(',').map(t => t.trim());
+      return `Including: ${topics.join(', ')}`;
+    }
+    return null;
+  };
 
   return (
     <div className="flex flex-col gap-4">
       {/* Title */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col mb-4">
         <h1 className="text-[34px] font-bold text-[#5D5FEF]">
-          {`${decodeURIComponent(topic)} Posts`}
+          {getDisplayTitle()}
         </h1>
+        {getSubtitle() && (
+          <p className="text-sm text-gray-600 mt-1">
+            {getSubtitle()}
+          </p>
+        )}
       </div>
 
       {/* Back button */}
@@ -473,17 +478,9 @@ const TopicPosts: FC<TopicPostsProps> = ({
         </Link>
       </div>
       <TopicAnalysisDrillDownTierBanner/>
-      
-      {/* Add this after the back button */}
-      {/* {isFreeTier && (
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
-          <div className="text-blue-600 text-sm">
-            <strong>Demo Mode:</strong> Showing sample restaurant posts for demonstration purposes
-          </div>
-        </div>
-      )} */}
-      {/* Trend Chart */}
-      {topicType !== "General" && (
+
+      {/* Trend Chart - only show for single topics */}
+      {topicType !== "General" && !isGroupedTopic && (
         <TopicPostTrendChart businessId={businessId} noteIds={noteIds} />
       )}
 
@@ -516,7 +513,7 @@ const TopicPosts: FC<TopicPostsProps> = ({
         openPreviewModal={openPreviewModal}
       />
 
-      {/* Modals - exactly same as original BusinessPosts */}
+      {/* Modals */}
       <PostCard
         isOpen={isModalOpen}
         onClose={closeModal}
