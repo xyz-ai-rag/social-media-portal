@@ -133,6 +133,20 @@ const TopicAnalysis: FC<AnalysisProps> = ({
         
         requestTracker.current.add(requestKey);
         setIsLoading(true);
+        
+        // Define the special business IDs that should be mapped
+        const MAPPED_BUSINESS_IDS = [
+          "6d5c4b3a-2e1f-09a8-b7c6-5d4e3f2a1b0c",
+          "8d9e0f1a-2b3c-4e5f-6a7b-8c9d0e1f2a3b",
+          "3b4c5d6e-7f8a-90b1-c2d3-e4f5a6b7c8d9"
+        ];
+
+        const EXAMPLE_BUSINESS_ID = "a7b6c5d4-e3f2-1a0b-9c8d-7e6f5a4b3c2d";
+
+        // Map the businessId if it's one of the special ones
+        const mappedBusinessId = MAPPED_BUSINESS_IDS.includes(businessId) 
+          ? EXAMPLE_BUSINESS_ID 
+          : businessId;
 
         const response = await fetch(
           constructVercelURL("/api/businesses/getBusinessTopicStats"),
@@ -140,7 +154,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              businessId: businessId,
+              businessId: mappedBusinessId,
               topicType: getTopicType(activeTab),
               startDate: startDate,
               endDate: endDate,
@@ -150,11 +164,13 @@ const TopicAnalysis: FC<AnalysisProps> = ({
           }
         );
         
+        
         if (!response.ok) {
           throw new Error("Failed to fetch post topics");
         }
 
         const data = await response.json();
+        console.log("checking data",data)
         setTopics(data.topics);
         setTotal(data.total);
 
