@@ -222,7 +222,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         "topic-analysis",
         "monthly-kpis",
         "business-reporting",
-        "credit-cards"
+        "credit-cards",
+        "monthly-summary"
       ];
       
       // Check if the third part of the path is a known business section
