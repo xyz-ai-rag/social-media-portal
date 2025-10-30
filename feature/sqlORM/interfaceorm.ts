@@ -45,7 +45,6 @@ export interface BusinessPostInstance extends Model {
   is_wrong_relevancy: boolean;
   is_good_summary: boolean;
   is_good_negative_feedback: boolean;
-  tiebreaker_in_relevancy: boolean;
   english_preview_text: string;
   last_modify_action: string;
   import_id: string; // uuid,
@@ -113,4 +112,32 @@ export interface BusinessTopicsTranslationsInstance extends Model {
   topic_id: string; // UUID - foreign key id to business_topics
   alternative_language: string; // e.g., 'Chinese'，'Japanese'
   translated_topic: string;
+}
+
+export interface MonthlySummaryInstance extends Model {
+  id: string; // UUID
+  business_id: string; // UUID
+  month: string; // Format: YYYY-MM
+  summary_text: string;
+  post_count_current_month: number;
+  post_count_last_month: number;
+  percent_change: number; // Decimal
+  generated_at: Date;
+}
+
+export interface MonthlyTopicInstance extends Model {
+  id: string; // UUID
+  monthly_summary_id: string; // UUID - foreign key to monthly_summaries
+  topic_type: string; // 'strength' or 'weakness'
+  topic_title: string;
+  topic_description: string;
+  created_at: Date;
+}
+
+export interface MonthlyTopicQuoteInstance extends Model {
+  id: string; // UUID
+  monthly_topic_id: string; // UUID - foreign key to monthly_topics
+  note_id: string; // Text - reference to business_posts
+  quote_text: string;
+  created_at: Date;
 }

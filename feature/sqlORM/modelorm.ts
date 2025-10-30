@@ -8,6 +8,9 @@ import {
   ActiveSessionsInstance,
   BusinessTopicsInstance,
   BusinessTopicsTranslationsInstance,
+  MonthlySummaryInstance,
+  MonthlyTopicInstance,
+  MonthlyTopicQuoteInstance,
 } from "./interfaceorm";
 
 // BusinessPosts table
@@ -78,7 +81,6 @@ export const BusinessPostModel =
       is_wrong_relevancy: { type: DataTypes.BOOLEAN, allowNull: true },
       is_good_summary: { type: DataTypes.BOOLEAN, allowNull: true },
       is_good_negative_feedback: { type: DataTypes.BOOLEAN, allowNull: true },
-      tiebreaker_in_relevancy: { type: DataTypes.BOOLEAN, allowNull: true },
       english_preview_text: { type: DataTypes.TEXT, allowNull: true },
       last_modify_action: { type: DataTypes.TEXT, allowNull: true },
       import_id: { type: DataTypes.UUID, allowNull: true },
@@ -334,6 +336,121 @@ export const TestBusinessTopicsModel =
     }
   );
 
+export const MonthlySummaryModel =
+  sequelizeDbConnection.define<MonthlySummaryInstance>(
+    "monthly_summaries",
+    {
+      id: {
+        type: DataTypes.UUID,
+        primaryKey: true,
+        allowNull: false,
+      },
+      business_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+      },
+      month: {
+        type: DataTypes.STRING(7),
+        allowNull: false,
+      },
+      summary_text: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      post_count_current_month: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      post_count_last_month: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      percent_change: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: true,
+        defaultValue: 0.0,
+      },
+      generated_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+    },
+    {
+      tableName: "monthly_summaries",
+      timestamps: false,
+    }
+  );
+
+export const MonthlyTopicModel =
+  sequelizeDbConnection.define<MonthlyTopicInstance>(
+    "monthly_topics",
+    {
+      id: {
+        type: DataTypes.UUID,
+        primaryKey: true,
+        allowNull: false,
+      },
+      monthly_summary_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+      },
+      topic_type: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+      },
+      topic_title: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+      },
+      topic_description: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      created_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+    },
+    {
+      tableName: "monthly_topics",
+      timestamps: false,
+    }
+  );
+
+export const MonthlyTopicQuoteModel =
+  sequelizeDbConnection.define<MonthlyTopicQuoteInstance>(
+    "monthly_topic_quotes",
+    {
+      id: {
+        type: DataTypes.UUID,
+        primaryKey: true,
+        allowNull: false,
+      },
+      monthly_topic_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+      },
+      note_id: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      quote_text: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      created_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+    },
+    {
+      tableName: "monthly_topic_quotes",
+      timestamps: false,
+    }
+  );
+
 BusinessTopicsModel.hasMany(BusinessTopicsTranslationsModel, {
   foreignKey: 'topic_id',
   as: 'translations'
@@ -342,4 +459,37 @@ BusinessTopicsModel.hasMany(BusinessTopicsTranslationsModel, {
 BusinessTopicsTranslationsModel.belongsTo(BusinessTopicsModel, {
   foreignKey: 'topic_id',
   as: 'topic'
+});
+
+// MonthlySummary has many MonthlyTopics
+MonthlySummaryModel.hasMany(MonthlyTopicModel, {
+  foreignKey: "monthly_summary_id",
+  as: "topics",
+});
+
+MonthlyTopicModel.belongsTo(MonthlySummaryModel, {
+  foreignKey: "monthly_summary_id",
+  as: "summary",
+});
+
+// MonthlyTopic has many MonthlyTopicQuotes
+MonthlyTopicModel.hasMany(MonthlyTopicQuoteModel, {
+  foreignKey: "monthly_topic_id",
+  as: "quotes",
+});
+
+MonthlyTopicQuoteModel.belongsTo(MonthlyTopicModel, {
+  foreignKey: "monthly_topic_id",
+  as: "topic",
+});
+
+// MonthlySummary belongs to Business
+MonthlySummaryModel.belongsTo(BusinessModel, {
+  foreignKey: "business_id",
+  as: "business",
+});
+
+BusinessModel.hasMany(MonthlySummaryModel, {
+  foreignKey: "business_id",
+  as: "monthly_summaries",
 });

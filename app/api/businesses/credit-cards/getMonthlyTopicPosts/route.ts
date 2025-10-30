@@ -1,35 +1,46 @@
-import { BusinessPostModel, BusinessTopicsModel,TestBusinessTopicsModel } from "@/feature/sqlORM/modelorm";
+import { BusinessPostModel } from "@/feature/sqlORM/modelorm";
 import { NextRequest, NextResponse } from "next/server";
 import { Op } from "sequelize";
 
 /**
- * API endpoint to get business posts filtered by topic
- * GET /api/businesses/getBusinessPostsByTopic?businessId=xxx&topic=xxx&startDate=xxx&endDate=xxx&platform=xxx&sentiment=xxx&relevance=xxx&hasCriticism=xxx&search=xxx
+ * API endpoint to get business posts for a monthly topic
+ * GET /api/businesses/credit-cards/getMonthlyTopicPosts?businessId=xxx&note_ids=xxx,xxx,xxx&startDate=xxx&endDate=xxx&platform=xxx&sentiment=xxx&relevance=xxx&hasCriticism=xxx&search=xxx
  */
 
-const DEPLOY_ENV = process.env.DEPLOY_ENV;
-
-const TopicModelToUse =
-  DEPLOY_ENV === "test" ? TestBusinessTopicsModel : BusinessTopicsModel;
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
 
     // Required parameters
     const businessId = searchParams.get("businessId");
-    const topicParam = decodeURIComponent(searchParams.get("topic") || "");
-    const topics = topicParam.includes(',') 
-      ? topicParam.split(',').map(t => t.trim())
-      : [topicParam];
+    const noteIdsParam = searchParams.get("note_ids");
+
     console.log("Request for business_id:", businessId);
-    
-    // Print which table is being used for topics
-    console.log("Using topics table:", DEPLOY_ENV === "test" ? "TestBusinessTopicsModel" : "BusinessTopicsModel");
-    if (!businessId || !topics) {
+    console.log("Note IDs param:", noteIdsParam);
+
+    if (!businessId || !noteIdsParam) {
       return NextResponse.json(
-        { error: "Business ID and topic are required" },
+        { error: "Business ID and note_ids are required" },
         { status: 400 }
       );
+    }
+
+    // Parse note_ids from comma-separated string
+    const noteIds = noteIdsParam.split(",").map(id => id.trim()).filter(id => id.length > 0);
+
+    console.log("Parsed note_ids:", noteIds.length, "notes");
+
+    if (noteIds.length === 0) {
+      return NextResponse.json({
+        posts: [],
+        pagination: {
+          totalCount: 0,
+          totalPages: 0,
+          currentPage: 1,
+          pageSize: 10,
+        },
+        appliedFilters: {},
+      });
     }
 
     // Get current date (without time component)
@@ -39,15 +50,11 @@ export async function GET(request: NextRequest) {
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
 
-    const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(today.getDate() - 7);
-
     // Format dates to YYYY-MM-DD for comparison
-    const defaultStartDate = formatDateForQuery(sevenDaysAgo);
     const defaultEndDate = formatDateForQuery(yesterday);
 
-    // Optional filter parameters with defaults
-    const startDate = searchParams.get("startDate") || defaultStartDate;
+    // Optional filter parameters
+    const startDate = searchParams.get("startDate") || "";
     const endDateParam = searchParams.get("endDate");
 
     // If end date includes today or is after today, adjust it to yesterday
@@ -68,56 +75,8 @@ export async function GET(request: NextRequest) {
     const pageSize = parseInt(searchParams.get("pageSize") || "10");
     const sortOrder = (searchParams.get("sortOrder") || "desc").toLowerCase();
     const postCategory = searchParams.get("postCategory") || "";
-
-    const availableTopics = await TopicModelToUse.findAll({
-      where: {
-        business_id: businessId
-      },
-      attributes: ['topic'],
-      group: ['topic'],
-      raw: true
-    });
-    
-    console.log("Available topics for this business:", availableTopics.map(t => t.topic));
-    
-    // First, get all note_ids from business_topics table for the given topic
-    const topicNotes = await TopicModelToUse.findAll({
-      where: {
-        business_id: businessId,
-        topic: {
-          [Op.in]: topics  
-        }
-      },
-      attributes: ['note_id'],
-      raw: true
-    });
-
-    const noteIds = topicNotes.map(note => note.note_id);
-    console.log(noteIds.length,"length")
-
-    if (noteIds.length === 0) {
-      return NextResponse.json({
-        posts: [],
-        pagination: {
-          totalCount: 0,
-          totalPages: 0,
-          currentPage: page,
-          pageSize,
-        },
-        appliedFilters: {
-          startDate,
-          endDate,
-          platform,
-          sentiment,
-          relevance,
-          hasCriticism,
-          search,
-          sortOrder,
-        },
-      });
-    }
-
     // Build query conditions for business_posts
+    // CRITICAL: Only query the specific note_ids provided
     const whereConditions: any = {
       business_id: businessId,
       note_id: {
@@ -129,13 +88,15 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    // Apply date range filter
-    const startDateTime = `${startDate} 0:00:00`;
-    const endDateTime = `${endDate} 23:59:59`;
+    // Apply date range filter if provided
+    if (startDate && endDate) {
+      const startDateTime = `${startDate} 0:00:00`;
+      const endDateTime = `${endDate} 23:59:59`;
 
-    whereConditions.last_update_time = {
-      [Op.between]: [new Date(startDateTime), new Date(endDateTime)],
-    };
+      whereConditions.last_update_time = {
+        [Op.between]: [new Date(startDateTime), new Date(endDateTime)],
+      };
+    }
 
     // Apply platform filter if provided
     if (platform) {
@@ -181,7 +142,6 @@ export async function GET(request: NextRequest) {
             [Op.iLike]: postCategory // Case-insensitive comparison
           };
         }
-
     // Apply criticism filter if provided
     if (hasCriticism) {
       const criticismValue =
@@ -285,6 +245,8 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    console.log(`Returning ${posts.length} posts out of ${totalCount} total`);
+
     return NextResponse.json({
       posts,
       pagination: {
@@ -306,9 +268,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Error fetching posts by topic:", error);
+    console.error("Error fetching monthly topic posts:", error);
     return NextResponse.json(
-      { error: "Failed to fetch posts by topic", details: error.message },
+      { error: "Failed to fetch monthly topic posts", details: error.message },
       { status: 500 }
     );
   }
@@ -327,4 +289,4 @@ function formatDisplayDate(date: string | Date): string {
     month: "short",
     day: "numeric",
   });
-} 
+}

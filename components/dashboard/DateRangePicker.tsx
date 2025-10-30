@@ -5,7 +5,7 @@ import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { setStartOfDay, setEndOfDay } from "../../utils/timeUtils";
 import { useDateRange } from "@/context/DateRangeContext";
 import DatePicker from "../business-posts/DatePicker";
-
+import MonthPicker from "./MonthPicker";
 interface DateRangePickerProps {
   page: string;
   businessId?: string;
@@ -15,13 +15,29 @@ interface DateRangePickerProps {
     label: string,
     aggregation: "hourly" | "daily" | "weekly" | "monthly"
   ) => void;
+  activeTab?: string; // Add this
+  selectedMonth?: string; // Add this
+  onMonthChange?: (month: string) => void; // Add this
 }
 
 export default function DateRangePicker({
   page,
   businessId,
   onDateRangeChange,
+  activeTab,
+  selectedMonth,
+  onMonthChange,
 }: DateRangePickerProps) {
+  // If we're on the monthly summary tab, show the month picker instead
+  if (activeTab === "monthly-summary" && businessId && selectedMonth && onMonthChange) {
+    return (
+      <MonthPicker
+        businessId={businessId}
+        selectedMonth={selectedMonth}
+        onMonthChange={onMonthChange}
+      />
+    );
+  }
   // Add client-side only marker
   const [isClient, setIsClient] = useState(false);
   

@@ -40,7 +40,8 @@ export default function Header() {
       pathname.includes("/posts") ||
       pathname.includes("/competitors") ||
       pathname.includes("/topic-analysis") ||
-      pathname.includes("/credit-cards")
+      pathname.includes("/credit-cards") ||
+      pathname.includes("/monthly-summary")
     );
   }, [pathname, searchParams]); // Re-compute when pathname or searchParams changes
 
