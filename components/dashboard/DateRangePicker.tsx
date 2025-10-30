@@ -6,6 +6,7 @@ import { setStartOfDay, setEndOfDay } from "../../utils/timeUtils";
 import { useDateRange } from "@/context/DateRangeContext";
 import DatePicker from "../business-posts/DatePicker";
 import MonthPicker from "./MonthPicker";
+
 interface DateRangePickerProps {
   page: string;
   businessId?: string;
@@ -15,9 +16,9 @@ interface DateRangePickerProps {
     label: string,
     aggregation: "hourly" | "daily" | "weekly" | "monthly"
   ) => void;
-  activeTab?: string; // Add this
-  selectedMonth?: string; // Add this
-  onMonthChange?: (month: string) => void; // Add this
+  activeTab?: string;
+  selectedMonth?: string;
+  onMonthChange?: (month: string) => void;
 }
 
 export default function DateRangePicker({
@@ -28,16 +29,8 @@ export default function DateRangePicker({
   selectedMonth,
   onMonthChange,
 }: DateRangePickerProps) {
-  // If we're on the monthly summary tab, show the month picker instead
-  if (activeTab === "monthly-summary" && businessId && selectedMonth && onMonthChange) {
-    return (
-      <MonthPicker
-        businessId={businessId}
-        selectedMonth={selectedMonth}
-        onMonthChange={onMonthChange}
-      />
-    );
-  }
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+  
   // Add client-side only marker
   const [isClient, setIsClient] = useState(false);
   
@@ -89,8 +82,7 @@ export default function DateRangePicker({
     } else {
       setCustomEndDate(yesterdayStr);
     }
-
-  }, []);
+  }, [page]);
 
   // Fetch date range when component mounts
   useEffect(() => {
@@ -133,7 +125,7 @@ export default function DateRangePicker({
       }
       case "last7Days": {
         const yesterdayDate = subDays(new Date(), 1);
-        const start = subDays(yesterdayDate, 6); // 7 days ending with yesterday
+        const start = subDays(yesterdayDate, 6);
         const startStr = format(start, "yyyy-MM-dd");
         const endStr = format(yesterdayDate, "yyyy-MM-dd");
         return {
@@ -145,7 +137,7 @@ export default function DateRangePicker({
       }
       case "last30Days": {
         const yesterdayDate = subDays(new Date(), 1);
-        const start = subDays(yesterdayDate, 29); // 30 days ending with yesterday
+        const start = subDays(yesterdayDate, 29);
         const startStr = format(start, "yyyy-MM-dd");
         const endStr = format(yesterdayDate, "yyyy-MM-dd");
         return {
@@ -157,7 +149,7 @@ export default function DateRangePicker({
       }
       case "last60Days": {
         const yesterdayDate = subDays(new Date(), 1);
-        const start = subDays(yesterdayDate, 59); // 30 days ending with yesterday
+        const start = subDays(yesterdayDate, 59);
         const startStr = format(start, "yyyy-MM-dd");
         const endStr = format(yesterdayDate, "yyyy-MM-dd");
         return {
@@ -169,7 +161,7 @@ export default function DateRangePicker({
       }
       case "last90Days": {
         const yesterdayDate = subDays(new Date(), 1);
-        const start = subDays(yesterdayDate, 89); // 30 days ending with yesterday
+        const start = subDays(yesterdayDate, 89);
         const startStr = format(start, "yyyy-MM-dd");
         const endStr = format(yesterdayDate, "yyyy-MM-dd");
         return {
@@ -178,9 +170,10 @@ export default function DateRangePicker({
           label: "Last 90 days",
           aggregation: "daily" as const,
         };
-      }case "last120Days": {
+      }
+      case "last120Days": {
         const yesterdayDate = subDays(new Date(), 1);
-        const start = subDays(yesterdayDate, 119); // 30 days ending with yesterday
+        const start = subDays(yesterdayDate, 119);
         const startStr = format(start, "yyyy-MM-dd");
         const endStr = format(yesterdayDate, "yyyy-MM-dd");
         return {
@@ -247,7 +240,6 @@ export default function DateRangePicker({
         };
       }
       case "custom": {
-        // Determine appropriate aggregation based on range size
         let aggregation: "hourly" | "daily" | "weekly" | "monthly" = "daily";
 
         if (customStartDate && customEndDate) {
@@ -283,7 +275,7 @@ export default function DateRangePicker({
     }
   };
 
-  // Save custom dates to sessionStorage
+  // Save custom dates to localStorage
   useEffect(() => {
     if (!isClient) return;
     
@@ -293,19 +285,18 @@ export default function DateRangePicker({
     if (customEndDate) {
       localStorage.setItem(`${page}_end_date`, JSON.stringify(customEndDate));
     }
-  }, [customStartDate, customEndDate, isClient]);
+  }, [customStartDate, customEndDate, isClient, page]);
 
   // Update date range when earliestDate changes
   useEffect(() => {
-    if (!isClient || !earliestDate) return;
-    if(!latestDate){return}
+    if (!isClient || !earliestDate || !latestDate) return;
     
     if (selectedPreset === "everything") {
       if (dateRangeContext) {
         dateRangeContext.updateDateRange("everything", earliestDate, latestDate);
       }
     }
-  }, [earliestDate, selectedPreset, dateRangeContext, isClient, latestDate]);
+  }, [earliestDate, latestDate, selectedPreset, dateRangeContext, isClient]);
 
   // Update date range when preset changes
   useEffect(() => {
@@ -338,7 +329,19 @@ export default function DateRangePicker({
         onDateRangeChange(start, end, label, aggregation);
       }
     }
-  }, [selectedPreset, customStartDate, customEndDate, onDateRangeChange, dateRangeContext, isClient]);
+  }, [selectedPreset, customStartDate, customEndDate, page, dateRangeContext, isClient]);
+
+  // NOW we can do conditional rendering AFTER all hooks are called
+  // If we're on the monthly summary tab, show the month picker instead
+  if (activeTab === "monthly-summary" && businessId && selectedMonth && onMonthChange) {
+    return (
+      <MonthPicker
+        businessId={businessId}
+        selectedMonth={selectedMonth}
+        onMonthChange={onMonthChange}
+      />
+    );
+  }
 
   // Prepare the date preset options
   const datePresetOptions = [
