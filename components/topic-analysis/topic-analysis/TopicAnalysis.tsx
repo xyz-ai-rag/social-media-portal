@@ -112,6 +112,9 @@ const TopicAnalysis: FC<AnalysisProps> = ({
     }
   }, [searchParams]);
 
+  // Track if we've set the initial visualization mode
+  const [hasSetInitialMode, setHasSetInitialMode] = useState(false);
+
   // Set business details and similar businesses
   useEffect(() => {
     const fetchSimilarBusinesses = async () => {
@@ -124,9 +127,10 @@ const TopicAnalysis: FC<AnalysisProps> = ({
           setBusinessName(business.business_name);
           setBusinessType(business.business_type);
           
-          // Set default visualization mode for credit cards
-          if (business.business_type === 'Credit card' && visualizationMode === 'bubble') {
+          // Set default visualization mode for credit cards ONLY on initial load
+          if (business.business_type === 'Credit card' && !hasSetInitialMode) {
             setVisualizationMode('radar');
+            setHasSetInitialMode(true);
           }
           
           // Fetch similar business names using the batch API
@@ -170,7 +174,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
     };
 
     fetchSimilarBusinesses();
-  }, [clientDetails, businessId, visualizationMode]);
+  }, [clientDetails, businessId, hasSetInitialMode]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -258,8 +262,10 @@ const TopicAnalysis: FC<AnalysisProps> = ({
   const topicLimit = getTopicLimit(activeTab);
   const minCount = activeTab === 0 ? 2 : 0;
 
-  // Determine if we should show radar charts
+  // Determine which visualization to show
   const showRadarCharts = businessType === 'Credit card' && activeTab === 0 && visualizationMode === 'radar';
+  const showWordCloud = visualizationMode === 'wordcloud';
+  const showBubbleChart = visualizationMode === 'bubble';
 
   return (
     <div className="container mx-auto px-4">
@@ -306,20 +312,7 @@ const TopicAnalysis: FC<AnalysisProps> = ({
       />
       
       <div className="flex justify-center items-center min-h-[400px] w-full min-w-0 overflow-visible">
-        {showRadarCharts ? (
-          // Show Radar Charts for Credit Cards on Overview tab
-          <div className="w-full overflow-visible">
-            <RadarChartView
-              businessId={businessId}
-              businessName={businessName}
-              similarBusinesses={similarBusinesses}
-              startDate={startDate}
-              endDate={endDate}
-              language={displayLanguage}
-              platform={selectedPlatform === 'all' ? undefined : selectedPlatform}
-            />
-          </div>
-        ) : isLoading ? (
+        {isLoading ? (
           <div className="flex flex-col items-center">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-2"></div>
             <span className="text-gray-400">Loading...</span>
@@ -331,42 +324,55 @@ const TopicAnalysis: FC<AnalysisProps> = ({
             </div>
             <p className="text-gray-500">No posts with these topics found</p>
           </div>
-        ) : (
-          <div className="flex flex-col items-center p-2 w-full">
-            {visualizationMode === 'wordcloud' ? (
-              <WordCloud
-                topics={topics}
-                businessId={businessId}
-                clientId={clientId}
-                minCount={minCount}
-                maxTopics={topicLimit}
-                topicType={getTopicType(activeTab)}
-                displayLanguage={displayLanguage}
-              />
-            ) : (
-              <>
-                <CirclePacking
-                  topics={topics}
-                  businessId={businessId}
-                  clientId={clientId}
-                  minCount={minCount}
-                  maxTopics={topicLimit}
-                  topicType={getTopicType(activeTab)}
-                  displayLanguage={displayLanguage}
-                />
-                <BarChart 
-                  topics={topics} 
-                  businessId={businessId} 
-                  clientId={clientId} 
-                  minCount={minCount}
-                  maxTopics={topicLimit}
-                  topicType={getTopicType(activeTab)}
-                  displayLanguage={displayLanguage}
-                />
-              </>
-            )}
+        ) : showRadarCharts ? (
+          // Show Radar Charts for Credit Cards on Overview tab when radar mode is selected
+          <div className="w-full overflow-visible">
+            <RadarChartView
+              businessId={businessId}
+              businessName={businessName}
+              similarBusinesses={similarBusinesses}
+              startDate={startDate}
+              endDate={endDate}
+              language={displayLanguage}
+              platform={selectedPlatform === 'all' ? undefined : selectedPlatform}
+            />
           </div>
-        )}
+        ) : showWordCloud ? (
+          // Show Word Cloud when wordcloud mode is selected
+          <div className="flex flex-col items-center p-2 w-full">
+            <WordCloud
+              topics={topics}
+              businessId={businessId}
+              clientId={clientId}
+              minCount={minCount}
+              maxTopics={topicLimit}
+              topicType={getTopicType(activeTab)}
+              displayLanguage={displayLanguage}
+            />
+          </div>
+        ) : showBubbleChart ? (
+          // Show Bubble Chart (CirclePacking) when bubble mode is selected
+          <div className="flex flex-col items-center p-2 w-full">
+            <CirclePacking
+              topics={topics}
+              businessId={businessId}
+              clientId={clientId}
+              minCount={minCount}
+              maxTopics={topicLimit}
+              topicType={getTopicType(activeTab)}
+              displayLanguage={displayLanguage}
+            />
+            <BarChart 
+              topics={topics} 
+              businessId={businessId} 
+              clientId={clientId} 
+              minCount={minCount}
+              maxTopics={topicLimit}
+              topicType={getTopicType(activeTab)}
+              displayLanguage={displayLanguage}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );
