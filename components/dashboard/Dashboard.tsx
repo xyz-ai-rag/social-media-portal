@@ -228,48 +228,11 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
 
         {/* Monthly Summary Tab Content - Only for Credit Cards */}
         {isCreditCard && activeTab === 'monthly-summary' && (
-          <div className="space-y-4">
-            {/* View Toggle */}
-            <div className="flex justify-end">
-              <div className="inline-flex rounded-lg border border-gray-200 p-1">
-                <button
-                  onClick={() => setSummaryViewMode('dashboard')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    summaryViewMode === 'dashboard'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  Dashboard View
-                </button>
-                <button
-                  onClick={() => setSummaryViewMode('document')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    summaryViewMode === 'document'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  Document View
-                </button>
-              </div>
-            </div>
-
-            {/* Render appropriate component */}
-            {summaryViewMode === 'dashboard' ? (
-              <MonthlySummary 
-                clientId={clientId} 
-                businessId={businessId}
-                selectedMonth={selectedMonth}
-              />
-            ) : (
-              <MonthlySummaryDocument 
-                clientId={clientId} 
-                businessId={businessId}
-                selectedMonth={selectedMonth}
-              />
-            )}
-          </div>
+          <MonthlySummary 
+            clientId={clientId} 
+            businessId={businessId}
+            selectedMonth={selectedMonth}
+          />
         )}
       </div>
     </DateRangeProvider>
