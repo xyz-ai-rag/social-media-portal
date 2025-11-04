@@ -66,13 +66,6 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
   }, []);
 
-  // Calculate default 30 days ago date
-  const thirtyDaysAgo = useMemo(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-  }, []);
-
   const [filters, setFilters] = useState(() => {
     if (typeof window !== "undefined") {
       const savedFilters = localStorage.getItem("business_page_filters");
@@ -104,16 +97,10 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     localStorage.setItem("business_page_filters", JSON.stringify(filters));
   }, [filters]);
 
-  // Get date range from context.
+  // Get date range from context - this is the source of truth
   const { dateRange } = useDateRange();
 
-  // setting default date
-  const [dateRangeOfPosts, setDateRangeOfPosts] = useState({
-    startDate: "",
-    endDate: "",
-  });
-
-  // Process dates using helper functions from timeUtils.
+  // Process dates directly from context
   const startDateProcessed = useMemo(
     () => dateRange.startDate.split("T")[0],
     [dateRange.startDate]
@@ -122,12 +109,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     () => dateRange.endDate.split("T")[0],
     [dateRange.endDate]
   );
-  useEffect(() => {
-    setDateRangeOfPosts({
-      startDate: startDateProcessed,
-      endDate: endDateProcessed,
-    });
-  }, [startDateProcessed, endDateProcessed]);
+
   // Track filters returned from API to keep UI in sync
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(
     null
@@ -155,9 +137,9 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
       try {
         // Ensure endDate is not after yesterday
         const endDate =
-          new Date(dateRangeOfPosts.endDate) > new Date(yesterday)
+          new Date(endDateProcessed) > new Date(yesterday)
             ? yesterday
-            : dateRangeOfPosts.endDate;
+            : endDateProcessed;
         
         // Check if current business is free tier and override businessId
         let effectiveBusinessId = businessId;
@@ -168,8 +150,8 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         const queryParams = new URLSearchParams();
         queryParams.append("businessId", effectiveBusinessId);
 
-        if (dateRangeOfPosts.startDate)
-          queryParams.append("startDate", dateRangeOfPosts.startDate);
+        if (startDateProcessed)
+          queryParams.append("startDate", startDateProcessed);
         queryParams.append("endDate", endDate);
         if (filters.platform) queryParams.append("platform", filters.platform);
         if (filters.sentiment)
@@ -214,7 +196,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         return { posts: [], pagination: null, appliedFilters: null };
       }
     },
-    [businessId, filters, dateRangeOfPosts, yesterday]
+    [businessId, filters, startDateProcessed, endDateProcessed, yesterday, isFreeTier]
   );
 
   // Main fetch function for current page
@@ -275,7 +257,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     setAdjacentPagesLoading(false);
   }, [pagination, fetchPostsForPage]);
 
-  // Fetch posts when filters or businessId changes
+  // Fetch posts when filters or date range changes
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
@@ -398,13 +380,8 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
     }
     const { startDate, endDate, ...otherFilters } = newFilters;
 
-    if (endDate || startDate) {
-      setDateRangeOfPosts((prevdate: object) => ({
-        ...prevdate,
-        ...(startDate && { startDate: startDate }),
-        ...(endDate && { endDate: endDate }),
-      }));
-    }
+    // Note: We don't need to handle startDate/endDate here anymore
+    // because the date range comes directly from the context
 
     setFilters((prev: any) => ({
       ...prev,
