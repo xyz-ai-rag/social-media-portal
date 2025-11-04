@@ -11,6 +11,7 @@ import PostPreviewCard from "../PostPreviewCard";
 import { useDateRange } from "@/context/DateRangeContext";
 import { BusinessPostsTierBanner } from "@/components/TierBanner";
 import { useBusinessTier } from '@/context/BusinessTierContext';
+
 interface BusinessPostsProps {
   clientId: string;
   businessId: string;
@@ -141,11 +142,10 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
             ? yesterday
             : endDateProcessed;
         
-        // Check if current business is free tier and override businessId
-        let effectiveBusinessId = businessId;
-        if (isFreeTier) {
-          effectiveBusinessId = 'a7b6c5d4-e3f2-1a0b-9c8d-7e6f5a4b3c2d';
-        }
+        // Use the actual businessId - don't override with dummy data
+        // The isFreeTier logic should be handled at a higher level if needed
+        const effectiveBusinessId = businessId;
+        
         // Build query parameters
         const queryParams = new URLSearchParams();
         queryParams.append("businessId", effectiveBusinessId);
@@ -196,7 +196,7 @@ const BusinessPosts: FC<BusinessPostsProps> = ({ clientId, businessId }) => {
         return { posts: [], pagination: null, appliedFilters: null };
       }
     },
-    [businessId, filters, startDateProcessed, endDateProcessed, yesterday, isFreeTier]
+    [businessId, filters, startDateProcessed, endDateProcessed, yesterday]
   );
 
   // Main fetch function for current page
