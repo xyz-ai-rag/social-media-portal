@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { DateRangeProvider } from "@/context/DateRangeContext";
 import DateRangePicker from "./DateRangePicker";
 import GroupedBarChart from "@/components/dashboard/GroupedBarChart/GroupedBarChart";
 import PostTypeChart from "@/components/dashboard/PostTypeRing/PostTypeRingChart";
@@ -12,7 +11,6 @@ import TopCitiesMap from "./TopCities/TopCities";
 import ContentType from "./ContentType/ContentType";
 import TopUsers from "./TopUsers/TopUsers";
 import MonthlySummary from "../credit-cards/MonthlySummary";
-import MonthlySummaryDocument from "../credit-cards/MonthlySummaryDocument";
 import { useAuth } from "@/context/AuthContext";
 import { DashboardTierBanner } from "@/components/TierBanner";
 import { BarChart3, TrendingUp } from "lucide-react";
@@ -125,7 +123,6 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
   const isCreditCard = businessType === "Credit card";
 
   return (
-    <DateRangeProvider>
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h1 className="text-[34px] font-bold text-[#5D5FEF]">
@@ -235,6 +232,5 @@ export default function Dashboard({ clientId, businessId }: DashboardProps) {
           />
         )}
       </div>
-    </DateRangeProvider>
   );
 }

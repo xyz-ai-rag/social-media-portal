@@ -1,5 +1,6 @@
 import { Inter } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
+import { DateRangeProvider } from "@/context/DateRangeContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
@@ -28,8 +29,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
-          <LayoutClientWrapper>{children}</LayoutClientWrapper>
-          <ToastContainer position="bottom-right" />
+          <DateRangeProvider>
+            <LayoutClientWrapper>{children}</LayoutClientWrapper>
+            <ToastContainer position="bottom-right" />
+          </DateRangeProvider>
         </AuthProvider>
       </body>
     </html>

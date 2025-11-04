@@ -34,7 +34,7 @@ export default function DateRangePicker({
   // Add client-side only marker
   const [isClient, setIsClient] = useState(false);
   
-  // Try to use context if available
+  // Use context - this is now the source of truth
   const dateRangeContext = useDateRange();
 
   const [selectedPreset, setSelectedPreset] = useState("last30Days");
@@ -50,7 +50,7 @@ export default function DateRangePicker({
   const [earliestDate, setEarliestDate] = useState<string>("");
   const [latestDate, setLatestDate] = useState<string>("");
 
-  // Initialize client-side values and load stored preferences
+  // Initialize client-side values and load stored preferences (GLOBAL, not per page)
   useEffect(() => {
     setIsClient(true);
     // Calculate dates on client-side only
@@ -62,27 +62,27 @@ export default function DateRangePicker({
     const thirtyDaysAgoStr = format(thirtyDaysAgoDate, "yyyy-MM-dd");
     setThirtyDaysAgo(thirtyDaysAgoStr);
     
-    // Load preferences from sessionStorage
-    const savedSelected = localStorage.getItem(`${page}_select`);
+    // Load preferences from localStorage - USE GLOBAL KEYS
+    const savedSelected = localStorage.getItem('global_date_select');
     if (savedSelected) {
       setSelectedPreset(JSON.parse(savedSelected));
       setShowCustomDates(JSON.parse(savedSelected) === "custom");
     }
     
-    const savedStartDate = localStorage.getItem(`${page}_start_date`);
+    const savedStartDate = localStorage.getItem('global_start_date');
     if (savedStartDate) {
       setCustomStartDate(JSON.parse(savedStartDate));
     } else {
       setCustomStartDate(thirtyDaysAgoStr);
     }
     
-    const savedEndDate = localStorage.getItem(`${page}_end_date`);
+    const savedEndDate = localStorage.getItem('global_end_date');
     if (savedEndDate) {
       setCustomEndDate(JSON.parse(savedEndDate));
     } else {
       setCustomEndDate(yesterdayStr);
     }
-  }, [page]);
+  }, []); // Remove 'page' dependency
 
   // Fetch date range when component mounts
   useEffect(() => {
@@ -275,17 +275,17 @@ export default function DateRangePicker({
     }
   };
 
-  // Save custom dates to localStorage
+  // Save custom dates to localStorage - USE GLOBAL KEYS
   useEffect(() => {
     if (!isClient) return;
     
     if (customStartDate) {
-      localStorage.setItem(`${page}_start_date`, JSON.stringify(customStartDate));
+      localStorage.setItem('global_start_date', JSON.stringify(customStartDate));
     }
     if (customEndDate) {
-      localStorage.setItem(`${page}_end_date`, JSON.stringify(customEndDate));
+      localStorage.setItem('global_end_date', JSON.stringify(customEndDate));
     }
-  }, [customStartDate, customEndDate, isClient, page]);
+  }, [customStartDate, customEndDate, isClient]); // Remove 'page' dependency
 
   // Update date range when earliestDate changes
   useEffect(() => {
@@ -302,7 +302,8 @@ export default function DateRangePicker({
   useEffect(() => {
     if (!isClient) return;
     
-    localStorage.setItem(`${page}_select`, JSON.stringify(selectedPreset));
+    // Save to GLOBAL localStorage
+    localStorage.setItem('global_date_select', JSON.stringify(selectedPreset));
     
     if (selectedPreset === "custom") {
       setShowCustomDates(true);
@@ -329,7 +330,7 @@ export default function DateRangePicker({
         onDateRangeChange(start, end, label, aggregation);
       }
     }
-  }, [selectedPreset, customStartDate, customEndDate, page, dateRangeContext, isClient]);
+  }, [selectedPreset, customStartDate, customEndDate, dateRangeContext, isClient]); // Remove 'page' dependency
 
   // NOW we can do conditional rendering AFTER all hooks are called
   // If we're on the monthly summary tab, show the month picker instead
